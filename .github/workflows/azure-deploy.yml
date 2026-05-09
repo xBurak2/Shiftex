@@ -1,0 +1,41 @@
+name: Deploy Shiftex to Azure
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore & Build
+        run: |
+          dotnet restore ShiftTrackingApp/ShiftTrackingApp.csproj
+          dotnet build ShiftTrackingApp/ShiftTrackingApp.csproj \
+            --configuration Release --no-restore
+
+      - name: Run Tests
+        run: |
+          dotnet test ShiftTrackingApp.Tests/ShiftTrackingApp.Tests.csproj \
+            --configuration Release --verbosity minimal
+
+      - name: Publish
+        run: |
+          dotnet publish ShiftTrackingApp/ShiftTrackingApp.csproj \
+            --configuration Release --output ./publish
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./publish
