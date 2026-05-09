@@ -1,0 +1,32 @@
+## Build
+bin/
+obj/
+out/
+
+## IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+
+## Logs
+Logs/
+*.log
+
+## Sensitive config — PRODUCTION'DA COMMIT'LEME
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## NuGet
+*.nupkg
+.nuget/
+
+## Test results
+TestResults/
+coverage/
