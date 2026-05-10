@@ -117,8 +117,7 @@ namespace ShiftTrackingApp.Tests
         {
             using var db = TestDbFactory.Create();
             db.Users.Add(MakeUser(1, "Personel"));
-            db.Shifts.Add(new Shift { Id = 1, Name = "Sabah",
-                StartTime = TimeSpan.FromHours(8), EndTime = TimeSpan.FromHours(16), Color="#fff" });
+            // Shift Id=1 ("Sabah") seed data'dan geliyor, tekrar eklenmez
             db.ShiftAssignments.Add(new ShiftAssignment
             {
                 UserId    = 1,
