@@ -16,7 +16,12 @@ namespace ShiftTrackingApp.Services
         {
             return await _db.Departments
                 .OrderBy(d => d.Name)
-                .Select(d => new DepartmentDto { Id = d.Id, Name = d.Name })
+                .Select(d => new DepartmentDto
+                {
+                    Id            = d.Id,
+                    Name          = d.Name,
+                    EmployeeCount = _db.Users.Count(u => u.DepartmentId == d.Id && u.IsActive)
+                })
                 .ToListAsync();
         }
 
@@ -24,7 +29,8 @@ namespace ShiftTrackingApp.Services
         {
             var dept = await _db.Departments.FindAsync(id);
             if (dept == null) return null;
-            return new DepartmentDto { Id = dept.Id, Name = dept.Name };
+            var count = await _db.Users.CountAsync(u => u.DepartmentId == id && u.IsActive);
+            return new DepartmentDto { Id = dept.Id, Name = dept.Name, EmployeeCount = count };
         }
 
         public async Task<DepartmentDto> CreateAsync(CreateDepartmentDto dto)

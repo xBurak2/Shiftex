@@ -221,11 +221,32 @@ const NAV_ADMIN = [
 ];
 
 const NAV_EMP = [
-  { section: 'Vardiyalarım' },
+  { section: 'Kişisel' },
   { id: 'my-shifts',     label: 'Vardiyalarım',       icon: ICONS.calendar },
   { id: 'my-attendance', label: 'Devam Durumum',      icon: ICONS.check },
   { id: 'my-leaves',     label: 'İzin Taleplerim',    icon: ICONS.clipboard },
+  { section: 'Takım' },
+  { id: 'roster',        label: 'Haftalık Plan',      icon: ICONS.calendar },
 ];
+
+// ── Vardiya kategorileri (Shift Id'ye göre) ─────────────────────────
+// 1-3: Vardiyalar | 4-5: Tatil/İzin | 6: Part Time (Vardiya) | 7-9: Fazla Mesai
+const SHIFT_TYPES = [
+  { id:1, name:'Sabah',                cat:'shift',    color:'#f59e0b', startTime:'08:00', endTime:'16:00' },
+  { id:2, name:'Öğleden Sonra',        cat:'shift',    color:'#4f6ef7', startTime:'14:00', endTime:'22:00' },
+  { id:3, name:'Gece',                 cat:'shift',    color:'#a78bfa', startTime:'22:00', endTime:'06:00' },
+  { id:6, name:'Part Time',            cat:'shift',    color:'#14b8a6', startTime:'08:00', endTime:'12:00' },
+  { id:4, name:'Tatil',                cat:'leave',    color:'#ef4444', startTime:'—',     endTime:'—'     },
+  { id:5, name:'İzinli',               cat:'leave',    color:'#22c55e', startTime:'—',     endTime:'—'     },
+  { id:7, name:'Sabah FM',             cat:'overtime', color:'#f97316', startTime:'16:00', endTime:'18:00' },
+  { id:8, name:'Öğleden Sonra FM',     cat:'overtime', color:'#6366f1', startTime:'22:00', endTime:'00:00' },
+  { id:9, name:'Gece FM',              cat:'overtime', color:'#ec4899', startTime:'06:00', endTime:'08:00' },
+];
+const SHIFT_CAT_LABELS = { shift:'Vardiyalar', leave:'Tatil / İzin', overtime:'Fazla Mesai' };
+function getShiftCategory(shiftId) {
+  const t = SHIFT_TYPES.find(x=>x.id===shiftId);
+  return t?.cat || 'shift';
+}
 
 function buildNav() {
   const items = currentUser.role === 'Admin' ? NAV_ADMIN : NAV_EMP;
@@ -344,6 +365,37 @@ async function loadAllUsers() {
     if (currentUser?.role === 'Admin') {
       const res = await api('GET', `/api/Users?page=1&pageSize=200`);
       allUsers = res.items || [];
+    } else {
+      // Personel kullanıcılar için: backend admin-only endpoint'i çağrılamaz.
+      // Sadece haftalık vardiya planından isim/foto'yu çıkararak takım listesi oluşturuyoruz.
+      try {
+        const ws = getMondayOf(new Date());
+        const weekly = await api('GET', `/api/Shifts/weekly?weekStart=${fmtDateOnly(ws)}`);
+        const map = {};
+        (weekly || []).forEach(a => {
+          if (!map[a.userId]) map[a.userId] = {
+            id: a.userId,
+            fullName: a.userFullName,
+            photoBase64: a.userPhoto,
+            departmentName: a.departmentName
+          };
+        });
+        // Kendisi listede yoksa ekle
+        if (currentUser && !map[currentUser.userId]) {
+          map[currentUser.userId] = {
+            id: currentUser.userId,
+            fullName: currentUser.fullName,
+            photoBase64: currentUser.photoBase64,
+            departmentName: ''
+          };
+        }
+        allUsers = Object.values(map).sort((a,b)=>a.fullName.localeCompare(b.fullName,'tr'));
+      } catch(_) {
+        allUsers = currentUser ? [{
+          id: currentUser.userId, fullName: currentUser.fullName,
+          photoBase64: currentUser.photoBase64
+        }] : [];
+      }
     }
   } catch(e) { console.error(e); }
 }
@@ -406,6 +458,14 @@ function openEmpModal(id) {
   document.getElementById('emp-pw-label').querySelector('.form-label').textContent =
     u ? 'Yeni Şifre (boş bırakılabilir)' : 'Şifre *';
 
+  // Foto önizleme + state
+  document.getElementById('emp-photo-data').value = u?.photoBase64 || '';
+  renderEmpPhotoPreview(u?.photoBase64, u?.fullName);
+
+  // File input'u resetle (aynı dosya tekrar seçilebilsin)
+  const fileInput = document.getElementById('emp-photo-input');
+  if (fileInput) fileInput.value = '';
+
   const deptSel = document.getElementById('emp-dept');
   deptSel.innerHTML = '<option value="">— Departman Seçin —</option>' +
     allDepts.map(d=>`<option value="${d.id}" ${u?.departmentId===d.id?'selected':''}>${d.name}</option>`).join('');
@@ -414,8 +474,41 @@ function openEmpModal(id) {
 }
 document.getElementById('add-emp-btn').addEventListener('click', () => openEmpModal());
 
+function renderEmpPhotoPreview(photoBase64, name) {
+  const preview = document.getElementById('emp-photo-preview');
+  const clearBtn = document.getElementById('emp-photo-clear');
+  if (photoBase64) {
+    preview.innerHTML = `<img src="${photoBase64}" alt="" />`;
+    clearBtn.style.display = '';
+  } else {
+    preview.innerHTML = avatar(name || '?', null, 72);
+    clearBtn.style.display = 'none';
+  }
+}
+
+function handleEmpPhoto(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  if (file.size > 400_000) { toast('Fotoğraf 400 KB\'dan küçük olmalıdır.','err'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('emp-photo-data').value = e.target.result;
+    const name = document.getElementById('emp-name').value;
+    renderEmpPhotoPreview(e.target.result, name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearEmpPhoto() {
+  document.getElementById('emp-photo-data').value = '';
+  const name = document.getElementById('emp-name').value;
+  renderEmpPhotoPreview(null, name);
+  const fi = document.getElementById('emp-photo-input'); if (fi) fi.value = '';
+}
+
 async function saveEmployee() {
   const id = document.getElementById('emp-id').value;
+  const photoData = document.getElementById('emp-photo-data').value;
   const body = {
     fullName: document.getElementById('emp-name').value.trim(),
     email:    document.getElementById('emp-email').value.trim(),
@@ -429,11 +522,23 @@ async function saveEmployee() {
   try {
     if (id) {
       if (pw) body.newPassword = pw;
+      // Foto güncellemesi (boş string → kaldır, dolu → güncelle)
+      body.photoBase64 = photoData || null;
       await api('PUT', `/api/Users/${id}`, body);
       toast('Personel güncellendi.');
     } else {
       body.password = pw;
       await api('POST', '/api/Users', body);
+      // Yeni kullanıcı için foto ayrı bir PUT ile eklenmeli (CreateUserDto'da photo yok)
+      if (photoData) {
+        try {
+          const created = await api('GET','/api/Users?page=1&pageSize=1');
+          const newId = created?.items?.find(x => x.email === body.email)?.id;
+          if (newId) {
+            await api('PUT', `/api/Users/${newId}`, { photoBase64: photoData });
+          }
+        } catch(_) { /* foto eklenmese de personel oluşturuldu */ }
+      }
       toast('Personel eklendi.', 'ok');
     }
     closeModal('emp-modal');
@@ -458,12 +563,25 @@ async function loadRoster() {
   const we = new Date(ws); we.setDate(we.getDate()+6);
   document.getElementById('roster-week-label').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
 
+  const isAdmin = currentUser?.role === 'Admin';
+  const rosterCard = document.querySelector('#page-roster .card');
+  if (rosterCard) rosterCard.classList.toggle('readonly-roster', !isAdmin);
+
+  // Personel için sayfa altyazısı güncelle + filtre butonu opsiyonel
+  const subEl = document.querySelector('#page-roster .page-sub');
+  if (subEl) subEl.textContent = isAdmin
+    ? 'Haftalık vardiya planı — hücreye tıklayarak vardiya, tatil veya fazla mesai atayabilirsiniz.'
+    : 'Haftalık vardiya planı — sadece görüntüleme. Kendi vardiyalarınız vurgulanır.';
+
   try {
     const assignments = await api('GET', `/api/Shifts/weekly?weekStart=${fmtDateOnly(ws)}`);
+    // userId → days → [assignments]
     const userMap = {};
     assignments.forEach(a => {
       if (!userMap[a.userId]) userMap[a.userId] = { name: a.userFullName, photo: a.userPhoto, days: {} };
-      userMap[a.userId].days[fmtDateOnly(a.date)] = a;
+      const ds = fmtDateOnly(a.date);
+      if (!userMap[a.userId].days[ds]) userMap[a.userId].days[ds] = [];
+      userMap[a.userId].days[ds].push(a);
     });
 
     const head = document.getElementById('roster-head');
@@ -473,19 +591,47 @@ async function loadRoster() {
         return `<th>${d}<small>${fmtDate(dt)}</small></th>`;
       }).join('');
 
+    // Personelse: kendisini en üste al, diğerlerini soluk göster
+    let usersOrdered = [...allUsers];
+    if (!isAdmin) {
+      usersOrdered.sort((a,b) => (a.id===currentUser.userId?-1: b.id===currentUser.userId?1:0));
+    }
+
     const body = document.getElementById('roster-body');
-    const rows = allUsers.map(u => {
+    const rows = usersOrdered.map(u => {
+      const isMe = !isAdmin && u.id === currentUser.userId;
       const days = userMap[u.id]?.days || {};
       const cells = Array.from({length:7},(_,i) => {
         const dt = new Date(ws); dt.setDate(dt.getDate()+i);
         const ds = fmtDateOnly(dt);
-        const a = days[ds];
-        const cell = a
-          ? `<div class="shift-chip" style="background:${a.shiftColor}" onclick="openShiftModal('${ds}',${u.id},${a.id})">${a.shiftName}<small>${a.startTime}–${a.endTime}</small></div>`
-          : `<div class="shift-empty" onclick="openShiftModal('${ds}',${u.id})">+</div>`;
-        return `<td>${cell}</td>`;
+        const dayAssignments = days[ds] || [];
+
+        let cellHtml = '';
+        if (dayAssignments.length) {
+          cellHtml = dayAssignments.map(a => {
+            const cat = getShiftCategory(a.shiftId);
+            const catBadge = cat==='overtime' ? '<span class="fm-badge">FM</span>' : '';
+            const onclick = isAdmin
+              ? `onclick="openShiftModal('${ds}',${u.id},${a.id})"`
+              : '';
+            return `<div class="shift-chip cat-${cat}" style="background:${a.shiftColor}" ${onclick} title="${a.shiftName} ${a.startTime}–${a.endTime}">
+                <span class="chip-name">${a.shiftName}${catBadge}</span>
+                <small>${a.startTime}–${a.endTime}</small>
+              </div>`;
+          }).join('');
+          // Admin: bu hücreye yeni vardiya/FM eklemek için + butonu
+          if (isAdmin) {
+            cellHtml += `<div class="shift-add-more" onclick="openShiftModal('${ds}',${u.id})" title="Bu güne fazla mesai/vardiya ekle">+</div>`;
+          }
+        } else {
+          cellHtml = isAdmin
+            ? `<div class="shift-empty" onclick="openShiftModal('${ds}',${u.id})">+</div>`
+            : `<div class="shift-blank">—</div>`;
+        }
+        return `<td>${cellHtml}</td>`;
       }).join('');
-      return `<tr><td><div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${u.fullName}</span></div></td>${cells}</tr>`;
+      const rowCls = isMe ? 'row-me' : '';
+      return `<tr class="${rowCls}"><td><div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${u.fullName}${isMe?' <small class="me-tag">(Sen)</small>':''}</span></div></td>${cells}</tr>`;
     }).join('');
     body.innerHTML = rows || '<tr><td colspan="8" class="empty">Personel bulunamadı.</td></tr>';
   } catch(e) { toast(e.message,'err'); }
@@ -493,41 +639,112 @@ async function loadRoster() {
 function rosterNav(d) { rosterWeekStart.setDate(rosterWeekStart.getDate()+d*7); loadRoster(); }
 
 let pendingShiftDate = null, pendingShiftUserId = null;
+let currentShiftCat = 'shift';
+let dayExistingShifts = [];
+
 async function openShiftModal(dateStr, userId, assignId) {
   pendingShiftDate = dateStr; pendingShiftUserId = userId;
   document.getElementById('shift-assign-id').value = assignId||'';
   const u = allUsers.find(x=>x.id===userId);
-  document.getElementById('shift-cell-info').textContent = `${u?.fullName||''} • ${fmtDate(dateStr)}`;
+  document.getElementById('shift-cell-info').innerHTML =
+    `<strong>${u?.fullName||''}</strong> · ${fmtDate(dateStr)}`;
 
+  // Bu gün için mevcut tüm atamalar
   const shifts = await api('GET',`/api/Shifts/user/${userId}?from=${dateStr}&to=${dateStr}`).catch(()=>[]);
-  const currentShiftId = shifts.length ? shifts[0].shiftId : null;
+  dayExistingShifts = shifts;
 
-  const shiftTypes = [
-    {id:1,name:'Sabah'},{id:2,name:'Öğleden Sonra'},{id:3,name:'Gece'},
-    {id:4,name:'Tatil'},{id:5,name:'İzinli'},{id:6,name:'Part Time'},
-    {id:7,name:'Sabah FM'},{id:8,name:'ÖS FM'},{id:9,name:'Gece FM'},
-  ];
-  document.getElementById('shift-type-sel').innerHTML =
-    shiftTypes.map(s=>`<option value="${s.id}" ${s.id===currentShiftId?'selected':''}>${s.name}</option>`).join('');
+  // Modal başlığı: ekleme mi düzenleme mi?
+  const titleEl = document.getElementById('shift-modal-title');
+  let currentShift = null;
+  if (assignId) {
+    currentShift = shifts.find(s => s.id === assignId);
+    titleEl.textContent = 'Vardiyayı Düzenle';
+  } else {
+    titleEl.textContent = shifts.length ? 'Ek Vardiya / Fazla Mesai' : 'Vardiya Ata';
+  }
+
+  // Mevcut atamalar listesi (sadece eklerken — düzenlemede gerek yok)
+  const existingWrap = document.getElementById('shift-existing-wrap');
+  const existingList = document.getElementById('shift-existing-list');
+  if (!assignId && shifts.length) {
+    existingWrap.classList.remove('hidden');
+    existingList.innerHTML = shifts.map(s => {
+      const cat = getShiftCategory(s.shiftId);
+      return `<div class="existing-shift-item">
+        <span class="shift-chip sm cat-${cat}" style="background:${s.shiftColor}">${s.shiftName}<small>${s.startTime}–${s.endTime}</small></span>
+        <button type="button" class="btn-icon-mini" onclick="openShiftModal('${dateStr}',${userId},${s.id})" title="Düzenle">✎</button>
+      </div>`;
+    }).join('');
+  } else {
+    existingWrap.classList.add('hidden');
+  }
+
+  // Personel seçimi
   document.getElementById('shift-user-sel').innerHTML =
     allUsers.map(u2=>`<option value="${u2.id}" ${u2.id===userId?'selected':''}>${u2.fullName}</option>`).join('');
-  document.getElementById('shift-note').value = shifts[0]?.note||'';
+  // Personel düzenlerken kilitli kalsın (yanlışlıkla başka birine atanmasın)
+  document.getElementById('shift-user-sel').disabled = !!assignId;
+
+  // Düzenleme modunda mevcut kategoriyi/türü göster
+  if (currentShift) {
+    currentShiftCat = getShiftCategory(currentShift.shiftId);
+    switchShiftCat(currentShiftCat, currentShift.shiftId);
+  } else {
+    // Yeni ekleme: önceden bir vardiya varsa, yenisi varsayılan olarak Fazla Mesai olsun
+    currentShiftCat = shifts.length ? 'overtime' : 'shift';
+    switchShiftCat(currentShiftCat);
+  }
+
+  document.getElementById('shift-note').value = currentShift?.note || '';
   document.getElementById('shift-delete-btn').classList.toggle('hidden', !assignId);
   document.getElementById('shift-modal').classList.remove('hidden');
 }
+
+function switchShiftCat(cat, selectedId) {
+  currentShiftCat = cat;
+  document.querySelectorAll('.shift-cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
+  });
+
+  const grid = document.getElementById('shift-type-grid');
+  const items = SHIFT_TYPES.filter(t => t.cat === cat);
+  // İlk seçili: parametre varsa onu, yoksa kategorinin ilkini
+  const selId = selectedId || items[0]?.id;
+  document.getElementById('shift-type-sel').value = selId || '';
+  grid.innerHTML = items.map(t => `
+    <div class="shift-type-card ${t.id===selId?'selected':''}" data-id="${t.id}" onclick="selectShiftType(${t.id})">
+      <span class="cat-dot" style="background:${t.color}"></span>
+      <div class="stc-info">
+        <strong>${t.name}</strong>
+        <small>${t.startTime} – ${t.endTime}</small>
+      </div>
+      <svg class="stc-check" viewBox="0 0 20 20" fill="none"><path d="M5 10l3 3 7-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  `).join('');
+}
+
+function selectShiftType(id) {
+  document.getElementById('shift-type-sel').value = id;
+  document.querySelectorAll('#shift-type-grid .shift-type-card').forEach(c => {
+    c.classList.toggle('selected', +c.dataset.id === id);
+  });
+}
+
 async function saveShift() {
   const id = document.getElementById('shift-assign-id').value;
+  const shiftId = +document.getElementById('shift-type-sel').value;
+  if (!shiftId) { toast('Vardiya türü seçin.','warn'); return; }
   const body = {
     userId:  +document.getElementById('shift-user-sel').value,
-    shiftId: +document.getElementById('shift-type-sel').value,
+    shiftId,
     date:    pendingShiftDate,
-    note:    document.getElementById('shift-note').value
+    note:    document.getElementById('shift-note').value || null
   };
   try {
     if (id) await api('PUT', `/api/Shifts/${id}`, body);
     else    await api('POST','/api/Shifts',       body);
     closeModal('shift-modal');
-    toast('Vardiya kaydedildi.');
+    toast('Vardiya kaydedildi.', 'ok');
     loadRoster();
   } catch(e) { toast(e.message,'err'); }
 }
@@ -574,7 +791,7 @@ async function loadMyAttendance() {
           <td class="font-mono">${a.workedHours!=null?a.workedHours.toFixed(1)+' sa':'—'}</td>
           <td>${a.checkOut?'<span class="badge badge-ok">Tamamlandı</span>':'<span class="badge badge-on">Aktif</span>'}</td>
         </tr>`).join('')
-      : '<tr><td colspan="5" class="empty">Bugün kayıt yok.</td></tr>';
+      : `<tr><td colspan="5" class="empty">Bugün kayıt yok. Giriş/çıkış için yüz tanıma turnikesini kullanın.</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
 async function doCheckIn() { try { await api('POST','/api/Attendance/checkin'); toast('Giriş kaydedildi.'); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
@@ -718,11 +935,17 @@ async function loadDepts() {
 }
 function renderDepts() {
   document.getElementById('dept-tbody').innerHTML = allDepts.length
-    ? allDepts.map(d => `<tr>
-        <td class="font-mono">${d.id}</td>
-        <td>${d.name}</td>
-        <td class="text-right"><button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">Sil</button></td>
-      </tr>`).join('')
+    ? allDepts.map(d => {
+        const count = d.employeeCount ?? 0;
+        const label = count === 0 ? 'Personel yok'
+                    : count === 1 ? '1 personel'
+                    : `${count} personel`;
+        return `<tr>
+          <td><strong>${d.name}</strong></td>
+          <td><span class="dept-count-badge">${ICONS.team}<span>${label}</span></span></td>
+          <td class="text-right"><button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">Sil</button></td>
+        </tr>`;
+      }).join('')
     : '<tr><td colspan="3" class="empty">Departman yok.</td></tr>';
 }
 function openDeptModal() {

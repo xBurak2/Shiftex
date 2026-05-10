@@ -246,6 +246,9 @@ namespace ShiftTrackingApp.DTOs
         [Required(ErrorMessage = "Departman adı zorunludur.")]
         [MaxLength(100, ErrorMessage = "Departman adı en fazla 100 karakter olabilir.")]
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>Bu departmana atanmış aktif personel sayısı.</summary>
+        public int EmployeeCount { get; set; }
     }
 
     public class CreateDepartmentDto

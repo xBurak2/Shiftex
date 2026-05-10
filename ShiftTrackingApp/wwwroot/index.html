@@ -262,11 +262,7 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Devam Durumum</h1>
-            <p class="page-sub">Bugünün giriş çıkış kaydı</p>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-secondary" id="checkout-btn" onclick="doCheckOut()">Çıkış Yap</button>
-            <button class="btn btn-primary" id="checkin-btn" onclick="doCheckIn()">Giriş Yap</button>
+            <p class="page-sub">Bugünün giriş çıkış kaydı — yüz tanıma turnikesinden otomatik kaydedilir</p>
           </div>
         </div>
         <div class="card no-pad">
@@ -456,7 +452,7 @@
         <div class="card no-pad">
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>ID</th><th>Ad</th><th class="text-right">İşlem</th></tr></thead>
+              <thead><tr><th>Departman</th><th>Personel Sayısı</th><th class="text-right">İşlem</th></tr></thead>
               <tbody id="dept-tbody"></tbody>
             </table>
           </div>
@@ -477,6 +473,22 @@
     </div>
     <div class="modal-body">
       <input id="emp-id" type="hidden" />
+      <input id="emp-photo-data" type="hidden" />
+
+      <!-- Fotoğraf yükleme alanı -->
+      <div class="emp-photo-row">
+        <div class="emp-photo-preview" id="emp-photo-preview"></div>
+        <div class="emp-photo-actions">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+            <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 16l4-4 3 3 7-7M14 4h3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Fotoğraf Seç
+            <input id="emp-photo-input" type="file" accept="image/*" hidden onchange="handleEmpPhoto(event)" />
+          </label>
+          <button type="button" class="btn btn-ghost btn-sm" id="emp-photo-clear" onclick="clearEmpPhoto()" style="display:none">Kaldır</button>
+          <small class="text-sub" style="display:block;margin-top:4px">Maks. 400 KB · JPG/PNG</small>
+        </div>
+      </div>
+
       <div class="form-grid-2">
         <div class="form-group"><label class="form-label">Ad Soyad *</label><input id="emp-name" type="text" class="form-input" /></div>
         <div class="form-group"><label class="form-label">E-posta *</label><input id="emp-email" type="email" class="form-input" /></div>
@@ -508,22 +520,59 @@
 </div>
 
 <div id="shift-modal" class="modal-overlay hidden">
-  <div class="modal">
+  <div class="modal modal-lg">
     <div class="modal-head">
-      <h3>Vardiya Ata</h3>
+      <h3 id="shift-modal-title">Vardiya Ata</h3>
       <button class="icon-btn" onclick="closeModal('shift-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <input id="shift-assign-id" type="hidden" />
       <div id="shift-cell-info" class="info-banner"></div>
-      <div class="form-group"><label class="form-label">Personel</label><select id="shift-user-sel" class="form-select"></select></div>
-      <div class="form-group"><label class="form-label">Vardiya Türü</label><select id="shift-type-sel" class="form-select"></select></div>
-      <div class="form-group"><label class="form-label">Not</label><input id="shift-note" type="text" class="form-input" /></div>
+
+      <!-- Mevcut atamalar (varsa) -->
+      <div id="shift-existing-wrap" class="hidden">
+        <label class="form-label" style="margin-bottom:6px;display:block">Bu güne atanmış vardiyalar</label>
+        <div id="shift-existing-list" class="existing-shifts"></div>
+        <div class="divider" style="margin:14px 0"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Personel</label>
+        <select id="shift-user-sel" class="form-select"></select>
+      </div>
+
+      <!-- Kategori sekmeleri -->
+      <div class="form-group">
+        <label class="form-label">Vardiya Kategorisi</label>
+        <div class="shift-cat-tabs" id="shift-cat-tabs">
+          <button type="button" class="shift-cat-tab active" data-cat="shift" onclick="switchShiftCat('shift')">
+            <span class="cat-dot" style="background:#4f6ef7"></span> Vardiyalar
+          </button>
+          <button type="button" class="shift-cat-tab" data-cat="leave" onclick="switchShiftCat('leave')">
+            <span class="cat-dot" style="background:#ef4444"></span> Tatil / İzin
+          </button>
+          <button type="button" class="shift-cat-tab" data-cat="overtime" onclick="switchShiftCat('overtime')">
+            <span class="cat-dot" style="background:#f97316"></span> Fazla Mesai
+          </button>
+        </div>
+      </div>
+
+      <!-- Vardiya tipi grid (kategori bazlı dinamik) -->
+      <div class="form-group">
+        <label class="form-label">Vardiya Türü</label>
+        <div id="shift-type-grid" class="shift-type-grid"></div>
+        <input id="shift-type-sel" type="hidden" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Not (opsiyonel)</label>
+        <input id="shift-note" type="text" class="form-input" placeholder="Örn: Müşteri toplantısı, etkinlik..." />
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('shift-modal')">İptal</button>
-      <button class="btn btn-danger hidden" id="shift-delete-btn" onclick="deleteShift()">Sil</button>
-      <button class="btn btn-primary" onclick="saveShift()">Kaydet</button>
+      <button class="btn btn-danger hidden" id="shift-delete-btn" onclick="deleteShift()">Vardiyayı Sil</button>
+      <button class="btn btn-primary" id="shift-save-btn" onclick="saveShift()">Kaydet</button>
     </div>
   </div>
 </div>
