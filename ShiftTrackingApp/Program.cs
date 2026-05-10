@@ -201,7 +201,15 @@ app.UseAuthorization();
 
 // ── Health check endpoint'leri ────────────────────────────────────────────
 app.MapHealthChecks("/health");
-app.MapGet("/", () => Results.Redirect("/index.html"));
+
+// Root path → index.html (redirect değil, direkt servis et — URL'de /index.html görünmesin)
+app.MapGet("/", async context =>
+{
+    context.Response.ContentType = "text/html";
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "index.html"));
+});
+
 app.MapControllers();
 
 // ── Başlangıç migrasyonu & indeks düzeltmesi ─────────────────────────────
