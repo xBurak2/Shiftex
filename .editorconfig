@@ -1,0 +1,84 @@
+# ════════════════════════════════════════════════════════════
+# Shiftex — Kod Stili ve Analiz Kuralları
+# Senior-level kod kalite zorlaması (Roslyn analyzers)
+# ════════════════════════════════════════════════════════════
+root = true
+
+[*]
+charset                  = utf-8
+end_of_line              = lf
+insert_final_newline     = true
+trim_trailing_whitespace = true
+indent_style             = space
+indent_size              = 4
+
+[*.{cs,csx,vb,vbx}]
+indent_size = 4
+
+[*.{json,yml,yaml,xml,csproj,xaml,config,html,css,js,ts}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# ─────────────────────────────────────────────────────────────
+# C# specific
+# ─────────────────────────────────────────────────────────────
+[*.cs]
+
+# Using direktifleri sistem en üstte
+dotnet_sort_system_directives_first    = true
+dotnet_separate_import_directive_groups = false
+
+# this. kullanılmasın (gereksiz)
+dotnet_style_qualification_for_field    = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method   = false:warning
+dotnet_style_qualification_for_event    = false:warning
+
+# Modern C# özellikleri
+csharp_style_var_for_built_in_types       = true:suggestion
+csharp_style_var_when_type_is_apparent    = true:suggestion
+csharp_style_var_elsewhere                = true:suggestion
+csharp_prefer_braces                      = when_multiline:suggestion
+dotnet_diagnostic.IDE0011.severity        = silent
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_throw_expression             = true:suggestion
+csharp_style_conditional_delegate_call    = true:suggestion
+csharp_prefer_simple_using_statement      = true:suggestion
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods      = when_on_single_line:suggestion
+csharp_style_expression_bodied_constructors = when_on_single_line:suggestion
+csharp_style_expression_bodied_operators    = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties   = true:suggestion
+csharp_style_expression_bodied_lambdas      = true:suggestion
+
+# Null checks
+dotnet_style_coalesce_expression  = true:suggestion
+dotnet_style_null_propagation     = true:suggestion
+
+# ─────────────────────────────────────────────────────────────
+# Analyzer kurallarının önem dereceleri
+# ─────────────────────────────────────────────────────────────
+
+# Performans uyarıları
+dotnet_diagnostic.CA1822.severity = suggestion  # Üyeleri static yap
+dotnet_diagnostic.CA1825.severity = warning     # Boş array yerine Array.Empty
+dotnet_diagnostic.CA1834.severity = warning     # StringBuilder.Append(char) kullan
+
+# Güvenlik uyarıları
+dotnet_diagnostic.CA5394.severity = warning     # Random güvensiz
+dotnet_diagnostic.CA2100.severity = warning     # SQL injection
+dotnet_diagnostic.CA3001.severity = warning     # SQL injection - reviewer
+dotnet_diagnostic.CA3002.severity = warning     # XSS - reviewer
+dotnet_diagnostic.CA3003.severity = warning     # File path injection
+dotnet_diagnostic.CA3076.severity = warning     # Insecure DTD
+
+# Async kuralları
+dotnet_diagnostic.CA2007.severity = none        # ConfigureAwait (ASP.NET'te gerek yok)
+dotnet_diagnostic.VSTHRD200.severity = none     # async suffix - external lib
+
+# Naming
+dotnet_diagnostic.IDE1006.severity = suggestion

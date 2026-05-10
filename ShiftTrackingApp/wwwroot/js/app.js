@@ -41,6 +41,26 @@ const ICONS = {
 };
 
 // ── Utilities ───────────────────────────────────────────────────────
+/**
+ * XSS koruması — kullanıcı verisini innerHTML'e koyarken her zaman escape edin.
+ * Kullanım: `<td>${esc(user.fullName)}</td>`
+ */
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+/** URL attribute'larını sınırla (javascript: gibi şemaları engelle) */
+function safeUrl(u) {
+  if (typeof u !== 'string') return '';
+  const s = u.trim().toLowerCase();
+  if (s.startsWith('javascript:') || s.startsWith('data:text/html')) return '';
+  return u;
+}
 function getMondayOf(d) {
   const dt = new Date(d);
   const day = dt.getDay();
@@ -61,8 +81,11 @@ function fmtTime(d) {
   return new Date(d).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
 }
 function avatar(name, photo, size=32) {
-  if (photo) return `<div class="av-init" style="width:${size}px;height:${size}px"><img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
-  const initials = (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  if (photo) {
+    const safePhoto = safeUrl(photo);
+    if (safePhoto) return `<div class="av-init" style="width:${size}px;height:${size}px"><img src="${esc(safePhoto)}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
+  }
+  const initials = esc((name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase());
   const hue = [...(name||'')].reduce((a,c)=>a+c.charCodeAt(0),0) % 360;
   return `<div class="av-init" style="width:${size}px;height:${size}px;background:hsl(${hue},48%,52%);font-size:${Math.round(size*0.36)}px">${initials}</div>`;
 }
@@ -413,15 +436,15 @@ async function loadEmployees(page) {
     const tbody = document.getElementById('emp-tbody');
     tbody.innerHTML = res.items.map(u => `
       <tr>
-        <td><div class="name-cell">${avatar(u.fullName, u.photoBase64)}<span>${u.fullName}</span></div></td>
-        <td>${u.email}</td>
-        <td>${u.departmentName||'—'}</td>
-        <td>${u.position||'—'}</td>
+        <td><div class="name-cell">${avatar(u.fullName, u.photoBase64)}<span>${esc(u.fullName)}</span></div></td>
+        <td>${esc(u.email)}</td>
+        <td>${esc(u.departmentName||'—')}</td>
+        <td>${esc(u.position||'—')}</td>
         <td><span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span></td>
         <td class="text-right">
           <div class="btn-group" style="justify-content:flex-end">
             <button class="btn btn-ghost btn-sm" onclick="openEmpModal(${u.id})">Düzenle</button>
-            <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteEmployee(${u.id},'${u.fullName.replace(/'/g,"\\'")}')">Sil</button>
+            <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteEmployee(${u.id},'${esc(u.fullName).replace(/'/g,"\\'")}')">Sil</button>
           </div>
         </td>
       </tr>`).join('');

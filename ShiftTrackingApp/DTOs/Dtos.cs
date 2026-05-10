@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ShiftTrackingApp.Helpers;
 
 namespace ShiftTrackingApp.DTOs
 {
@@ -65,7 +66,7 @@ namespace ShiftTrackingApp.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Şifre zorunludur.")]
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
+        [StrongPassword(MinLength = 8)]
         [MaxLength(100, ErrorMessage = "Şifre en fazla 100 karakter olabilir.")]
         public string Password { get; set; } = string.Empty;
 
@@ -110,7 +111,7 @@ namespace ShiftTrackingApp.DTOs
 
         public string? PhotoBase64 { get; set; }
 
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
+        [StrongPassword(MinLength = 8)]
         [MaxLength(100, ErrorMessage = "Şifre en fazla 100 karakter olabilir.")]
         public string? NewPassword { get; set; }
     }

@@ -1,10 +1,14 @@
 using Serilog;
 using Serilog.Events;
 using ShiftTrackingApp.Middleware;
+using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +19,13 @@ using ShiftTrackingApp.Services;
 using ShiftTrackingApp.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Kestrel — istek body boyutu sınırı (DoS koruması) ────────────────────
+builder.WebHost.ConfigureKestrel(opts =>
+{
+    // Default 30 MB → 5 MB (yüz/fotoğraf yüklemeleri için yeterli)
+    opts.Limits.MaxRequestBodySize = 5 * 1024 * 1024;
+});
 
 // ── Veritabanı ────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -81,7 +92,40 @@ builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy("Uygulama çalışıyor."))
     .AddDbContextCheck<AppDbContext>("database");
 
+// ── Response Compression (Brotli + Gzip) ─────────────────────────────────
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.EnableForHttps = true;
+    opts.Providers.Add<BrotliCompressionProvider>();
+    opts.Providers.Add<GzipCompressionProvider>();
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json", "application/problem+json",
+        "text/css", "application/javascript", "text/html",
+        "image/svg+xml"
+    });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o   => o.Level = CompressionLevel.Fastest);
+
+// ── Output Caching ───────────────────────────────────────────────────────
+builder.Services.AddOutputCache(opts =>
+{
+    // Departments listesi: 60 sn cache (yönetici/personel bağımsız aynı)
+    opts.AddPolicy("departments", b => b.Expire(TimeSpan.FromSeconds(60)));
+});
+
+// ── ProblemDetails (RFC 7807) — ASP.NET'in built-in middleware'i ──────────
+builder.Services.AddProblemDetails(opts =>
+{
+    opts.CustomizeProblemDetails = ctx =>
+    {
+        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+    };
+});
+
 // ── Servisler ─────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<AccountLockoutService>(); // brute-force koruma — singleton state
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<IAuthService,       AuthService>();
 builder.Services.AddScoped<IUserService,       UserService>();
@@ -90,6 +134,7 @@ builder.Services.AddScoped<ILeaveService,      LeaveService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IFaceDataService,   FaceDataService>();
+builder.Services.AddScoped<INotificationService, LoggerNotificationService>(); // Production'da SMTP/SendGrid impl ile değiştirin
 
 // ── CORS ──────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration
@@ -149,14 +194,22 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title       = "Shiftex API",
         Version     = "v1",
-        Description = "Personel Vardiya ve Devam Takip Sistemi API"
+        Description = "Personel Vardiya ve Devam Takip Sistemi API. " +
+                      "JWT ile authentication, AES-256 ile şifrelenmiş yüz verisi, refresh token rotasyonu.",
+        Contact     = new OpenApiContact
+        {
+            Name = "Shiftex Team",
+            Url  = new Uri("https://github.com/xBurak2/Shiftex")
+        },
+        License     = new OpenApiLicense { Name = "Proprietary" }
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name        = "Authorization",
-        Type        = SecuritySchemeType.Http,
-        Scheme      = "Bearer",
-        Description = "JWT Bearer token giriniz"
+        Name         = "Authorization",
+        Type         = SecuritySchemeType.Http,
+        Scheme       = "Bearer",
+        BearerFormat = "JWT",
+        Description  = "JWT Bearer token giriniz (login endpoint'inden alabilirsiniz)"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {{
@@ -166,21 +219,28 @@ builder.Services.AddSwaggerGen(c =>
         },
         Array.Empty<string>()
     }});
+
+    // XML doc'ları varsa Swagger'a dahil et (servislerin <summary> taglerini gösterir)
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, "ShiftTrackingApp.xml");
+    if (File.Exists(xmlPath)) c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
-// ── Serilog ───────────────────────────────────────────────────────────────
+// ── Serilog (correlation ID, environment, machine, user ile zenginleştirilmiş) ──
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .Enrich.WithThreadId()
+    .Enrich.WithMachineName()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithProperty("Application", "Shiftex")
     .WriteTo.Console(outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {Message:lj} {Properties:j}{NewLine}{Exception}")
     .WriteTo.File("Logs/shiftex-.log",
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 14,
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] [{ThreadId}] {Message:lj}{NewLine}{Exception}")
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] [{MachineName}/{ThreadId}] [{CorrelationId}] {Message:lj} {Properties:j}{NewLine}{Exception}")
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -190,17 +250,57 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseCorrelationId();            // En başta — her log/exception ID ile zenginleştirilsin
+app.UseSecurityHeaders();          // OWASP başlıkları (CSP, X-Frame-Options, vb.)
 app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
+app.UseResponseCompression();      // Brotli/Gzip — JSON ve statik dosyalar için
 app.UseCors("AppPolicy");
 app.UseRateLimiter();
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} → {StatusCode} ({Elapsed:0} ms)";
+    opts.GetLevel = (httpCtx, elapsed, ex) =>
+        ex != null                            ? LogEventLevel.Error
+      : httpCtx.Response.StatusCode >= 500    ? LogEventLevel.Error
+      : httpCtx.Response.StatusCode >= 400    ? LogEventLevel.Warning
+      : elapsed > 2000                        ? LogEventLevel.Warning   // yavaş istekler
+      :                                          LogEventLevel.Information;
+});
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();              // Departments gibi statik-ish endpoint'ler için
 
-// ── Health check endpoint'leri ────────────────────────────────────────────
-app.MapHealthChecks("/health");
+// ── Health check endpoint'leri (detaylı JSON cevap) ───────────────────────
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        var payload = new
+        {
+            status   = report.Status.ToString(),
+            duration = report.TotalDuration.TotalMilliseconds,
+            checks   = report.Entries.Select(e => new
+            {
+                name        = e.Key,
+                status      = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration    = e.Value.Duration.TotalMilliseconds,
+                error       = e.Value.Exception?.Message
+            })
+        };
+        await ctx.Response.WriteAsync(JsonSerializer.Serialize(payload,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    }
+});
+
+// Liveness — sadece self check (Azure App Service liveness probe için ideal)
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = r => r.Name == "self"
+});
 
 // Root path → index.html (redirect değil, direkt servis et — URL'de /index.html görünmesin)
 app.MapGet("/", async context =>

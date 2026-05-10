@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using ShiftTrackingApp.Data;
 using ShiftTrackingApp.DTOs;
 using ShiftTrackingApp.Helpers;
 using ShiftTrackingApp.Models;
@@ -22,6 +24,12 @@ namespace ShiftTrackingApp.Tests
                 })
                 .Build();
 
+        // Test helper — yeni AuthService bağımlılıklarını otomatik enjekte eder
+        private static AuthService BuildSvc(AppDbContext db, JwtHelper jwt, IConfiguration config) =>
+            new(db, jwt, config,
+                new AccountLockoutService(NullLogger<AccountLockoutService>.Instance),
+                NullLogger<AuthService>.Instance);
+
         private static User CreateTestUser(string password = "Test1234") => new()
         {
             Id           = 1,
@@ -42,7 +50,7 @@ namespace ShiftTrackingApp.Tests
             db.Users.Add(CreateTestUser());
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.LoginAsync(new LoginDto
                 { Email = "test@example.com", Password = "Test1234" });
 
@@ -61,7 +69,7 @@ namespace ShiftTrackingApp.Tests
             db.Users.Add(CreateTestUser());
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.LoginAsync(new LoginDto
                 { Email = "test@example.com", Password = "YanlisŞifre" });
 
@@ -75,7 +83,7 @@ namespace ShiftTrackingApp.Tests
             var config   = BuildConfig();
             var jwt      = new JwtHelper(config);
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.LoginAsync(new LoginDto
                 { Email = "yok@example.com", Password = "herhangi" });
 
@@ -93,7 +101,7 @@ namespace ShiftTrackingApp.Tests
             db.Users.Add(u);
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.LoginAsync(new LoginDto
                 { Email = "test@example.com", Password = "Test1234" });
 
@@ -117,7 +125,7 @@ namespace ShiftTrackingApp.Tests
             });
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.RefreshAsync("revoked-token");
 
             Assert.Null(result);
@@ -140,7 +148,7 @@ namespace ShiftTrackingApp.Tests
             });
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             var result = await svc.RefreshAsync("expired-token");
 
             Assert.Null(result);
@@ -169,12 +177,77 @@ namespace ShiftTrackingApp.Tests
             }
             await db.SaveChangesAsync();
 
-            var svc    = new AuthService(db, jwt, config);
+            var svc    = BuildSvc(db, jwt, config);
             await svc.LoginAsync(new LoginDto
                 { Email = "test@example.com", Password = "Test1234" });
 
             var activeCount = db.RefreshTokens.Count(rt => !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow);
             Assert.True(activeCount <= 5, $"Aktif token sayısı 5'i geçmemeli. Şu an: {activeCount}");
+        }
+
+        [Fact]
+        public async Task RefreshToken_IsHashedInDatabase_NotPlainText()
+        {
+            using var db = TestDbFactory.Create();
+            var config   = BuildConfig();
+            var jwt      = new JwtHelper(config);
+            db.Users.Add(CreateTestUser());
+            await db.SaveChangesAsync();
+
+            var svc    = BuildSvc(db, jwt, config);
+            var result = await svc.LoginAsync(new LoginDto
+                { Email = "test@example.com", Password = "Test1234" });
+
+            Assert.NotNull(result);
+            var stored = db.RefreshTokens.Single();
+            // DB'deki token, kullanıcıya verilen ham token'dan farklı olmalı (hash'lenmiş)
+            Assert.NotEqual(result!.RefreshToken, stored.Token);
+            // SHA-256 hex 64 karakter olmalı
+            Assert.Equal(64, stored.Token.Length);
+        }
+
+        [Fact]
+        public async Task Login_TooManyFailures_LocksAccount()
+        {
+            using var db = TestDbFactory.Create();
+            var config   = BuildConfig();
+            var jwt      = new JwtHelper(config);
+            db.Users.Add(CreateTestUser());
+            await db.SaveChangesAsync();
+
+            var svc = BuildSvc(db, jwt, config);
+            // 5 başarısız deneme yap
+            for (int i = 0; i < 5; i++)
+            {
+                await svc.LoginAsync(new LoginDto
+                    { Email = "test@example.com", Password = "yanlis-sifre" });
+            }
+            // 6'ıncı deneme — doğru şifreyle bile kilit yüzünden hata almalı
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                svc.LoginAsync(new LoginDto
+                    { Email = "test@example.com", Password = "Test1234" }));
+        }
+
+        [Fact]
+        public async Task Login_SuccessfulAfterFailures_ResetsCounter()
+        {
+            using var db = TestDbFactory.Create();
+            var config   = BuildConfig();
+            var jwt      = new JwtHelper(config);
+            db.Users.Add(CreateTestUser());
+            await db.SaveChangesAsync();
+
+            var svc = BuildSvc(db, jwt, config);
+            // 3 başarısız (eşik altında)
+            for (int i = 0; i < 3; i++)
+            {
+                await svc.LoginAsync(new LoginDto
+                    { Email = "test@example.com", Password = "yanlis" });
+            }
+            // Doğru şifre — geçmeli
+            var ok = await svc.LoginAsync(new LoginDto
+                { Email = "test@example.com", Password = "Test1234" });
+            Assert.NotNull(ok);
         }
     }
 }

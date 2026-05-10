@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using ShiftTrackingApp.Constants;
 using ShiftTrackingApp.Data;
 using ShiftTrackingApp.DTOs;
 using ShiftTrackingApp.Services;
@@ -56,7 +58,7 @@ namespace ShiftTrackingApp.Controllers
         public UsersController(IUserService users) => _users = users;
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> GetAll(
             [FromQuery] int page     = 1,
             [FromQuery] int pageSize = 50)
@@ -67,7 +69,7 @@ namespace ShiftTrackingApp.Controllers
         {
             var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var role     = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (role != "Admin" && callerId != id) return Forbid();
+            if (role != Roles.Admin && callerId != id) return Forbid();
             var user = await _users.GetByIdAsync(id);
             return user == null ? NotFound() : Ok(user);
         }
@@ -85,8 +87,8 @@ namespace ShiftTrackingApp.Controllers
         {
             var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var role     = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (role != "Admin" && callerId != id) return Forbid();
-            if (role != "Admin") dto.Role = null;
+            if (role != Roles.Admin && callerId != id) return Forbid();
+            if (role != Roles.Admin) dto.Role = null;
             var updated = await _users.UpdateAsync(id, dto);
             return updated == null ? NotFound() : Ok(updated);
         }
@@ -97,15 +99,54 @@ namespace ShiftTrackingApp.Controllers
         {
             var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var role     = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (role != "Admin" && callerId != id) return Forbid();
-            var now     = DateTime.Now;
+            if (role != Roles.Admin && callerId != id) return Forbid();
+            // UTC kullanırız (sunucu timezone'una bağımlı olmaz); month/year hesaplaması doğru kalır
+            var now     = DateTime.UtcNow;
             var summary = await _users.GetMonthlyAttendanceSummaryAsync(
                 id, year ?? now.Year, month ?? now.Month);
             return Ok(summary);
         }
 
+        /// <summary>Aylık özet raporu CSV (Excel uyumlu) olarak indir.</summary>
+        [HttpGet("{id}/attendance-summary/export")]
+        public async Task<IActionResult> ExportAttendanceSummary(int id,
+            [FromQuery] int? year, [FromQuery] int? month)
+        {
+            var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var role     = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (role != Roles.Admin && callerId != id) return Forbid();
+
+            var now     = DateTime.UtcNow;
+            var y       = year  ?? now.Year;
+            var m       = month ?? now.Month;
+            var s       = await _users.GetMonthlyAttendanceSummaryAsync(id, y, m);
+            var user    = await _users.GetByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var bytes = ShiftTrackingApp.Helpers.CsvWriter.Write(
+                headers: new[] { "Metric", "Value" },
+                rows: new[]
+                {
+                    new object?[] { "Personel",         user.FullName },
+                    new object?[] { "E-posta",          user.Email },
+                    new object?[] { "Departman",        user.DepartmentName ?? "-" },
+                    new object?[] { "Yıl",              y },
+                    new object?[] { "Ay",               m },
+                    new object?[] { "Mevcut Gün",       s.PresentDays },
+                    new object?[] { "İzinli Gün",       s.LeaveDays },
+                    new object?[] { "Devamsız Gün",    s.AbsentDays },
+                    new object?[] { "Raporlu Gün",     s.AbsentWithReport },
+                    new object?[] { "Raporsuz Gün",    s.AbsentWithoutReport },
+                    new object?[] { "Toplam Çalışma (sa)", s.TotalWorkedHours },
+                    new object?[] { "Fazla Mesai (sa)",    s.TotalOvertimeHours },
+                    new object?[] { "FM Vardiya Sayısı",   s.OvertimeShiftCount },
+                });
+            var fileName = $"devam-raporu-{user.FullName.Replace(' ','_')}-{y}-{m:D2}.csv";
+            return File(bytes, "text/csv; charset=utf-8", fileName);
+        }
+
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Create(CreateUserDto dto)
         {
             var user = await _users.CreateAsync(dto);
@@ -113,7 +154,7 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _users.DeleteAsync(id);
@@ -128,9 +169,15 @@ namespace ShiftTrackingApp.Controllers
     public class DepartmentsController : ControllerBase
     {
         private readonly IDepartmentService _departments;
-        public DepartmentsController(IDepartmentService departments) => _departments = departments;
+        private readonly IOutputCacheStore  _cache;
+        public DepartmentsController(IDepartmentService departments, IOutputCacheStore cache)
+        {
+            _departments = departments;
+            _cache       = cache;
+        }
 
         [HttpGet]
+        [OutputCache(PolicyName = "departments", Tags = new[] { "departments" })]
         public async Task<IActionResult> GetAll()
             => Ok(await _departments.GetAllAsync());
 
@@ -142,18 +189,20 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Create([FromBody] CreateDepartmentDto dto)
         {
             var dept = await _departments.CreateAsync(dto);
+            await _cache.EvictByTagAsync("departments", default); // Cache invalidation
             return CreatedAtAction(nameof(GetById), new { id = dept.Id }, dept);
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _departments.DeleteAsync(id);
+            if (success) await _cache.EvictByTagAsync("departments", default);
             return success ? NoContent() : NotFound();
         }
     }
@@ -184,12 +233,12 @@ namespace ShiftTrackingApp.Controllers
         {
             var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var role     = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (role != "Admin" && callerId != userId) return Forbid();
+            if (role != Roles.Admin && callerId != userId) return Forbid();
             return Ok(await _shifts.GetByUserAsync(userId, from, to));
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Assign([FromBody] CreateShiftAssignmentDto dto)
         {
             var result = await _shifts.AssignAsync(dto);
@@ -197,7 +246,7 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Update(int id, [FromBody] CreateShiftAssignmentDto dto)
         {
             var result = await _shifts.UpdateAsync(id, dto);
@@ -205,7 +254,7 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _shifts.DeleteAsync(id);
@@ -223,7 +272,7 @@ namespace ShiftTrackingApp.Controllers
         public LeavesController(ILeaveService leaves) => _leaves = leaves;
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> GetAll([FromQuery] string? status)
             => Ok(await _leaves.GetAllAsync(status));
 
@@ -242,7 +291,7 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpPatch("{id}/review")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Review(int id, ReviewLeaveDto dto)
         {
             var reviewerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -261,7 +310,7 @@ namespace ShiftTrackingApp.Controllers
         public AttendanceController(IAttendanceService attendance) => _attendance = attendance;
 
         [HttpGet("today")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> GetToday()
             => Ok(await _attendance.GetTodayAsync());
 
@@ -280,12 +329,12 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpPost("checkin-face/{userId}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> CheckInFace(int userId)
             => Ok(await _attendance.CheckInAsync(userId, "FaceRecognition"));
 
         [HttpPost("checkout-face/{userId}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> CheckOutFace(int userId)
         {
             var result = await _attendance.CheckOutAsync(userId, "FaceRecognition");
@@ -305,7 +354,7 @@ namespace ShiftTrackingApp.Controllers
         }
 
         [HttpGet("dashboard")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Dashboard()
             => Ok(await _attendance.GetDashboardStatsAsync());
     }
@@ -313,7 +362,7 @@ namespace ShiftTrackingApp.Controllers
     // ════════════ FACE DATA ══════════════════════════════════════════════
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public class FaceDataController : ControllerBase
     {
         private readonly IFaceDataService _faceData;

@@ -5,6 +5,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>ShiftTrackingApp</RootNamespace>
+
+    <!-- Senior-level kalite anahtarları -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- 1591: eksik XML doc uyarısı (servisler kademeli olarak belgelenecek) -->
+    <!-- 1573: parametre belgeleme eksikliği -->
+    <NoWarn>$(NoWarn);1591;1573</NoWarn>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +27,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
   </ItemGroup>
 
