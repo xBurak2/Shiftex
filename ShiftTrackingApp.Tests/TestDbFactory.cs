@@ -16,6 +16,12 @@ namespace ShiftTrackingApp.Tests
 
             var ctx = new AppDbContext(options);
             ctx.Database.EnsureCreated();
+
+            // Seed data'dan gelen kullanıcıları temizle (ID çakışmasını önlemek için).
+            // Departments ve Shifts seed verileri FK referansları için bırakılır.
+            ctx.Users.RemoveRange(ctx.Users);
+            ctx.SaveChanges();
+
             return ctx;
         }
     }
