@@ -331,34 +331,12 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Devam Takip</h1>
-            <p class="page-sub">Bugünkü giriş ve çıkışlar</p>
+            <p class="page-sub">Bugünkü giriş ve çıkışlar — Giriş/çıkış kayıtları kiosk cihazından otomatik gelir</p>
           </div>
-          <div class="btn-group">
-            <button class="btn btn-secondary" id="face-co-btn" onclick="toggleCoCam()">
-              <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="2"/></svg>
-              Yüz ile Çıkış
-            </button>
-            <button class="btn btn-primary" id="face-cam-btn" onclick="toggleCam()">
-              <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="2"/></svg>
-              Yüz ile Giriş
-            </button>
-          </div>
-        </div>
-
-        <div id="face-panel" class="face-panel card hidden">
-          <div class="face-cam-wrap">
-            <video id="face-video" autoplay playsinline></video>
-            <canvas id="face-canvas"></canvas>
-          </div>
-          <div id="face-status" class="face-status"></div>
-        </div>
-
-        <div id="face-co-panel" class="face-panel card hidden">
-          <div class="face-cam-wrap">
-            <video id="face-co-video" autoplay playsinline></video>
-            <canvas id="face-co-canvas"></canvas>
-          </div>
-          <div id="face-co-status" class="face-status"></div>
+          <a href="/kiosk" target="_blank" class="btn btn-secondary">
+            <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><rect x="3" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            Kiosk Modunu Aç
+          </a>
         </div>
 
         <div class="card no-pad">
@@ -444,6 +422,115 @@
             </table>
           </div>
         </div>
+      </section>
+
+      <!-- ═════ PERSONEL: GENEL BAKIŞ ═════ -->
+      <section id="page-my-dashboard" class="page hidden">
+        <div class="hero hero-gradient">
+          <div class="hero-content">
+            <h1 class="hero-title" id="my-hero-title">Hoş geldin 👋</h1>
+            <p class="hero-sub" id="my-hero-sub">Bu hafta ve önümüzdeki günlerin özetin.</p>
+          </div>
+          <div class="hero-meta">
+            <div class="hero-date" id="my-hero-date"></div>
+            <div class="hero-clock" id="my-hero-clock">--:--</div>
+          </div>
+        </div>
+
+        <!-- Mini istatistikler -->
+        <div class="stat-grid" id="my-stat-grid"></div>
+
+        <div class="dash-grid-3">
+          <!-- Bu hafta vardiyalarım -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📅 Bu Hafta Vardiyalarım</h3>
+              <button class="link-btn" onclick="navTo('my-shifts')">Tümü →</button>
+            </div>
+            <div id="my-week-shifts" class="card-body"></div>
+          </div>
+
+          <!-- Sonraki vardiya -->
+          <div class="card">
+            <div class="card-head">
+              <h3>⏭️ Sonraki Vardiyam</h3>
+            </div>
+            <div id="my-next-shift" class="card-body"></div>
+          </div>
+
+          <!-- İzin durumum -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📋 İzin Durumum</h3>
+              <button class="link-btn" onclick="navTo('my-leaves')">Detay →</button>
+            </div>
+            <div id="my-leaves-summary" class="card-body"></div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <!-- Bu ayki devam grafiği -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📊 Bu Ayki Devamım</h3>
+            </div>
+            <div id="my-month-summary" class="card-body"></div>
+          </div>
+
+          <!-- Hızlı eylemler -->
+          <div class="card">
+            <div class="card-head">
+              <h3>⚡ Hızlı Eylemler</h3>
+            </div>
+            <div class="quick-actions">
+              <button class="quick-action" onclick="openLeaveModal()">
+                <span class="qa-icon">📝</span>
+                <div class="qa-text">
+                  <strong>Yeni İzin Talebi</strong>
+                  <small>Yıllık / Sağlık / Mazeret</small>
+                </div>
+              </button>
+              <button class="quick-action" onclick="navTo('my-monthly')">
+                <span class="qa-icon">📊</span>
+                <div class="qa-text">
+                  <strong>Aylık Özet</strong>
+                  <small>Devam ve mesai raporu</small>
+                </div>
+              </button>
+              <button class="quick-action" onclick="navTo('roster')">
+                <span class="qa-icon">📅</span>
+                <div class="qa-text">
+                  <strong>Haftalık Plan</strong>
+                  <small>Tüm ekibin programı</small>
+                </div>
+              </button>
+              <button class="quick-action" onclick="navTo('profile')">
+                <span class="qa-icon">👤</span>
+                <div class="qa-text">
+                  <strong>Profilim</strong>
+                  <small>Şifre ve fotoğraf</small>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ PERSONEL: AYLIK ÖZETİM ═════ -->
+      <section id="page-my-monthly" class="page hidden">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Aylık Özetim</h1>
+            <p class="page-sub">Devam, mesai ve izin istatistiklerin</p>
+          </div>
+          <div class="filter-bar">
+            <select id="my-month-sel" class="form-select"></select>
+            <select id="my-year-sel"  class="form-select"></select>
+            <button class="btn btn-primary" onclick="loadMyMonthlyData()">Getir</button>
+            <button class="btn btn-secondary" onclick="exportMyMonthly()">⬇ CSV İndir</button>
+          </div>
+        </div>
+        <div id="my-monthly-result"></div>
       </section>
 
       <section id="page-my-shifts" class="page hidden">

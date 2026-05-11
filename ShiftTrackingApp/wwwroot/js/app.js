@@ -16,9 +16,9 @@ let empCurrentPage = 1;
 let empTotalPages  = 1;
 const EMP_PAGE_SIZE = 50;
 
-// Camera streams
-let faceStream = null, coStream = null, enrStream = null;
-let faceInterval = null, coInterval = null, enrInterval = null;
+// Camera streams (sadece yüz kaydı için — devam takip artık kiosk üzerinden)
+let enrStream = null;
+let enrInterval = null;
 let modelsLoaded = false;
 
 // ── ICONS (Lucide-style) ────────────────────────────────────────────
@@ -213,9 +213,9 @@ function logout() {
 }
 
 function stopAllCams() {
-  [faceStream, coStream, enrStream].forEach(s => s?.getTracks().forEach(t=>t.stop()));
-  [faceInterval, coInterval, enrInterval].forEach(i => i && clearInterval(i));
-  faceStream = coStream = enrStream = null;
+  enrStream?.getTracks().forEach(t => t.stop());
+  if (enrInterval) clearInterval(enrInterval);
+  enrStream = null; enrInterval = null;
 }
 
 // ── App start ───────────────────────────────────────────────────────
@@ -226,13 +226,9 @@ async function startApp() {
   updateTopbarUser();
   await Promise.all([loadAllUsers(), loadDepts()]);
   const isAdmin = currentUser.role === 'Admin';
-  navTo(isAdmin ? 'dashboard' : 'my-shifts');
-  // Bildirimler — sadece admin (admin endpoint'leri kullanır)
-  if (isAdmin) {
-    startNotificationPolling();
-  } else {
-    document.getElementById('notif-menu')?.classList.add('hidden');
-  }
+  navTo(isAdmin ? 'dashboard' : 'my-dashboard');
+  // Bildirimler — hem admin hem personel için açık (içerik role bazlı)
+  startNotificationPolling();
 }
 
 // ── Notification Center ────────────────────────────────────────────
@@ -247,42 +243,90 @@ function startNotificationPolling() {
 
 async function refreshNotifications() {
   try {
-    const [pending, today] = await Promise.all([
-      api('GET', '/api/Leaves?status=Pending').catch(()=>[]),
-      api('GET', '/api/Attendance/today').catch(()=>[])
-    ]);
-    const lates = (today || []).filter(a => a.isLateArrival);
-    lastNotifData = { pending: pending || [], lates };
+    const isAdmin = currentUser?.role === 'Admin';
+    if (isAdmin) {
+      const [pending, today] = await Promise.all([
+        api('GET', '/api/Leaves?status=Pending').catch(()=>[]),
+        api('GET', '/api/Attendance/today').catch(()=>[])
+      ]);
+      const lates = (today || []).filter(a => a.isLateArrival);
+      lastNotifData = { kind: 'admin', pending: pending || [], lates };
+    } else {
+      // Personel için: kendi izin durumum + yaklaşan vardiyalar (yarın)
+      const today = new Date();
+      const tomorrow = new Date(); tomorrow.setDate(today.getDate()+1);
+      const week     = new Date(); week.setDate(today.getDate()+7);
+      const [myLeaves, myShifts] = await Promise.all([
+        api('GET', '/api/Leaves/my').catch(()=>[]),
+        api('GET', `/api/Shifts/my?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`).catch(()=>[])
+      ]);
+      // Son 7 günde işlem gören kendi izinlerim
+      const recentReviewed = (myLeaves || []).filter(l => {
+        if (l.status === 'Pending') return false;
+        const created = new Date(l.createdAt);
+        return (Date.now() - created.getTime()) < 7*24*60*60*1000;
+      });
+      // Yarın için vardiyam (eğer varsa) ve bugünkü vardiyam
+      const upcomingShifts = (myShifts || []).filter(s => {
+        const d = new Date(s.date);
+        const todayStr = fmtDateOnly(today);
+        const tmrStr   = fmtDateOnly(tomorrow);
+        return fmtDateOnly(d) === todayStr || fmtDateOnly(d) === tmrStr;
+      });
+      lastNotifData = { kind: 'employee', myLeaves: recentReviewed, upcomingShifts };
+    }
     renderNotifications();
   } catch(_) { /* sessiz */ }
 }
 
 function renderNotifications() {
-  const { pending, lates } = lastNotifData;
-  const total = pending.length + lates.length;
+  const d = lastNotifData;
   const badge = document.getElementById('notif-badge');
+  const list  = document.getElementById('notif-list');
+  const items = [];
+
+  if (d.kind === 'admin') {
+    (d.pending || []).forEach(l => items.push({
+      icon: '📋',
+      title: `${l.userFullName} izin talebi`,
+      body: `${l.leaveType} · ${l.totalDays} gün · ${fmtDate(l.startDate)}`,
+      onclick: `navTo('leaves');closeNotifMenu()`
+    }));
+    (d.lates || []).forEach(a => items.push({
+      icon: '⏰',
+      title: `${a.userFullName} geç kaldı`,
+      body: `${fmtTime(a.checkIn)} — +${a.lateMinutes} dakika`,
+      onclick: `navTo('attendance');closeNotifMenu()`
+    }));
+  } else if (d.kind === 'employee') {
+    (d.myLeaves || []).forEach(l => {
+      const icon = l.status === 'Approved' ? '✅' : '❌';
+      const verb = l.status === 'Approved' ? 'onaylandı' : 'reddedildi';
+      items.push({
+        icon,
+        title: `İzin talebin ${verb}`,
+        body: `${l.leaveType} · ${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}`,
+        onclick: `navTo('my-leaves');closeNotifMenu()`
+      });
+    });
+    (d.upcomingShifts || []).forEach(s => {
+      const d2 = new Date(s.date);
+      const todayStr = fmtDateOnly(new Date());
+      const label = fmtDateOnly(d2) === todayStr ? 'Bugün' : 'Yarın';
+      items.push({
+        icon: '⏰',
+        title: `${label} vardiyan: ${s.shiftName}`,
+        body: `${s.startTime} – ${s.endTime}`,
+        onclick: `navTo('my-shifts');closeNotifMenu()`
+      });
+    });
+  }
+
+  const total = items.length;
   badge.textContent = total > 9 ? '9+' : String(total);
   badge.classList.toggle('hidden', total === 0);
-
-  const list = document.getElementById('notif-list');
   document.getElementById('notif-count-text').textContent =
     total === 0 ? 'Yeni bildirim yok' : `${total} bildirim`;
-
-  const items = [];
-  pending.forEach(l => items.push({
-    type: 'leave',
-    icon: '📋',
-    title: `${l.userFullName} izin talebi`,
-    body: `${l.leaveType} · ${l.totalDays} gün · ${fmtDate(l.startDate)}`,
-    onclick: `navTo('leaves');closeNotifMenu()`
-  }));
-  lates.forEach(a => items.push({
-    type: 'late',
-    icon: '⏰',
-    title: `${a.userFullName} geç kaldı`,
-    body: `${fmtTime(a.checkIn)} — +${a.lateMinutes} dakika`,
-    onclick: `navTo('attendance');closeNotifMenu()`
-  }));
 
   list.innerHTML = items.length ? items.map(it => `
     <button class="notif-item" onclick="${it.onclick}">
@@ -334,9 +378,11 @@ const NAV_ADMIN = [
 
 const NAV_EMP = [
   { section: 'Kişisel' },
+  { id: 'my-dashboard',  label: 'Genel Bakış',        icon: ICONS.dashboard },
   { id: 'my-shifts',     label: 'Vardiyalarım',       icon: ICONS.calendar },
   { id: 'my-attendance', label: 'Devam Durumum',      icon: ICONS.check },
   { id: 'my-leaves',     label: 'İzin Taleplerim',    icon: ICONS.clipboard },
+  { id: 'my-monthly',    label: 'Aylık Özetim',       icon: ICONS.chart },
   { section: 'Takım' },
   { id: 'roster',        label: 'Haftalık Plan',      icon: ICONS.calendar },
 ];
@@ -373,7 +419,8 @@ const PAGE_TITLES = {
   'dashboard': 'Dashboard', 'employees': 'Personel', 'roster': 'Vardiya Planlama',
   'attendance': 'Devam Takip', 'leaves': 'İzin Yönetimi', 'my-leaves': 'İzin Taleplerim',
   'my-shifts': 'Vardiyalarım', 'my-attendance': 'Devam Durumum', 'profile': 'Profilim',
-  'enroll': 'Yüz Kaydı', 'monthly': 'Aylık Rapor', 'departments': 'Departmanlar'
+  'enroll': 'Yüz Kaydı', 'monthly': 'Aylık Rapor', 'departments': 'Departmanlar',
+  'my-dashboard': 'Genel Bakış', 'my-monthly': 'Aylık Özetim'
 };
 
 function navTo(id) { showPage(id); }
@@ -400,6 +447,8 @@ function showPage(id) {
     case 'enroll':      loadEnrList();   break;
     case 'monthly':     initMonthly();   break;
     case 'departments': loadDepts().then(renderDepts); break;
+    case 'my-dashboard': loadMyDashboard(); break;
+    case 'my-monthly':   loadMyMonthly(); break;
   }
 }
 
@@ -1098,6 +1147,205 @@ async function submitLeave() {
   catch(e) { toast(e.message,'err'); }
 }
 
+// ════════ PERSONEL: GENEL BAKIŞ ════════════════════════════════════
+async function loadMyDashboard() {
+  const firstName = currentUser.fullName.split(' ')[0];
+  const hour = new Date().getHours();
+  const greet = hour < 6 ? 'İyi geceler' : hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
+  document.getElementById('my-hero-title').textContent = `${greet}, ${esc(firstName)} 👋`;
+  document.getElementById('my-hero-date').textContent =
+    new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' });
+
+  // Canlı saat
+  const clockEl = document.getElementById('my-hero-clock');
+  const tick = () => { if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); };
+  tick();
+  if (heroClockInterval) clearInterval(heroClockInterval);
+  heroClockInterval = setInterval(tick, 30000);
+
+  try {
+    const ws = getMondayOf(new Date());
+    const we = new Date(ws); we.setDate(we.getDate()+6);
+    const wsStr = fmtDateOnly(ws);
+    const weStr = fmtDateOnly(we);
+
+    // Önümüzdeki 30 gün — sonraki vardiya için
+    const next30 = new Date(); next30.setDate(next30.getDate()+30);
+
+    const now = new Date();
+    const [thisWeek, futureShifts, myLeaves, summary] = await Promise.all([
+      api('GET', `/api/Shifts/my?from=${wsStr}&to=${weStr}`).catch(()=>[]),
+      api('GET', `/api/Shifts/my?from=${fmtDateOnly(now)}&to=${fmtDateOnly(next30)}`).catch(()=>[]),
+      api('GET', '/api/Leaves/my').catch(()=>[]),
+      api('GET', `/api/Users/${currentUser.userId}/attendance-summary?year=${now.getFullYear()}&month=${now.getMonth()+1}`).catch(()=>null)
+    ]);
+
+    // Mini istatistikler
+    const totalShifts    = thisWeek.length;
+    const overtimeShifts = thisWeek.filter(s => getShiftCategory(s.shiftId) === 'overtime').length;
+    const leaveShifts    = thisWeek.filter(s => getShiftCategory(s.shiftId) === 'leave').length;
+    const pendingLeaves  = myLeaves.filter(l => l.status === 'Pending').length;
+
+    document.getElementById('my-stat-grid').innerHTML = [
+      { label: 'Bu Hafta Vardiya', val: totalShifts,    icon: ICONS.calendar, cls:'icon-blue',  hint:'Toplam'    },
+      { label: 'Fazla Mesai',      val: overtimeShifts, icon: ICONS.trend,    cls:'icon-amber', hint:'Bu hafta'  },
+      { label: 'İzin/Tatil',       val: leaveShifts,    icon: ICONS.palm,     cls:'icon-green', hint:'Bu hafta'  },
+      { label: 'Bekleyen Talep',   val: pendingLeaves,  icon: ICONS.pending,  cls:'icon-cyan',  hint:'İzin'      },
+      { label: 'Bu Ay Devam',      val: (summary?.presentDays ?? 0)+' gün', icon: ICONS.checkin, cls:'icon-violet', hint:'Mevcut' },
+      { label: 'Bu Ay Çalışma',    val: (summary?.totalWorkedHours ?? 0).toFixed(1)+' sa', icon: ICONS.trend, cls:'icon-red', hint:'Toplam' },
+    ].map(s => `
+      <div class="stat-card stat-card-rich">
+        <div class="stat-icon ${s.cls}">${s.icon}</div>
+        <div class="stat-content">
+          <div class="stat-val">${s.val}</div>
+          <div class="stat-lbl">${s.label}</div>
+        </div>
+        <div class="stat-hint">${s.hint}</div>
+      </div>
+    `).join('');
+
+    // Bu hafta vardiyalarım
+    const DAYS = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+    document.getElementById('my-week-shifts').innerHTML = thisWeek.length
+      ? thisWeek.slice(0,6).map(s => {
+          const dt = new Date(s.date);
+          const isToday = fmtDateOnly(dt) === fmtDateOnly(new Date());
+          const cat = getShiftCategory(s.shiftId);
+          const catBadge = cat === 'overtime' ? '<span class="fm-badge">FM</span>' : '';
+          return `<div class="ms-row ${isToday?'ms-today':''}">
+            <div class="ms-day">
+              <strong>${DAYS[(dt.getDay()+6)%7]}</strong>
+              <small>${fmtDate(dt)}${isToday?' · Bugün':''}</small>
+            </div>
+            <div class="ms-chip" style="background:${s.shiftColor}">${esc(s.shiftName)}${catBadge}</div>
+            <div class="ms-time font-mono">${s.startTime}–${s.endTime}</div>
+          </div>`;
+        }).join('')
+      : '<div class="empty">Bu hafta vardiya yok.</div>';
+
+    // Sonraki vardiya
+    const upcomingShifts = (futureShifts || []).filter(s => {
+      const d = new Date(s.date);
+      return d >= new Date(new Date().toDateString());
+    }).sort((a,b) => new Date(a.date) - new Date(b.date));
+    const next = upcomingShifts[0];
+    document.getElementById('my-next-shift').innerHTML = next ? (() => {
+      const dt = new Date(next.date);
+      const days = Math.ceil((dt - new Date(new Date().toDateString())) / 86400000);
+      const dayLabel = days === 0 ? 'Bugün' : days === 1 ? 'Yarın' : `${days} gün sonra`;
+      return `<div class="next-shift">
+        <div class="ns-day">${esc(dayLabel)}</div>
+        <div class="ns-chip" style="background:${next.shiftColor}">${esc(next.shiftName)}</div>
+        <div class="ns-time font-mono">${next.startTime} – ${next.endTime}</div>
+        <div class="ns-date">${fmtDate(dt)}</div>
+      </div>`;
+    })() : '<div class="empty">Önümüzdeki vardiyan yok 🌴</div>';
+
+    // İzin durumum özeti
+    const recent = myLeaves.slice(0,4);
+    document.getElementById('my-leaves-summary').innerHTML = recent.length ? recent.map(l => `
+      <div class="leave-mini">
+        <div class="lm-info">
+          <strong>${esc(l.leaveType)}</strong>
+          <small>${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}</small>
+        </div>
+        ${statusBadge(l.status)}
+      </div>
+    `).join('') : '<div class="empty">Henüz izin talebin yok.</div>';
+
+    // Bu ay özet
+    if (summary) {
+      const total = (summary.presentDays || 0) + (summary.leaveDays || 0) + (summary.absentDays || 0);
+      const presentPct = total ? Math.round((summary.presentDays/total)*100) : 0;
+      const leavePct   = total ? Math.round((summary.leaveDays/total)*100) : 0;
+      const absentPct  = total ? Math.round((summary.absentDays/total)*100) : 0;
+      document.getElementById('my-month-summary').innerHTML = `
+        <div class="month-bars">
+          <div class="dist-row">
+            <div class="dist-label"><span class="dist-dot" style="background:#34D399"></span>Mevcut</div>
+            <div class="dist-bar"><div class="dist-fill" style="width:${presentPct}%;background:#34D399"></div></div>
+            <div class="dist-val"><strong>${summary.presentDays}</strong><small>${presentPct}%</small></div>
+          </div>
+          <div class="dist-row">
+            <div class="dist-label"><span class="dist-dot" style="background:#22D3EE"></span>İzinli</div>
+            <div class="dist-bar"><div class="dist-fill" style="width:${leavePct}%;background:#22D3EE"></div></div>
+            <div class="dist-val"><strong>${summary.leaveDays}</strong><small>${leavePct}%</small></div>
+          </div>
+          <div class="dist-row">
+            <div class="dist-label"><span class="dist-dot" style="background:#F87171"></span>Devamsız</div>
+            <div class="dist-bar"><div class="dist-fill" style="width:${absentPct}%;background:#F87171"></div></div>
+            <div class="dist-val"><strong>${summary.absentDays}</strong><small>${absentPct}%</small></div>
+          </div>
+        </div>
+        <div class="month-totals">
+          <div><strong>${(summary.totalWorkedHours ?? 0).toFixed(1)}</strong><small>Toplam Saat</small></div>
+          <div><strong>${(summary.totalOvertimeHours ?? 0).toFixed(1)}</strong><small>Fazla Mesai</small></div>
+          <div><strong>${summary.overtimeShiftCount ?? 0}</strong><small>FM Vardiyası</small></div>
+        </div>`;
+    } else {
+      document.getElementById('my-month-summary').innerHTML = '<div class="empty">Bu ay için kayıt yok.</div>';
+    }
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ════════ PERSONEL: AYLIK ÖZETİM ════════
+function loadMyMonthly() {
+  const ms = document.getElementById('my-month-sel');
+  const ys = document.getElementById('my-year-sel');
+  if (ms && !ms.options.length) {
+    const now = new Date();
+    const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    ms.innerHTML = MONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===now.getMonth()+1?'selected':''}>${m}</option>`).join('');
+    const y = now.getFullYear();
+    ys.innerHTML = [y-1,y,y+1].map(yr=>`<option value="${yr}" ${yr===y?'selected':''}>${yr}</option>`).join('');
+  }
+  loadMyMonthlyData();
+}
+async function loadMyMonthlyData() {
+  const year  = document.getElementById('my-year-sel').value;
+  const month = document.getElementById('my-month-sel').value;
+  try {
+    const s = await api('GET', `/api/Users/${currentUser.userId}/attendance-summary?year=${year}&month=${month}`);
+    document.getElementById('my-monthly-result').innerHTML = `
+      <div class="stat-grid" style="margin-top:20px">
+        ${[
+          ['Mevcut Gün',   s.presentDays,         ICONS.checkin,    'icon-green'],
+          ['İzinli Gün',   s.leaveDays,           ICONS.palm,       'icon-amber'],
+          ['Devamsız',     s.absentDays,          ICONS.cross,      'icon-red'],
+          ['Raporlu',      s.absentWithReport,    ICONS.clipboard,  'icon-cyan'],
+          ['Raporsuz',     s.absentWithoutReport, ICONS.cross,      'icon-amber'],
+          ['Toplam Saat',  s.totalWorkedHours.toFixed(1)+' sa', ICONS.trend, 'icon-blue'],
+          ['FM Saat',      s.totalOvertimeHours.toFixed(1)+' sa', ICONS.trend, 'icon-violet'],
+          ['FM Vardiya',   s.overtimeShiftCount,  ICONS.calendar,   'icon-blue'],
+        ].map(([lbl,val,icon,cls])=>`
+          <div class="stat-card stat-card-rich">
+            <div class="stat-icon ${cls}">${icon}</div>
+            <div class="stat-content">
+              <div class="stat-val">${val}</div>
+              <div class="stat-lbl">${lbl}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } catch(e) { toast(e.message,'err'); }
+}
+async function exportMyMonthly() {
+  const year  = document.getElementById('my-year-sel').value;
+  const month = document.getElementById('my-month-sel').value;
+  try {
+    const res = await fetch(API_BASE + `/api/Users/${currentUser.userId}/attendance-summary/export?year=${year}&month=${month}`, {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    if (!res.ok) throw new Error('İndirilemedi');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `devam-raporu-${year}-${String(month).padStart(2,'0')}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Rapor indiriliyor…', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
 // ── My Shifts ───────────────────────────────────────────────────────
 async function loadMyShifts() {
   const DAYS = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
@@ -1339,69 +1587,8 @@ function stopEnrCam() {
   document.getElementById('enr-status').textContent = '';
 }
 
-// ── Face Check-in ───────────────────────────────────────────────────
-async function toggleCam() {
-  if (faceStream) { stopFaceCam(); return; }
-  const panel = document.getElementById('face-panel'); panel.classList.remove('hidden');
-  try {
-    await ensureModels(); await loadEnrolledFaces();
-    if (!enrolledFaces.length) { toast('Kayıtlı yüz yok.','err'); panel.classList.add('hidden'); return; }
-    faceStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
-    const vid = document.getElementById('face-video'); vid.srcObject = faceStream; await vid.play();
-    const canvas = document.getElementById('face-canvas');
-    canvas.width = vid.videoWidth || 320; canvas.height = vid.videoHeight || 240;
-    runFaceRecognition(vid, canvas, 'checkin-face', 'face-status', stopFaceCam);
-  } catch(e) { toast('Kamera hatası: '+e.message,'err'); panel.classList.add('hidden'); }
-}
-function stopFaceCam() {
-  faceStream?.getTracks().forEach(t=>t.stop()); faceStream = null;
-  clearInterval(faceInterval); faceInterval = null;
-  document.getElementById('face-panel').classList.add('hidden');
-}
-async function toggleCoCam() {
-  if (coStream) { stopCoCam(); return; }
-  const panel = document.getElementById('face-co-panel'); panel.classList.remove('hidden');
-  try {
-    await ensureModels(); await loadEnrolledFaces();
-    if (!enrolledFaces.length) { toast('Kayıtlı yüz yok.','err'); panel.classList.add('hidden'); return; }
-    coStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
-    const vid = document.getElementById('face-co-video'); vid.srcObject = coStream; await vid.play();
-    const canvas = document.getElementById('face-co-canvas');
-    canvas.width = vid.videoWidth || 320; canvas.height = vid.videoHeight || 240;
-    runFaceRecognition(vid, canvas, 'checkout-face', 'face-co-status', stopCoCam);
-  } catch(e) { toast('Kamera hatası: '+e.message,'err'); panel.classList.add('hidden'); }
-}
-function stopCoCam() {
-  coStream?.getTracks().forEach(t=>t.stop()); coStream = null;
-  clearInterval(coInterval); coInterval = null;
-  document.getElementById('face-co-panel').classList.add('hidden');
-}
-function runFaceRecognition(vid, canvas, endpoint, statusId, stopFn) {
-  const matcher = new faceapi.FaceMatcher(
-    enrolledFaces.map(f => new faceapi.LabeledFaceDescriptors(String(f.userId), [f.descriptor])), 0.5);
-  const processedIds = new Set();
-  const intervalId = setInterval(async () => {
-    const det = await faceapi.detectSingleFace(vid, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks(true).withFaceDescriptor();
-    const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
-    if (!det) { document.getElementById(statusId).textContent = '⏳ Yüz aranıyor…'; return; }
-    faceapi.draw.drawDetections(canvas,[det]);
-    const match = matcher.findBestMatch(det.descriptor);
-    if (match.label === 'unknown') { document.getElementById(statusId).textContent = '❓ Tanınamadı'; return; }
-    const userId = +match.label;
-    if (processedIds.has(userId)) return;
-    processedIds.add(userId);
-    const found = enrolledFaces.find(f=>f.userId===userId);
-    document.getElementById(statusId).textContent = `✅ ${found?.name||userId} tanındı.`;
-    try {
-      await api('POST', `/api/Attendance/${endpoint}/${userId}`);
-      toast(`${found?.name||userId} — ${endpoint.includes('checkin')?'Giriş':'Çıkış'} kaydedildi ✓`);
-      setTimeout(() => { stopFn(); loadAttendance(); }, 1500);
-    } catch(e) { toast(e.message,'err'); processedIds.delete(userId); }
-  }, 300);
-  if (endpoint.includes('checkout')) coInterval = intervalId;
-  else faceInterval = intervalId;
-}
+// Devam takip kameraları kaldırıldı — giriş/çıkış işlemleri /kiosk üzerinden yapılır.
+// Yüz kaydı (enroll) admin için "Yüz Kaydı" sayfasında olmaya devam eder.
 
 // ── Modal helpers ───────────────────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
