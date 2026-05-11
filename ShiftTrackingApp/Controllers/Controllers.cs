@@ -260,6 +260,21 @@ namespace ShiftTrackingApp.Controllers
             var success = await _shifts.DeleteAsync(id);
             return success ? NoContent() : NotFound();
         }
+
+        public class CopyWeekDto
+        {
+            public DateOnly SourceWeekStart { get; set; }
+            public DateOnly TargetWeekStart { get; set; }
+        }
+
+        /// <summary>Bir haftanın atamalarını başka bir haftaya kopyalar. Hedef hafta üzerine yazılır.</summary>
+        [HttpPost("copy-week")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> CopyWeek([FromBody] CopyWeekDto dto)
+        {
+            var count = await _shifts.CopyWeekAsync(dto.SourceWeekStart, dto.TargetWeekStart);
+            return Ok(new { copied = count });
+        }
     }
 
     // ════════════ LEAVES ═════════════════════════════════════════════════
@@ -357,6 +372,111 @@ namespace ShiftTrackingApp.Controllers
         [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Dashboard()
             => Ok(await _attendance.GetDashboardStatsAsync());
+    }
+
+    // ════════════ KIOSK ══════════════════════════════════════════════════
+    /// <summary>
+    /// Sabit cihazlardan (tablet/telefon) yüz tanıma turnike erişimi.
+    /// Kiosk login: özel bir kiosk şifresiyle JWT alır; bu JWT
+    /// sadece kiosk endpoint'lerini açar. Standart kullanıcı oturumlarından
+    /// ayrı tutulur — hassas verilere erişim yok.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class KioskController : ControllerBase
+    {
+        private readonly IFaceDataService _faceData;
+        private readonly IAttendanceService _attendance;
+        private readonly IConfiguration _config;
+        private readonly Helpers.JwtHelper _jwt;
+        private readonly ILogger<KioskController> _log;
+
+        public KioskController(
+            IFaceDataService faceData,
+            IAttendanceService attendance,
+            IConfiguration config,
+            Helpers.JwtHelper jwt,
+            ILogger<KioskController> log)
+        {
+            _faceData   = faceData;
+            _attendance = attendance;
+            _config     = config;
+            _jwt        = jwt;
+            _log        = log;
+        }
+
+        public class KioskLoginDto
+        {
+            public string DeviceId { get; set; } = string.Empty;
+            public string KioskPin { get; set; } = string.Empty;
+        }
+
+        public class KioskAttendDto
+        {
+            public int UserId { get; set; }
+        }
+
+        /// <summary>
+        /// Kiosk cihazı için kısa süreli JWT döner.
+        /// Konfigürasyon: Kiosk:Pin (App Settings'te). Yoksa fallback olarak Jwt:Key + "KIOSK".
+        /// </summary>
+        [HttpPost("login")]
+        [EnableRateLimiting("login")]
+        public IActionResult Login([FromBody] KioskLoginDto dto)
+        {
+            var configuredPin = _config["Kiosk:Pin"] ?? "shiftex-kiosk-2026";
+            if (!string.Equals(dto.KioskPin, configuredPin, StringComparison.Ordinal))
+            {
+                _log.LogWarning("Kiosk login başarısız: DeviceId={DeviceId}", dto.DeviceId);
+                return Unauthorized(new { message = "Geçersiz kiosk PIN'i." });
+            }
+
+            // Kiosk-specific token (24 saatlik). Role = "Kiosk".
+            var fakeUser = new ShiftTrackingApp.Models.User
+            {
+                Id       = 0,
+                FullName = $"Kiosk: {dto.DeviceId}",
+                Email    = $"kiosk-{dto.DeviceId}@shiftex.local",
+                Role     = "Kiosk"
+            };
+            var token = _jwt.GenerateToken(fakeUser);
+
+            _log.LogInformation("Kiosk login: DeviceId={DeviceId}", dto.DeviceId);
+            return Ok(new { token, deviceId = dto.DeviceId, expiresInHours = 24 });
+        }
+
+        /// <summary>Kayıtlı tüm yüz vektörlerini (decrypt edilmiş) döner.</summary>
+        [HttpGet("face-descriptors")]
+        [Authorize(Roles = "Kiosk,Admin")]
+        public async Task<IActionResult> GetFaceDescriptors()
+            => Ok(await _faceData.GetAllAsync());
+
+        /// <summary>
+        /// Kiosk akıllı tanıma sonucu: kişiye göre otomatik giriş veya çıkış.
+        /// Aynı gün açık kayıt varsa → çıkış; yoksa → giriş.
+        /// </summary>
+        [HttpPost("attend")]
+        [Authorize(Roles = "Kiosk,Admin")]
+        public async Task<IActionResult> Attend([FromBody] KioskAttendDto dto)
+        {
+            if (dto.UserId <= 0) return BadRequest(new { message = "Geçersiz kullanıcı." });
+
+            // Bugünkü açık kayıtları kontrol et
+            var today = await _attendance.GetByUserTodayAsync(dto.UserId);
+            var hasOpen = today.Any(t => t.CheckOut == null);
+
+            if (hasOpen)
+            {
+                var result = await _attendance.CheckOutAsync(dto.UserId, "FaceRecognition");
+                if (result == null) return BadRequest(new { message = "Çıkış kaydı oluşturulamadı." });
+                return Ok(new { action = "checkout", attendance = result });
+            }
+            else
+            {
+                var result = await _attendance.CheckInAsync(dto.UserId, "FaceRecognition");
+                return Ok(new { action = "checkin", attendance = result });
+            }
+        }
     }
 
     // ════════════ FACE DATA ══════════════════════════════════════════════

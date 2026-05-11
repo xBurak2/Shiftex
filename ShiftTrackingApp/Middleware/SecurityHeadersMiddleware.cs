@@ -39,11 +39,12 @@ namespace ShiftTrackingApp.Middleware
             // Production'da nonce/hash kullanılarak inline scriptler tamamen kaldırılmalı.
             headers["Content-Security-Policy"] =
                 "default-src 'self'; " +
-                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +  // face-api wasm/eval
                 "style-src  'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                 "font-src   'self' https://fonts.gstatic.com; " +
                 "img-src    'self' data: blob:; " +
                 "media-src  'self' blob:; " +
+                "worker-src 'self' blob:; " +                                                   // face-api worker
                 "connect-src 'self' https://cdn.jsdelivr.net; " +
                 "frame-ancestors 'none'; " +
                 "base-uri 'self'; " +

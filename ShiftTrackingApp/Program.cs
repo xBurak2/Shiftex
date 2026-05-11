@@ -302,6 +302,14 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
     Predicate = r => r.Name == "self"
 });
 
+// Kiosk sayfası (clean URL: /kiosk)
+app.MapGet("/kiosk", async context =>
+{
+    context.Response.ContentType = "text/html";
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "kiosk.html"));
+});
+
 // Root path → index.html (redirect değil, direkt servis et — URL'de /index.html görünmesin)
 app.MapGet("/", async context =>
 {

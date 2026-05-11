@@ -26,6 +26,9 @@ namespace ShiftTrackingApp.Services.Interfaces
         Task<ShiftAssignmentDto> AssignAsync(CreateShiftAssignmentDto dto);
         Task<ShiftAssignmentDto?> UpdateAsync(int id, CreateShiftAssignmentDto dto);
         Task<bool> DeleteAsync(int id);
+
+        /// <summary>Bir haftadaki tüm vardiyaları başka bir haftaya kopyalar. Hedef hafta üzerine yazılır.</summary>
+        Task<int> CopyWeekAsync(DateOnly sourceWeekStart, DateOnly targetWeekStart);
     }
 
     public interface ILeaveService

@@ -74,6 +74,46 @@ namespace ShiftTrackingApp.Services
             return true;
         }
 
+        /// <summary>
+        /// Bir haftanın tüm atamalarını başka bir haftaya kopyalar.
+        /// Hedef haftadaki mevcut atamalar SİLİNİR (overwrite).
+        /// Geçmişe kopyalanmaz (sourceWeekStart geçmişte olabilir).
+        /// </summary>
+        public async Task<int> CopyWeekAsync(DateOnly sourceWeekStart, DateOnly targetWeekStart)
+        {
+            if (sourceWeekStart == targetWeekStart)
+                throw new InvalidOperationException("Kaynak ve hedef hafta aynı olamaz.");
+
+            var sourceEnd = sourceWeekStart.AddDays(6);
+            var targetEnd = targetWeekStart.AddDays(6);
+
+            // Hedef haftayı temizle
+            var existing = await _db.ShiftAssignments
+                .Where(sa => sa.Date >= targetWeekStart && sa.Date <= targetEnd)
+                .ToListAsync();
+            _db.ShiftAssignments.RemoveRange(existing);
+
+            // Kaynak haftayı al
+            var source = await _db.ShiftAssignments
+                .Where(sa => sa.Date >= sourceWeekStart && sa.Date <= sourceEnd && sa.User.IsActive)
+                .ToListAsync();
+
+            var dayDiff = targetWeekStart.DayNumber - sourceWeekStart.DayNumber;
+            var copies = source.Select(sa => new ShiftAssignment
+            {
+                UserId    = sa.UserId,
+                ShiftId   = sa.ShiftId,
+                Date      = sa.Date.AddDays(dayDiff),
+                Position  = sa.Position,
+                Note      = sa.Note,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+
+            await _db.ShiftAssignments.AddRangeAsync(copies);
+            await _db.SaveChangesAsync();
+            return copies.Count;
+        }
+
         private async Task<ShiftAssignmentDto> LoadDto(int id)
         {
             var sa = await _db.ShiftAssignments

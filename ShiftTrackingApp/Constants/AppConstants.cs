@@ -5,6 +5,8 @@ namespace ShiftTrackingApp.Constants
     {
         public const string Admin    = "Admin";
         public const string Employee = "Employee";
+        /// <summary>Sabit cihaz (tablet/telefon) yüz tanıma turnikesi. Sadece check-in/out yetkili.</summary>
+        public const string Kiosk    = "Kiosk";
     }
 
     /// <summary>İzin durumları — leave request state machine.</summary>

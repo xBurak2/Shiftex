@@ -23,10 +23,18 @@
 
 <!-- ══════════════════ LOGIN ══════════════════ -->
 <div id="login-screen" class="login-screen">
-  <div class="login-bg"></div>
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="brand-mark">
+  <!-- Animasyonlu mesh gradient arkaplan -->
+  <div class="login-bg-mesh">
+    <div class="mesh-blob mesh-blob-1"></div>
+    <div class="mesh-blob mesh-blob-2"></div>
+    <div class="mesh-blob mesh-blob-3"></div>
+    <div class="mesh-grid"></div>
+  </div>
+
+  <!-- Sol panel: marka hikayesi -->
+  <div class="login-hero">
+    <div class="login-hero-brand">
+      <div class="brand-mark brand-mark-lg">
         <svg viewBox="0 0 32 32" fill="none">
           <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/>
           <path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -34,22 +42,70 @@
       </div>
       <span>Shiftex</span>
     </div>
-    <h1 class="login-title">Tekrar hoş geldin</h1>
-    <p class="login-subtitle">Hesabına giriş yap ve takıma katıl</p>
-    <div id="login-error" class="alert alert-error hidden"></div>
-    <div class="form-group">
-      <label class="form-label">E-posta adresi</label>
-      <input id="login-email" type="email" class="form-input" autocomplete="username" placeholder="ornek@sirket.com" />
+    <h1 class="login-hero-title">Vardiyalarınız,<br><span class="gradient-text">otomasyonla</span> yönetilsin.</h1>
+    <p class="login-hero-sub">Modern bir vardiya planlama, yüz tanıma ile devam takibi ve raporlama platformu. Tek panelden tüm ekibiniz.</p>
+    <ul class="login-features">
+      <li>
+        <span class="lf-dot lf-dot-violet"></span>
+        <div><strong>Yüz tanıma turnikesi</strong><small>AES-256 şifreli biyometrik veri</small></div>
+      </li>
+      <li>
+        <span class="lf-dot lf-dot-blue"></span>
+        <div><strong>Kategorize vardiya planlama</strong><small>Vardiyalar, tatil, fazla mesai — aynı güne çoklu atama</small></div>
+      </li>
+      <li>
+        <span class="lf-dot lf-dot-green"></span>
+        <div><strong>Aylık devam raporları</strong><small>CSV / Excel uyumlu çıktı</small></div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Sağ panel: form -->
+  <div class="login-card-wrap">
+    <div class="login-card login-card-glass">
+      <div class="login-brand mobile-only">
+        <div class="brand-mark">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/>
+            <path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span>Shiftex</span>
+      </div>
+      <h2 class="login-title">Hoş geldin 👋</h2>
+      <p class="login-subtitle">Hesabınla giriş yap, ekibini yönet.</p>
+      <div id="login-error" class="alert alert-error hidden"></div>
+      <div class="form-group">
+        <label class="form-label">E-posta adresi</label>
+        <div class="input-with-icon">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.6"/><path d="M3 6l7 5 7-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="login-email" type="email" class="form-input" autocomplete="username" placeholder="ornek@sirket.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Şifre</label>
+        <div class="input-with-icon">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
+          <input id="login-pass" type="password" class="form-input" autocomplete="current-password" placeholder="••••••••" />
+          <button type="button" class="input-toggle" onclick="togglePassword()" aria-label="Şifreyi göster">
+            <svg id="eye-icon" viewBox="0 0 20 20" fill="none"><path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+          </button>
+        </div>
+      </div>
+      <button id="login-btn" class="btn btn-primary btn-full btn-lg">
+        Giriş Yap
+        <svg viewBox="0 0 20 20" fill="none"><path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div class="login-divider"><span>veya</span></div>
+
+      <a href="/kiosk" class="btn btn-secondary btn-full">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><rect x="3" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+        Turnike (Kiosk) Modu
+      </a>
+
+      <p class="login-foot">© 2026 Shiftex · v1.1 Production</p>
     </div>
-    <div class="form-group">
-      <label class="form-label">Şifre</label>
-      <input id="login-pass" type="password" class="form-input" autocomplete="current-password" placeholder="••••••••" />
-    </div>
-    <button id="login-btn" class="btn btn-primary btn-full">
-      Giriş Yap
-      <svg viewBox="0 0 20 20" fill="none"><path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <p class="login-foot">© 2026 Shiftex. Tüm hakları saklıdır.</p>
   </div>
 </div>
 
@@ -80,6 +136,24 @@
       </button>
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-actions">
+        <!-- Notification bell -->
+        <div class="notif-menu" id="notif-menu">
+          <button class="icon-btn notif-trigger" id="notif-trigger" title="Bildirimler" aria-label="Bildirimler">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path d="M5 8a5 5 0 0110 0v3l2 3H3l2-3V8z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 17a2 2 0 004 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            <span class="notif-badge hidden" id="notif-badge">0</span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="dropdown-header"><strong>Bildirimler</strong><small id="notif-count-text">Yükleniyor…</small></div>
+            <div id="notif-list" class="notif-list"></div>
+            <div class="notif-foot">
+              <small>Bildirimler her 60 saniyede bir güncellenir</small>
+            </div>
+          </div>
+        </div>
+
         <button class="icon-btn" id="theme-toggle" title="Temayı değiştir" aria-label="Temayı değiştir">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
@@ -124,28 +198,63 @@
       <div id="toast-container" class="toast-container"></div>
 
       <section id="page-dashboard" class="page hidden">
-        <div class="hero">
-          <div>
+        <div class="hero hero-gradient">
+          <div class="hero-content">
             <h1 class="hero-title" id="hero-title">Hoş geldin 👋</h1>
-            <p class="hero-sub">Bugün ekibinde olanlara bir göz at.</p>
+            <p class="hero-sub" id="hero-sub">Bugün ekibinde olanlara bir göz at.</p>
           </div>
-          <div class="hero-date" id="hero-date"></div>
+          <div class="hero-meta">
+            <div class="hero-date" id="hero-date"></div>
+            <div class="hero-clock" id="hero-clock">--:--</div>
+          </div>
         </div>
+
         <div class="stat-grid" id="stat-grid"></div>
-        <div class="dash-grid">
+
+        <div class="dash-grid-3">
+          <!-- Bugünkü Aktivite -->
           <div class="card">
             <div class="card-head">
-              <h3>Bugün giriş yapanlar</h3>
+              <h3>Bugünkü Aktivite</h3>
               <span class="card-tag" id="present-count">0</span>
             </div>
             <div id="present-list" class="card-body"></div>
           </div>
+
+          <!-- Geç Kalanlar -->
           <div class="card">
             <div class="card-head">
-              <h3>Bekleyen izin talepleri</h3>
-              <button class="link-btn" onclick="navTo('leaves')">Tümünü gör →</button>
+              <h3>⏰ Geç Kalanlar</h3>
+              <span class="card-tag" id="late-count">0</span>
+            </div>
+            <div id="late-list" class="card-body"></div>
+          </div>
+
+          <!-- Bekleyen İzinler -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📋 Bekleyen İzinler</h3>
+              <button class="link-btn" onclick="navTo('leaves')">Tümü →</button>
             </div>
             <div id="pending-leaves-dash" class="card-body"></div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <!-- Yaklaşan İzinler -->
+          <div class="card">
+            <div class="card-head">
+              <h3>🗓️ Yaklaşan İzinler (7 gün)</h3>
+            </div>
+            <div id="upcoming-leaves" class="card-body"></div>
+          </div>
+
+          <!-- Bu Hafta Vardiya Dağılımı -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📊 Bu Hafta Vardiya Dağılımı</h3>
+            </div>
+            <div id="shift-distribution" class="card-body"></div>
           </div>
         </div>
       </section>
@@ -193,10 +302,19 @@
             <h1 class="page-title">Vardiya Planlama</h1>
             <p class="page-sub">Haftalık vardiya planı</p>
           </div>
-          <div class="week-nav">
-            <button class="icon-btn" onclick="rosterNav(-1)"><svg viewBox="0 0 20 20" fill="none"><path d="M12 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-            <span id="roster-week-label" class="week-label"></span>
-            <button class="icon-btn" onclick="rosterNav(1)"><svg viewBox="0 0 20 20" fill="none"><path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <div class="page-actions">
+            <div class="week-nav">
+              <button class="icon-btn" onclick="rosterNav(-1)" title="Önceki hafta"><svg viewBox="0 0 20 20" fill="none"><path d="M12 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+              <span id="roster-week-label" class="week-label"></span>
+              <button class="icon-btn" onclick="rosterNav(1)" title="Sonraki hafta"><svg viewBox="0 0 20 20" fill="none"><path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            </div>
+            <button class="btn btn-secondary btn-sm admin-only" id="copy-week-btn" onclick="copyPreviousWeek()" title="Önceki haftanın planını bu haftaya kopyalar (mevcut atamaları siler)">
+              <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><rect x="5" y="3" width="11" height="13" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 6v9a2 2 0 002 2h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Önceki Haftayı Kopyala
+            </button>
+            <select id="roster-dept-filter" class="form-select form-select-sm admin-only" onchange="loadRoster()">
+              <option value="">Tüm Departmanlar</option>
+            </select>
           </div>
         </div>
         <div class="card no-pad">

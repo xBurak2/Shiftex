@@ -169,6 +169,18 @@ document.getElementById('login-btn').addEventListener('click', doLogin);
 document.getElementById('login-pass').addEventListener('keydown', e => e.key==='Enter' && doLogin());
 document.getElementById('login-email').addEventListener('keydown', e => e.key==='Enter' && doLogin());
 
+// Şifreyi göster/gizle toggle
+function togglePassword() {
+  const inp = document.getElementById('login-pass');
+  const eye = document.getElementById('eye-icon');
+  if (!inp || !eye) return;
+  const hidden = inp.type === 'password';
+  inp.type = hidden ? 'text' : 'password';
+  eye.innerHTML = hidden
+    ? '<path d="M2 10s3-6 8-6c2 0 3.7.8 5 1.8M18 10s-3 6-8 6c-2 0-3.7-.8-5-1.8M3 3l14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>'
+    : '<path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/>';
+}
+
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
@@ -215,7 +227,84 @@ async function startApp() {
   await Promise.all([loadAllUsers(), loadDepts()]);
   const isAdmin = currentUser.role === 'Admin';
   navTo(isAdmin ? 'dashboard' : 'my-shifts');
+  // Bildirimler — sadece admin (admin endpoint'leri kullanır)
+  if (isAdmin) {
+    startNotificationPolling();
+  } else {
+    document.getElementById('notif-menu')?.classList.add('hidden');
+  }
 }
+
+// ── Notification Center ────────────────────────────────────────────
+let notifInterval = null;
+let lastNotifData = { pending: [], lates: [] };
+
+function startNotificationPolling() {
+  refreshNotifications();
+  if (notifInterval) clearInterval(notifInterval);
+  notifInterval = setInterval(refreshNotifications, 60000); // 60 saniye
+}
+
+async function refreshNotifications() {
+  try {
+    const [pending, today] = await Promise.all([
+      api('GET', '/api/Leaves?status=Pending').catch(()=>[]),
+      api('GET', '/api/Attendance/today').catch(()=>[])
+    ]);
+    const lates = (today || []).filter(a => a.isLateArrival);
+    lastNotifData = { pending: pending || [], lates };
+    renderNotifications();
+  } catch(_) { /* sessiz */ }
+}
+
+function renderNotifications() {
+  const { pending, lates } = lastNotifData;
+  const total = pending.length + lates.length;
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = total > 9 ? '9+' : String(total);
+  badge.classList.toggle('hidden', total === 0);
+
+  const list = document.getElementById('notif-list');
+  document.getElementById('notif-count-text').textContent =
+    total === 0 ? 'Yeni bildirim yok' : `${total} bildirim`;
+
+  const items = [];
+  pending.forEach(l => items.push({
+    type: 'leave',
+    icon: '📋',
+    title: `${l.userFullName} izin talebi`,
+    body: `${l.leaveType} · ${l.totalDays} gün · ${fmtDate(l.startDate)}`,
+    onclick: `navTo('leaves');closeNotifMenu()`
+  }));
+  lates.forEach(a => items.push({
+    type: 'late',
+    icon: '⏰',
+    title: `${a.userFullName} geç kaldı`,
+    body: `${fmtTime(a.checkIn)} — +${a.lateMinutes} dakika`,
+    onclick: `navTo('attendance');closeNotifMenu()`
+  }));
+
+  list.innerHTML = items.length ? items.map(it => `
+    <button class="notif-item" onclick="${it.onclick}">
+      <span class="notif-icon">${it.icon}</span>
+      <div class="notif-content">
+        <div class="notif-title">${esc(it.title)}</div>
+        <div class="notif-body">${esc(it.body)}</div>
+      </div>
+    </button>
+  `).join('') : '<div class="empty">Yeni bildirim yok 🎉</div>';
+}
+
+function closeNotifMenu() { document.getElementById('notif-menu')?.classList.remove('open'); }
+document.addEventListener('click', e => {
+  const menu = document.getElementById('notif-menu');
+  if (!menu) return;
+  if (e.target.closest('#notif-trigger')) {
+    menu.classList.toggle('open');
+  } else if (!e.target.closest('#notif-dropdown')) {
+    menu.classList.remove('open');
+  }
+});
 
 function tryRestoreSession() {
   const t = sessionStorage.getItem('sx_token');
@@ -327,59 +416,145 @@ function updateTopbarUser() {
 // ── Dashboard ───────────────────────────────────────────────────────
 async function loadDashboard() {
   // Hero
-  const heroTitle = `Hoş geldin, ${currentUser.fullName.split(' ')[0]} 👋`;
-  document.getElementById('hero-title').textContent = heroTitle;
+  const firstName = currentUser.fullName.split(' ')[0];
+  const hour = new Date().getHours();
+  const greet = hour < 6 ? 'İyi geceler' : hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
+  document.getElementById('hero-title').textContent = `${greet}, ${esc(firstName)} 👋`;
+  document.getElementById('hero-sub').textContent = 'İşte ekibinin bugünkü durumu — bir bakış at.';
   document.getElementById('hero-date').textContent =
     new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' });
+  startHeroClock();
 
   try {
-    const [stats, today] = await Promise.all([
+    const [stats, today, pending] = await Promise.all([
       api('GET','/api/Attendance/dashboard'),
-      api('GET','/api/Attendance/today')
+      api('GET','/api/Attendance/today'),
+      api('GET','/api/Leaves?status=Pending')
     ]);
 
+    // Stat kartlar — daha zengin görsel
     const sg = document.getElementById('stat-grid');
     sg.innerHTML = [
-      {label:'Toplam Personel', val: stats.totalActiveEmployees, icon: ICONS.team,    cls:'icon-blue'},
-      {label:'Bugün Giriş',     val: stats.presentToday,         icon: ICONS.checkin, cls:'icon-green'},
-      {label:'İzinli',          val: stats.onLeaveToday,         icon: ICONS.palm,    cls:'icon-amber'},
-      {label:'Devamsız',        val: stats.absentToday,          icon: ICONS.cross,   cls:'icon-red'},
-      {label:'Bekleyen İzin',   val: stats.pendingLeaveRequests, icon: ICONS.pending, cls:'icon-cyan'},
-      {label:'Devam Oranı',     val: stats.attendanceRate+'%',   icon: ICONS.trend,   cls:'icon-violet'},
+      {label:'Toplam Personel', val: stats.totalActiveEmployees, icon: ICONS.team,    cls:'icon-blue',   hint:'Aktif'},
+      {label:'Bugün Giriş',     val: stats.presentToday,         icon: ICONS.checkin, cls:'icon-green',  hint:'Çalışıyor'},
+      {label:'İzinli',          val: stats.onLeaveToday,         icon: ICONS.palm,    cls:'icon-amber',  hint:'Onaylı'},
+      {label:'Devamsız',        val: stats.absentToday,          icon: ICONS.cross,   cls:'icon-red',    hint:'Bildirimsiz'},
+      {label:'Bekleyen İzin',   val: stats.pendingLeaveRequests, icon: ICONS.pending, cls:'icon-cyan',   hint:'Onay bekliyor'},
+      {label:'Devam Oranı',     val: stats.attendanceRate+'%',   icon: ICONS.trend,   cls:'icon-violet', hint:'Bugün'},
     ].map(s => `
-      <div class="stat-card">
+      <div class="stat-card stat-card-rich">
         <div class="stat-icon ${s.cls}">${s.icon}</div>
-        <div class="stat-val">${s.val}</div>
-        <div class="stat-lbl">${s.label}</div>
+        <div class="stat-content">
+          <div class="stat-val">${s.val}</div>
+          <div class="stat-lbl">${s.label}</div>
+        </div>
+        <div class="stat-hint">${s.hint}</div>
       </div>
     `).join('');
 
+    // Bugünkü aktivite (ilk 8)
     const pl = document.getElementById('present-list');
     document.getElementById('present-count').textContent = today.length;
-    pl.innerHTML = today.length ? today.slice(0,8).map(a => `
+    pl.innerHTML = today.length ? today.slice(0,6).map(a => `
       <div class="present-row">
         ${avatar(a.userFullName, a.userPhoto, 36)}
         <div class="pr-info">
-          <strong>${a.userFullName}</strong>
-          <small>Giriş: ${fmtTime(a.checkIn)}${a.checkOut ? ' · Çıkış: ' + fmtTime(a.checkOut) : ''}</small>
+          <strong>${esc(a.userFullName)}</strong>
+          <small>→ ${fmtTime(a.checkIn)}${a.checkOut ? ' · ← ' + fmtTime(a.checkOut) : ''}</small>
         </div>
         ${a.checkOut ? '<span class="badge badge-emp">Tamamlandı</span>' : '<span class="badge badge-on">Aktif</span>'}
       </div>`).join('')
     : '<div class="empty">Bugün henüz giriş yapılmadı.</div>';
 
-    const pending = await api('GET','/api/Leaves?status=Pending');
+    // Geç kalanlar
+    const lates = today.filter(a => a.isLateArrival);
+    document.getElementById('late-count').textContent = lates.length;
+    document.getElementById('late-list').innerHTML = lates.length ? lates.slice(0,6).map(a => `
+      <div class="present-row">
+        ${avatar(a.userFullName, a.userPhoto, 36)}
+        <div class="pr-info">
+          <strong>${esc(a.userFullName)}</strong>
+          <small>${fmtTime(a.checkIn)} · <span class="late-mins">+${a.lateMinutes} dk</span></small>
+        </div>
+        <span class="badge badge-warn">Geç</span>
+      </div>`).join('')
+    : '<div class="empty">🎉 Bugün geç kalan yok!</div>';
+
+    // Bekleyen izinler
     const pd = document.getElementById('pending-leaves-dash');
     pd.innerHTML = pending.length ? pending.slice(0,5).map(l => `
       <div class="leave-row">
         ${avatar(l.userFullName, null, 32)}
-        <div style="flex:1">
-          <strong>${l.userFullName}</strong>
-          <span style="display:block">${l.leaveType} · ${l.totalDays} gün · ${fmtDate(l.startDate)}</span>
+        <div style="flex:1;min-width:0">
+          <strong>${esc(l.userFullName)}</strong>
+          <span style="display:block;font-size:12px;color:var(--text-3)">${esc(l.leaveType)} · ${l.totalDays} gün</span>
         </div>
         <span class="badge badge-warn">Bekliyor</span>
       </div>`).join('')
     : '<div class="empty">Bekleyen talep yok.</div>';
+
+    // Yaklaşan izinler (7 gün)
+    const all = await api('GET','/api/Leaves?status=Approved').catch(()=>[]);
+    const upcoming = (all || []).filter(l => {
+      const start = new Date(l.startDate);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const week = new Date(); week.setDate(week.getDate()+7);
+      return start >= today && start <= week;
+    });
+    document.getElementById('upcoming-leaves').innerHTML = upcoming.length ? upcoming.slice(0,6).map(l => {
+      const days = Math.ceil((new Date(l.startDate) - new Date()) / (1000*60*60*24));
+      return `<div class="upcoming-row">
+        ${avatar(l.userFullName, null, 32)}
+        <div style="flex:1;min-width:0">
+          <strong>${esc(l.userFullName)}</strong>
+          <span style="display:block;font-size:12px;color:var(--text-3)">${esc(l.leaveType)} · ${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}</span>
+        </div>
+        <span class="badge badge-info">${days <= 0 ? 'Bugün' : days + ' gün sonra'}</span>
+      </div>`;
+    }).join('') : '<div class="empty">Önümüzdeki 7 günde planlı izin yok.</div>';
+
+    // Bu hafta vardiya dağılımı
+    await renderShiftDistribution();
   } catch(e) { toast(e.message,'err'); }
+}
+
+let heroClockInterval = null;
+function startHeroClock() {
+  if (heroClockInterval) clearInterval(heroClockInterval);
+  const update = () => {
+    const el = document.getElementById('hero-clock');
+    if (el) el.textContent = new Date().toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+  };
+  update();
+  heroClockInterval = setInterval(update, 30000);
+}
+
+async function renderShiftDistribution() {
+  const ws = getMondayOf(new Date());
+  try {
+    const assignments = await api('GET', `/api/Shifts/weekly?weekStart=${fmtDateOnly(ws)}`);
+    const buckets = { 'Vardiyalar': 0, 'Tatil/İzin': 0, 'Fazla Mesai': 0 };
+    const colors = { 'Vardiyalar': '#4f6ef7', 'Tatil/İzin': '#ef4444', 'Fazla Mesai': '#f97316' };
+    (assignments || []).forEach(a => {
+      const cat = getShiftCategory(a.shiftId);
+      if (cat === 'shift')        buckets['Vardiyalar']++;
+      else if (cat === 'leave')   buckets['Tatil/İzin']++;
+      else if (cat === 'overtime') buckets['Fazla Mesai']++;
+    });
+    const total = Object.values(buckets).reduce((a,b)=>a+b,0);
+    const el = document.getElementById('shift-distribution');
+    if (!total) { el.innerHTML = '<div class="empty">Bu hafta atanmış vardiya yok.</div>'; return; }
+    el.innerHTML = Object.entries(buckets).map(([name, count]) => {
+      const pct = Math.round((count/total)*100);
+      return `<div class="dist-row">
+        <div class="dist-label"><span class="dist-dot" style="background:${colors[name]}"></span>${name}</div>
+        <div class="dist-bar"><div class="dist-fill" style="width:${pct}%;background:${colors[name]}"></div></div>
+        <div class="dist-val"><strong>${count}</strong><small>${pct}%</small></div>
+      </div>`;
+    }).join('');
+  } catch(_) {
+    document.getElementById('shift-distribution').innerHTML = '<div class="empty">Yüklenemedi.</div>';
+  }
 }
 
 // ── Personel ────────────────────────────────────────────────────────
@@ -590,6 +765,20 @@ async function loadRoster() {
   const rosterCard = document.querySelector('#page-roster .card');
   if (rosterCard) rosterCard.classList.toggle('readonly-roster', !isAdmin);
 
+  // Admin-only kontrolleri göster/gizle
+  document.querySelectorAll('#page-roster .admin-only').forEach(el => {
+    el.classList.toggle('hidden', !isAdmin);
+  });
+
+  // Departman filtresini doldur (admin için)
+  if (isAdmin) {
+    const filter = document.getElementById('roster-dept-filter');
+    if (filter && filter.options.length <= 1 && allDepts.length) {
+      filter.innerHTML = '<option value="">Tüm Departmanlar</option>' +
+        allDepts.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+    }
+  }
+
   // Personel için sayfa altyazısı güncelle + filtre butonu opsiyonel
   const subEl = document.querySelector('#page-roster .page-sub');
   if (subEl) subEl.textContent = isAdmin
@@ -614,8 +803,13 @@ async function loadRoster() {
         return `<th>${d}<small>${fmtDate(dt)}</small></th>`;
       }).join('');
 
-    // Personelse: kendisini en üste al, diğerlerini soluk göster
+    // Departman filtresini uygula (admin)
+    const deptFilter = +document.getElementById('roster-dept-filter')?.value || 0;
     let usersOrdered = [...allUsers];
+    if (isAdmin && deptFilter) {
+      usersOrdered = usersOrdered.filter(u => u.departmentId === deptFilter);
+    }
+    // Personelse: kendisini en üste al, diğerlerini soluk göster
     if (!isAdmin) {
       usersOrdered.sort((a,b) => (a.id===currentUser.userId?-1: b.id===currentUser.userId?1:0));
     }
@@ -660,6 +854,28 @@ async function loadRoster() {
   } catch(e) { toast(e.message,'err'); }
 }
 function rosterNav(d) { rosterWeekStart.setDate(rosterWeekStart.getDate()+d*7); loadRoster(); }
+
+// Önceki haftanın planını bu haftaya kopyala
+async function copyPreviousWeek() {
+  const target = new Date(rosterWeekStart);
+  const source = new Date(rosterWeekStart); source.setDate(source.getDate() - 7);
+  const targetStr = fmtDateOnly(target);
+  const sourceStr = fmtDateOnly(source);
+
+  if (!confirm(
+    `${fmtDate(source)} – ${fmtDate(new Date(source.getTime()+6*86400000))} haftası, ` +
+    `şu anki haftanın (${fmtDate(target)}) üzerine kopyalanacak. ` +
+    `Bu haftaki tüm mevcut atamalar SİLİNECEK. Devam edilsin mi?`)) return;
+
+  try {
+    const result = await api('POST', '/api/Shifts/copy-week', {
+      sourceWeekStart: sourceStr,
+      targetWeekStart: targetStr
+    });
+    toast(`${result.copied} vardiya kopyalandı.`, 'ok');
+    loadRoster();
+  } catch(e) { toast(e.message, 'err'); }
+}
 
 let pendingShiftDate = null, pendingShiftUserId = null;
 let currentShiftCat = 'shift';

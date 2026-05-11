@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="api-base" content="" />
+  <meta name="theme-color" content="#0A0A0C" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Shiftex Turnike — Giriş & Çıkış</title>
+  <script>
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port ? ':' + window.location.port : '';
+    document.querySelector('meta[name="api-base"]').content = `${protocol}//${hostname}${port}`;
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="/css/kiosk.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body class="kiosk-body">
+
+<!-- KİOSK GİRİŞ EKRANI (PIN doğrulama) -->
+<div id="kiosk-auth" class="kiosk-auth">
+  <div class="kiosk-auth-card">
+    <div class="kiosk-brand">
+      <div class="brand-mark brand-mark-lg">
+        <svg viewBox="0 0 32 32" fill="none">
+          <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/>
+          <path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span>Shiftex Turnike</span>
+    </div>
+    <h1>Cihaz Doğrulama</h1>
+    <p>Bu cihazı yüz tanıma turnikesi olarak ayarlamak için yönetici PIN'ini girin.</p>
+    <div id="kiosk-auth-err" class="alert alert-error hidden"></div>
+    <div class="form-group">
+      <label class="form-label">Cihaz Adı</label>
+      <input id="kiosk-device-id" type="text" class="form-input" placeholder="Örn: Ana Giriş Tablet" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Yönetici PIN'i</label>
+      <input id="kiosk-pin" type="password" class="form-input" placeholder="••••••••" />
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="kioskLogin()">
+      Turnikeyi Etkinleştir
+    </button>
+    <a href="/" class="kiosk-back-link">← Normal giriş ekranına dön</a>
+  </div>
+</div>
+
+<!-- KİOSK ANA EKRAN -->
+<div id="kiosk-main" class="kiosk-main hidden">
+
+  <!-- Üst bar: tarih, saat, cihaz adı, çıkış -->
+  <header class="kiosk-header">
+    <div class="kh-left">
+      <div class="kiosk-brand-mini">
+        <svg viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/><path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Shiftex</span>
+      </div>
+      <span class="kh-device" id="kh-device"></span>
+    </div>
+    <div class="kh-center">
+      <div class="kh-time" id="kh-time">--:--</div>
+      <div class="kh-date" id="kh-date"></div>
+    </div>
+    <div class="kh-right">
+      <span class="kh-status" id="kh-status">
+        <span class="status-dot status-active"></span>
+        <span>Sistem hazır</span>
+      </span>
+      <button class="btn btn-ghost btn-sm" onclick="kioskExit()">Çıkış</button>
+    </div>
+  </header>
+
+  <!-- Ana içerik: kamera + feedback -->
+  <main class="kiosk-stage">
+    <!-- Sol: kamera -->
+    <div class="kiosk-camera-wrap">
+      <video id="kiosk-video" autoplay playsinline muted></video>
+      <canvas id="kiosk-canvas"></canvas>
+      <div class="kiosk-camera-frame"></div>
+      <div class="kiosk-scan-line"></div>
+    </div>
+
+    <!-- Sağ: bilgilendirme -->
+    <div class="kiosk-info">
+      <div id="kiosk-prompt" class="kiosk-prompt kiosk-prompt-idle">
+        <div class="kp-icon">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="2" opacity=".3"/>
+            <circle cx="32" cy="24" r="8" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M14 50c3-8 11-12 18-12s15 4 18 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="kp-title">Yüzünüzü kameraya gösterin</h2>
+        <p class="kp-sub">Sistem sizi otomatik olarak tanıyacaktır</p>
+      </div>
+
+      <!-- Son işlemler listesi -->
+      <div class="kiosk-recent">
+        <div class="kr-head">Son işlemler</div>
+        <div id="kiosk-recent-list" class="kr-list">
+          <div class="kr-empty">Henüz işlem yapılmadı</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tam ekran başarı modalı (in/out) -->
+  <div id="kiosk-result" class="kiosk-result hidden">
+    <div class="kr-card">
+      <div class="kr-check" id="kr-check">
+        <svg viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="3" class="kr-circle"/>
+          <path d="M25 41l11 11 19-22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="kr-tick"/>
+        </svg>
+      </div>
+      <h2 class="kr-greeting" id="kr-greeting">Hoş geldiniz</h2>
+      <div class="kr-user" id="kr-user">—</div>
+      <div class="kr-action" id="kr-action">Giriş kaydedildi</div>
+      <div class="kr-clock" id="kr-clock">--:--</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/kiosk.js"></script>
+</body>
+</html>
