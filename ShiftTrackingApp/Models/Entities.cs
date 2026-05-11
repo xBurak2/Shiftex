@@ -49,6 +49,62 @@ namespace ShiftTrackingApp.Models
         public User User { get; set; } = null!;
     }
 
+    /// <summary>
+    /// Personeller arası vardiya değişim talebi.
+    /// İki personel rıza ile gün/vardiya takası ister, admin onayıyla işleme alınır.
+    /// </summary>
+    public class ShiftSwapRequest
+    {
+        public int Id { get; set; }
+
+        // Talebi başlatan
+        public int RequesterId { get; set; }
+        public int RequesterShiftAssignmentId { get; set; }
+
+        // Hedef personel
+        public int TargetUserId { get; set; }
+        public int? TargetShiftAssignmentId { get; set; } // null ise tek yönlü "üstüme al"
+
+        public string? Reason { get; set; }
+
+        // State: Pending (target onay bekliyor) → AcceptedByTarget (admin onayı bekliyor)
+        //        → ApprovedByAdmin (uygulandı) | RejectedByTarget | RejectedByAdmin | CancelledByRequester
+        public string Status { get; set; } = "Pending";
+
+        public DateTime CreatedAt   { get; set; } = DateTime.UtcNow;
+        public DateTime? RespondedAt{ get; set; }   // hedef cevap verdiğinde
+        public DateTime? ReviewedAt { get; set; }   // admin onayında
+        public int? ReviewedBy      { get; set; }
+
+        public User Requester  { get; set; } = null!;
+        public User TargetUser { get; set; } = null!;
+        public ShiftAssignment RequesterShiftAssignment { get; set; } = null!;
+        public ShiftAssignment? TargetShiftAssignment   { get; set; }
+    }
+
+    /// <summary>
+    /// Personelin fazla mesai için yaptığı talep.
+    /// Admin onaylarsa ilgili güne FM vardiyası atanır.
+    /// </summary>
+    public class OvertimeRequest
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public DateOnly Date { get; set; }
+        public int ShiftId { get; set; }   // FM shift ID'si (7, 8, 9)
+        public string? Reason { get; set; }
+
+        // Pending → Approved (ShiftAssignment otomatik oluşturulur) | Rejected
+        public string Status { get; set; } = "Pending";
+
+        public DateTime CreatedAt  { get; set; } = DateTime.UtcNow;
+        public DateTime? ReviewedAt{ get; set; }
+        public int? ReviewedBy     { get; set; }
+
+        public User User   { get; set; } = null!;
+        public Shift Shift { get; set; } = null!;
+    }
+
     public class AttendanceLog
     {
         public int Id { get; set; }

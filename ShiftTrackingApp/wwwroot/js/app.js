@@ -363,28 +363,32 @@ function tryRestoreSession() {
 // ── Navigation ──────────────────────────────────────────────────────
 const NAV_ADMIN = [
   { section: 'Genel' },
-  { id: 'dashboard',   label: 'Dashboard',         icon: ICONS.dashboard },
+  { id: 'dashboard',     label: 'Dashboard',           icon: ICONS.dashboard },
   { section: 'Personel' },
-  { id: 'employees',   label: 'Personel',          icon: ICONS.users },
-  { id: 'departments', label: 'Departmanlar',      icon: ICONS.building },
+  { id: 'employees',     label: 'Personel',            icon: ICONS.users },
+  { id: 'departments',   label: 'Departmanlar',        icon: ICONS.building },
   { section: 'Operasyon' },
-  { id: 'roster',      label: 'Vardiya Planlama',  icon: ICONS.calendar },
-  { id: 'attendance',  label: 'Devam Takip',       icon: ICONS.check },
-  { id: 'leaves',      label: 'İzin Yönetimi',     icon: ICONS.clipboard },
+  { id: 'roster',        label: 'Vardiya Planlama',    icon: ICONS.calendar },
+  { id: 'attendance',    label: 'Devam Takip',         icon: ICONS.check },
+  { id: 'leaves',        label: 'İzin Yönetimi',       icon: ICONS.clipboard },
+  { id: 'overtime-admin',label: 'Mesai Talepleri',     icon: ICONS.trend },
+  { id: 'swap-admin',    label: 'Vardiya Değişimleri', icon: ICONS.scan },
   { section: 'Raporlar' },
-  { id: 'enroll',      label: 'Yüz Kaydı',         icon: ICONS.scan },
-  { id: 'monthly',     label: 'Aylık Rapor',       icon: ICONS.chart },
+  { id: 'enroll',        label: 'Yüz Kaydı',           icon: ICONS.scan },
+  { id: 'monthly',       label: 'Aylık Rapor',         icon: ICONS.chart },
 ];
 
 const NAV_EMP = [
   { section: 'Kişisel' },
-  { id: 'my-dashboard',  label: 'Genel Bakış',        icon: ICONS.dashboard },
-  { id: 'my-shifts',     label: 'Vardiyalarım',       icon: ICONS.calendar },
-  { id: 'my-attendance', label: 'Devam Durumum',      icon: ICONS.check },
-  { id: 'my-leaves',     label: 'İzin Taleplerim',    icon: ICONS.clipboard },
-  { id: 'my-monthly',    label: 'Aylık Özetim',       icon: ICONS.chart },
+  { id: 'my-dashboard',  label: 'Genel Bakış',         icon: ICONS.dashboard },
+  { id: 'my-shifts',     label: 'Vardiyalarım',        icon: ICONS.calendar },
+  { id: 'my-attendance', label: 'Devam Durumum',       icon: ICONS.check },
+  { id: 'my-leaves',     label: 'İzin Taleplerim',     icon: ICONS.clipboard },
+  { id: 'my-overtime',   label: 'Mesai Taleplerim',    icon: ICONS.trend },
+  { id: 'my-swaps',      label: 'Vardiya Değişimleri', icon: ICONS.scan },
+  { id: 'my-monthly',    label: 'Aylık Özetim',        icon: ICONS.chart },
   { section: 'Takım' },
-  { id: 'roster',        label: 'Haftalık Plan',      icon: ICONS.calendar },
+  { id: 'roster',        label: 'Haftalık Plan',       icon: ICONS.calendar },
 ];
 
 // ── Vardiya kategorileri (Shift Id'ye göre) ─────────────────────────
@@ -420,7 +424,9 @@ const PAGE_TITLES = {
   'attendance': 'Devam Takip', 'leaves': 'İzin Yönetimi', 'my-leaves': 'İzin Taleplerim',
   'my-shifts': 'Vardiyalarım', 'my-attendance': 'Devam Durumum', 'profile': 'Profilim',
   'enroll': 'Yüz Kaydı', 'monthly': 'Aylık Rapor', 'departments': 'Departmanlar',
-  'my-dashboard': 'Genel Bakış', 'my-monthly': 'Aylık Özetim'
+  'my-dashboard': 'Genel Bakış', 'my-monthly': 'Aylık Özetim',
+  'my-overtime': 'Mesai Taleplerim', 'my-swaps': 'Vardiya Değişimleri',
+  'overtime-admin': 'Mesai Talepleri', 'swap-admin': 'Vardiya Değişim Talepleri'
 };
 
 function navTo(id) { showPage(id); }
@@ -447,8 +453,12 @@ function showPage(id) {
     case 'enroll':      loadEnrList();   break;
     case 'monthly':     initMonthly();   break;
     case 'departments': loadDepts().then(renderDepts); break;
-    case 'my-dashboard': loadMyDashboard(); break;
-    case 'my-monthly':   loadMyMonthly(); break;
+    case 'my-dashboard':    loadMyDashboard(); break;
+    case 'my-monthly':      loadMyMonthly(); break;
+    case 'my-overtime':     loadMyOvertime(); break;
+    case 'my-swaps':        loadMySwaps('outgoing'); break;
+    case 'overtime-admin':  loadAdminOvertime(); break;
+    case 'swap-admin':      loadAdminSwaps(); break;
   }
 }
 
@@ -659,13 +669,13 @@ async function loadEmployees(page) {
 
     const tbody = document.getElementById('emp-tbody');
     tbody.innerHTML = res.items.map(u => `
-      <tr>
+      <tr class="emp-row" onclick="viewEmployeeProfile(${u.id})" style="cursor:pointer">
         <td><div class="name-cell">${avatar(u.fullName, u.photoBase64)}<span>${esc(u.fullName)}</span></div></td>
         <td>${esc(u.email)}</td>
         <td>${esc(u.departmentName||'—')}</td>
         <td>${esc(u.position||'—')}</td>
         <td><span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span></td>
-        <td class="text-right">
+        <td class="text-right" onclick="event.stopPropagation()">
           <div class="btn-group" style="justify-content:flex-end">
             <button class="btn btn-ghost btn-sm" onclick="openEmpModal(${u.id})">Düzenle</button>
             <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteEmployee(${u.id},'${esc(u.fullName).replace(/'/g,"\\'")}')">Sil</button>
@@ -794,6 +804,95 @@ async function saveEmployee() {
   } catch(e) { toast(e.message,'err'); }
 }
 
+// Read-only personel profili (admin için detay göster, sonra düzenleye geçilebilir)
+async function viewEmployeeProfile(id) {
+  const u = allUsers.find(x => x.id === id);
+  if (!u) return;
+  const now = new Date();
+
+  // Modalı aç
+  document.getElementById('emp-view-modal').classList.remove('hidden');
+  document.getElementById('emp-view-content').innerHTML = `
+    <div class="profile-view-head">
+      <div class="profile-view-avatar">${avatar(u.fullName, u.photoBase64, 96)}</div>
+      <div class="profile-view-meta">
+        <h2 class="profile-view-name">${esc(u.fullName)}</h2>
+        <div class="profile-view-role">
+          <span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span>
+          ${u.departmentName ? `<span class="profile-view-dept">${esc(u.departmentName)}</span>` : ''}
+        </div>
+        <div class="profile-view-pos">${esc(u.position || 'Pozisyon belirtilmemiş')}</div>
+      </div>
+    </div>
+    <div class="profile-view-grid">
+      <div class="pv-info">
+        <span class="pv-label">E-posta</span>
+        <span class="pv-val">${esc(u.email)}</span>
+      </div>
+      <div class="pv-info">
+        <span class="pv-label">Telefon</span>
+        <span class="pv-val">${esc(u.phoneNumber || '—')}</span>
+      </div>
+      <div class="pv-info">
+        <span class="pv-label">İşe Giriş</span>
+        <span class="pv-val">${u.hireDate ? fmtDate(u.hireDate) : '—'}</span>
+      </div>
+      <div class="pv-info">
+        <span class="pv-label">Durum</span>
+        <span class="pv-val">${u.isActive ? '<span class="badge badge-ok">Aktif</span>' : '<span class="badge badge-err">Pasif</span>'}</span>
+      </div>
+    </div>
+    <div class="pv-section">
+      <h4>Bu Ayki Devam (${now.toLocaleDateString('tr-TR',{month:'long',year:'numeric'})})</h4>
+      <div id="pv-monthly" class="pv-monthly-loading">Yükleniyor…</div>
+    </div>
+    <div class="pv-section">
+      <h4>Son İzin Talepleri</h4>
+      <div id="pv-leaves" class="pv-leaves-loading">Yükleniyor…</div>
+    </div>
+  `;
+
+  // Edit butonunu bağla
+  document.getElementById('emp-view-edit-btn').onclick = () => {
+    closeModal('emp-view-modal');
+    openEmpModal(id);
+  };
+
+  // Async olarak istatistikleri çek
+  try {
+    const [summary, leaves] = await Promise.all([
+      api('GET', `/api/Users/${id}/attendance-summary?year=${now.getFullYear()}&month=${now.getMonth()+1}`).catch(()=>null),
+      api('GET', '/api/Leaves').catch(()=>[])
+    ]);
+
+    if (summary) {
+      document.getElementById('pv-monthly').innerHTML = `
+        <div class="pv-stats">
+          <div class="pv-stat"><strong>${summary.presentDays}</strong><small>Mevcut</small></div>
+          <div class="pv-stat"><strong>${summary.leaveDays}</strong><small>İzinli</small></div>
+          <div class="pv-stat"><strong>${summary.absentDays}</strong><small>Devamsız</small></div>
+          <div class="pv-stat"><strong>${(summary.totalWorkedHours||0).toFixed(1)}</strong><small>Saat</small></div>
+          <div class="pv-stat"><strong>${(summary.totalOvertimeHours||0).toFixed(1)}</strong><small>FM Saat</small></div>
+          <div class="pv-stat"><strong>${summary.overtimeShiftCount}</strong><small>FM Vardiya</small></div>
+        </div>`;
+    } else {
+      document.getElementById('pv-monthly').innerHTML = '<div class="empty">Bu ay için kayıt yok.</div>';
+    }
+
+    const myLeaves = (leaves || []).filter(l => l.userId === id).slice(0, 5);
+    document.getElementById('pv-leaves').innerHTML = myLeaves.length
+      ? myLeaves.map(l => `
+          <div class="leave-mini">
+            <div class="lm-info">
+              <strong>${esc(l.leaveType)}</strong>
+              <small>${fmtDate(l.startDate)} - ${fmtDate(l.endDate)} · ${l.totalDays} gün</small>
+            </div>
+            ${statusBadge(l.status)}
+          </div>`).join('')
+      : '<div class="empty">İzin talebi yok.</div>';
+  } catch(_) { /* sessiz */ }
+}
+
 async function deleteEmployee(id, name) {
   if (!confirm(`"${name}" silinecek. Onaylıyor musunuz?`)) return;
   try {
@@ -885,9 +984,11 @@ async function loadRoster() {
                 <small>${a.startTime}–${a.endTime}</small>
               </div>`;
           }).join('');
-          // Admin: bu hücreye yeni vardiya/FM eklemek için + butonu
-          if (isAdmin) {
-            cellHtml += `<div class="shift-add-more" onclick="openShiftModal('${ds}',${u.id})" title="Bu güne fazla mesai/vardiya ekle">+</div>`;
+          // Admin: bu hücreye yeni FM eklemek için + butonu (sadece FM yoksa ve base shift varsa)
+          const hasOvertime  = dayAssignments.some(a => getShiftCategory(a.shiftId) === 'overtime');
+          const hasBaseShift = dayAssignments.some(a => getShiftCategory(a.shiftId) !== 'overtime');
+          if (isAdmin && !hasOvertime && hasBaseShift) {
+            cellHtml += `<div class="shift-add-more" onclick="openShiftModal('${ds}',${u.id})" title="Bu güne fazla mesai ekle">+ FM</div>`;
           }
         } else {
           cellHtml = isAdmin
@@ -967,6 +1068,28 @@ async function openShiftModal(dateStr, userId, assignId) {
     existingWrap.classList.add('hidden');
   }
 
+  // FM kuralı: aynı güne sadece 1 fazla mesai eklenebilir
+  const hasOvertime = shifts.some(s => getShiftCategory(s.shiftId) === 'overtime');
+  // FM kuralı: FM eklemek için mevcut bir normal vardiya/tatil olmalı
+  const hasBaseShift = shifts.some(s => getShiftCategory(s.shiftId) !== 'overtime');
+  const otTab = document.querySelector('.shift-cat-tab[data-cat="overtime"]');
+  if (otTab) {
+    if (assignId) {
+      // Düzenleme modunda kısıtlamayı gevşet (mevcut FM'i düzenleyebilirsin)
+      otTab.classList.remove('disabled-tab');
+      otTab.removeAttribute('title');
+    } else if (hasOvertime) {
+      otTab.classList.add('disabled-tab');
+      otTab.setAttribute('title', 'Bu güne zaten fazla mesai eklenmiş');
+    } else if (!hasBaseShift) {
+      otTab.classList.add('disabled-tab');
+      otTab.setAttribute('title', 'Fazla mesai için önce normal vardiya atayın');
+    } else {
+      otTab.classList.remove('disabled-tab');
+      otTab.removeAttribute('title');
+    }
+  }
+
   // Personel seçimi
   document.getElementById('shift-user-sel').innerHTML =
     allUsers.map(u2=>`<option value="${u2.id}" ${u2.id===userId?'selected':''}>${u2.fullName}</option>`).join('');
@@ -989,6 +1112,12 @@ async function openShiftModal(dateStr, userId, assignId) {
 }
 
 function switchShiftCat(cat, selectedId) {
+  // Disabled tab'a tıklanmayı engelle
+  const targetTab = document.querySelector(`.shift-cat-tab[data-cat="${cat}"]`);
+  if (targetTab && targetTab.classList.contains('disabled-tab')) {
+    toast(targetTab.getAttribute('title') || 'Bu kategoriye eklenemez', 'warn');
+    return;
+  }
   currentShiftCat = cat;
   document.querySelectorAll('.shift-cat-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.cat === cat);
@@ -1022,6 +1151,16 @@ async function saveShift() {
   const id = document.getElementById('shift-assign-id').value;
   const shiftId = +document.getElementById('shift-type-sel').value;
   if (!shiftId) { toast('Vardiya türü seçin.','warn'); return; }
+
+  // FM kontrolü: aynı güne sadece 1 FM ve FM için base shift gerekir
+  const cat = getShiftCategory(shiftId);
+  if (cat === 'overtime' && !id) {
+    const hasOvertime  = dayExistingShifts.some(s => getShiftCategory(s.shiftId) === 'overtime');
+    const hasBaseShift = dayExistingShifts.some(s => getShiftCategory(s.shiftId) !== 'overtime');
+    if (hasOvertime)  { toast('Bu güne zaten fazla mesai eklenmiş.', 'err'); return; }
+    if (!hasBaseShift){ toast('Fazla mesai için önce normal vardiya atayın.', 'err'); return; }
+  }
+
   const body = {
     userId:  +document.getElementById('shift-user-sel').value,
     shiftId,
@@ -1173,11 +1312,12 @@ async function loadMyDashboard() {
     const next30 = new Date(); next30.setDate(next30.getDate()+30);
 
     const now = new Date();
-    const [thisWeek, futureShifts, myLeaves, summary] = await Promise.all([
+    const [thisWeek, futureShifts, myLeaves, summary, balance] = await Promise.all([
       api('GET', `/api/Shifts/my?from=${wsStr}&to=${weStr}`).catch(()=>[]),
       api('GET', `/api/Shifts/my?from=${fmtDateOnly(now)}&to=${fmtDateOnly(next30)}`).catch(()=>[]),
       api('GET', '/api/Leaves/my').catch(()=>[]),
-      api('GET', `/api/Users/${currentUser.userId}/attendance-summary?year=${now.getFullYear()}&month=${now.getMonth()+1}`).catch(()=>null)
+      api('GET', `/api/Users/${currentUser.userId}/attendance-summary?year=${now.getFullYear()}&month=${now.getMonth()+1}`).catch(()=>null),
+      api('GET', '/api/LeaveBalance/me').catch(()=>null)
     ]);
 
     // Mini istatistikler
@@ -1187,9 +1327,9 @@ async function loadMyDashboard() {
     const pendingLeaves  = myLeaves.filter(l => l.status === 'Pending').length;
 
     document.getElementById('my-stat-grid').innerHTML = [
+      { label: 'İzin Bakiyem',     val: (balance?.remainingDays ?? 0)+'/'+(balance?.annualAllowance ?? 14), icon: ICONS.palm, cls:'icon-green', hint:`${balance?.year || new Date().getFullYear()} yılı` },
       { label: 'Bu Hafta Vardiya', val: totalShifts,    icon: ICONS.calendar, cls:'icon-blue',  hint:'Toplam'    },
       { label: 'Fazla Mesai',      val: overtimeShifts, icon: ICONS.trend,    cls:'icon-amber', hint:'Bu hafta'  },
-      { label: 'İzin/Tatil',       val: leaveShifts,    icon: ICONS.palm,     cls:'icon-green', hint:'Bu hafta'  },
       { label: 'Bekleyen Talep',   val: pendingLeaves,  icon: ICONS.pending,  cls:'icon-cyan',  hint:'İzin'      },
       { label: 'Bu Ay Devam',      val: (summary?.presentDays ?? 0)+' gün', icon: ICONS.checkin, cls:'icon-violet', hint:'Mevcut' },
       { label: 'Bu Ay Çalışma',    val: (summary?.totalWorkedHours ?? 0).toFixed(1)+' sa', icon: ICONS.trend, cls:'icon-red', hint:'Toplam' },
@@ -1468,6 +1608,29 @@ function initMonthly() {
   const y = now.getFullYear();
   ys.innerHTML = [y-1,y,y+1].map(yr=>`<option value="${yr}" ${yr===y?'selected':''}>${yr}</option>`).join('');
 }
+async function exportAdminMonthly() {
+  const userId = document.getElementById('monthly-user-sel').value;
+  const month  = document.getElementById('monthly-month-sel').value;
+  const year   = document.getElementById('monthly-year-sel').value;
+  if (!userId) { toast('Önce personel seçin.', 'warn'); return; }
+  try {
+    const res = await fetch(API_BASE + `/api/Users/${userId}/attendance-summary/export?year=${year}&month=${month}`, {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    if (!res.ok) throw new Error('İndirme başarısız');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const user = allUsers.find(u => u.id === +userId);
+    const safeName = (user?.fullName || 'personel').replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]/g, '_');
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}-${year}-${String(month).padStart(2,'0')}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Rapor indiriliyor…', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
 async function loadMonthlySummary() {
   const userId = document.getElementById('monthly-user-sel').value;
   const month = document.getElementById('monthly-month-sel').value;
@@ -1600,6 +1763,261 @@ function populateUserSelects() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = allUsers.map(u=>`<option value="${u.id}">${u.fullName}</option>`).join('');
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+// MESAİ TALEPLERİ (Overtime Requests)
+// ════════════════════════════════════════════════════════════════
+async function loadMyOvertime() {
+  try {
+    const items = await api('GET', '/api/Overtime/my');
+    const tbody = document.getElementById('my-overtime-tbody');
+    tbody.innerHTML = items.length ? items.map(o => `
+      <tr>
+        <td class="font-mono">${fmtDate(o.date)}</td>
+        <td><span class="shift-chip sm" style="background:${o.shiftColor}">${esc(o.shiftName)}</span></td>
+        <td class="font-mono">${o.shiftStartTime}–${o.shiftEndTime}</td>
+        <td>${esc(o.reason || '—')}</td>
+        <td>${overtimeStatusBadge(o.status)}</td>
+        <td class="text-sub">${fmtDate(o.createdAt)}</td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty">Henüz mesai talebin yok.</td></tr>';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+function openOvertimeModal() {
+  // Varsayılan: yarın
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('ot-date').value   = fmtDateOnly(tomorrow);
+  document.getElementById('ot-shift').value  = '7';
+  document.getElementById('ot-reason').value = '';
+  document.getElementById('overtime-modal').classList.remove('hidden');
+}
+
+async function submitOvertimeRequest() {
+  const body = {
+    date:    document.getElementById('ot-date').value,
+    shiftId: +document.getElementById('ot-shift').value,
+    reason:  document.getElementById('ot-reason').value || null
+  };
+  if (!body.date) { toast('Tarih seçin.', 'warn'); return; }
+  try {
+    await api('POST', '/api/Overtime', body);
+    toast('Mesai talebin gönderildi.', 'ok');
+    closeModal('overtime-modal');
+    loadMyOvertime();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadAdminOvertime() {
+  const status = document.getElementById('overtime-filter')?.value || '';
+  try {
+    const items = await api('GET', `/api/Overtime${status?`?status=${status}`:''}`);
+    const tbody = document.getElementById('overtime-admin-tbody');
+    tbody.innerHTML = items.length ? items.map(o => `
+      <tr>
+        <td><div class="name-cell">${avatar(o.userName, null)}<span>${esc(o.userName)}</span></div></td>
+        <td class="font-mono">${fmtDate(o.date)}</td>
+        <td><span class="shift-chip sm" style="background:${o.shiftColor}">${esc(o.shiftName)}</span></td>
+        <td class="font-mono">${o.shiftStartTime}–${o.shiftEndTime}</td>
+        <td>${esc(o.reason || '—')}</td>
+        <td>${overtimeStatusBadge(o.status)}</td>
+        <td class="text-right">${o.status==='Pending'?`
+          <div class="btn-group" style="justify-content:flex-end">
+            <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="approveOvertime(${o.id})">Onayla</button>
+            <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="rejectOvertime(${o.id})">Reddet</button>
+          </div>`:'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="7" class="empty">Kayıt yok.</td></tr>';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function approveOvertime(id) {
+  if (!confirm('Mesai talebini onaylıyor musunuz? Onaylanan talep otomatik olarak vardiya planına eklenir.')) return;
+  try { await api('POST', `/api/Overtime/${id}/approve`); toast('Onaylandı, vardiyaya eklendi.', 'ok'); loadAdminOvertime(); }
+  catch(e) { toast(e.message, 'err'); }
+}
+async function rejectOvertime(id) {
+  if (!confirm('Mesai talebini reddetmek istiyor musunuz?')) return;
+  try { await api('POST', `/api/Overtime/${id}/reject`); toast('Reddedildi.'); loadAdminOvertime(); }
+  catch(e) { toast(e.message, 'err'); }
+}
+
+function overtimeStatusBadge(s) {
+  const map = { Pending: 'badge-warn', Approved: 'badge-ok', Rejected: 'badge-err' };
+  const lbl = { Pending: 'Bekliyor', Approved: 'Onaylandı', Rejected: 'Reddedildi' };
+  return `<span class="badge ${map[s]||''}">${lbl[s]||s}</span>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// VARDİYA DEĞİŞİM TALEPLERİ (Shift Swap)
+// ════════════════════════════════════════════════════════════════
+let currentSwapTab = 'outgoing';
+function switchSwapTab(tab) {
+  currentSwapTab = tab;
+  document.querySelectorAll('.swap-tab').forEach(t => t.classList.toggle('active', t.dataset.swapTab === tab));
+  loadMySwaps(tab);
+}
+
+async function loadMySwaps(tab) {
+  tab = tab || currentSwapTab;
+  try {
+    const url = tab === 'outgoing' ? '/api/ShiftSwap/my-outgoing' : '/api/ShiftSwap/my-incoming';
+    const items = await api('GET', url);
+    const tbody = document.getElementById('my-swap-tbody');
+    tbody.innerHTML = items.length ? items.map(s => {
+      const isOutgoing = s.requesterId === currentUser.userId;
+      const otherName  = isOutgoing ? s.targetUserName : s.requesterName;
+      const myShift    = isOutgoing ? `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}` : (s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : '—');
+      const theirShift = isOutgoing ? (s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : '—') : `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}`;
+
+      let actions = '—';
+      if (!isOutgoing && s.status === 'Pending') {
+        actions = `<div class="btn-group" style="justify-content:flex-end">
+          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="respondSwap(${s.id},'Accept')">Kabul Et</button>
+          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="respondSwap(${s.id},'Reject')">Reddet</button>
+        </div>`;
+      } else if (isOutgoing && (s.status === 'Pending' || s.status === 'AcceptedByTarget')) {
+        actions = `<button class="btn btn-sm btn-ghost" onclick="cancelSwap(${s.id})">İptal</button>`;
+      }
+      return `<tr>
+        <td>${esc(myShift)}</td>
+        <td>${esc(otherName)}</td>
+        <td>${esc(theirShift)}</td>
+        <td>${swapStatusBadge(s.status)}</td>
+        <td class="text-right">${actions}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="5" class="empty">${tab==='outgoing'?'Gönderdiğin değişim talebi yok.':'Sana gelen değişim talebi yok.'}</td></tr>`;
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function openSwapModal() {
+  // 30 günlük vardiyalarımı çek
+  const today = new Date();
+  const week  = new Date(); week.setDate(today.getDate()+30);
+  try {
+    const myShifts = await api('GET', `/api/Shifts/my?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`);
+    const future   = (myShifts || []).filter(s => new Date(s.date) >= new Date(new Date().toDateString()));
+    if (!future.length) { toast('Önümüzdeki 30 günde değişebilecek vardiyan yok.', 'warn'); return; }
+
+    document.getElementById('swap-my-shift').innerHTML = future.map(s =>
+      `<option value="${s.id}">${fmtDate(s.date)} · ${s.shiftName} (${s.startTime}–${s.endTime})</option>`).join('');
+
+    // Diğer personel listesi (kendisi hariç)
+    const others = allUsers.filter(u => u.id !== currentUser.userId);
+    document.getElementById('swap-target-user').innerHTML = others.map(u =>
+      `<option value="${u.id}">${esc(u.fullName)}</option>`).join('');
+
+    document.getElementById('swap-target-shift').innerHTML = '<option value="">Vardiyamı üstüne almasını rica ediyorum</option>';
+    document.getElementById('swap-reason').value = '';
+
+    // İlk seçili kullanıcının vardiyalarını yükle
+    if (others.length) await loadSwapTargetShifts();
+
+    document.getElementById('swap-modal').classList.remove('hidden');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadSwapTargetShifts() {
+  const targetUserId = +document.getElementById('swap-target-user').value;
+  if (!targetUserId) return;
+  const today = new Date();
+  const week  = new Date(); week.setDate(today.getDate()+30);
+  try {
+    const shifts = await api('GET', `/api/Shifts/user/${targetUserId}?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`);
+    const future = (shifts || []).filter(s => new Date(s.date) >= new Date(new Date().toDateString()));
+    document.getElementById('swap-target-shift').innerHTML = '<option value="">Vardiyamı üstüne almasını rica ediyorum</option>' +
+      future.map(s => `<option value="${s.id}">${fmtDate(s.date)} · ${s.shiftName} (${s.startTime}–${s.endTime})</option>`).join('');
+  } catch(_) { /* sessiz */ }
+}
+
+async function submitSwapRequest() {
+  const body = {
+    requesterShiftAssignmentId: +document.getElementById('swap-my-shift').value,
+    targetUserId:               +document.getElementById('swap-target-user').value,
+    targetShiftAssignmentId:    +document.getElementById('swap-target-shift').value || null,
+    reason:                     document.getElementById('swap-reason').value || null
+  };
+  if (!body.requesterShiftAssignmentId || !body.targetUserId) {
+    toast('Vardiya ve hedef personel seçin.', 'warn'); return;
+  }
+  try {
+    await api('POST', '/api/ShiftSwap', body);
+    toast('Değişim talebin gönderildi.', 'ok');
+    closeModal('swap-modal');
+    loadMySwaps('outgoing');
+    switchSwapTab('outgoing');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function respondSwap(id, response) {
+  if (response === 'Reject' && !confirm('Değişim talebini reddediyor musun?')) return;
+  if (response === 'Accept' && !confirm('Bu değişimi kabul ediyor musun? Yönetici son onayı verecek.')) return;
+  try {
+    await api('POST', `/api/ShiftSwap/${id}/respond`, { response });
+    toast(response === 'Accept' ? 'Kabul edildi, yönetici onayı bekleniyor.' : 'Reddedildi.', 'ok');
+    loadMySwaps(currentSwapTab);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function cancelSwap(id) {
+  if (!confirm('Değişim talebini iptal etmek istiyor musun?')) return;
+  try {
+    await api('DELETE', `/api/ShiftSwap/${id}`);
+    toast('İptal edildi.');
+    loadMySwaps(currentSwapTab);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadAdminSwaps() {
+  const status = document.getElementById('swap-filter')?.value || '';
+  try {
+    const items = await api('GET', `/api/ShiftSwap${status?`?status=${status}`:''}`);
+    const tbody = document.getElementById('swap-admin-tbody');
+    tbody.innerHTML = items.length ? items.map(s => {
+      const reqShift = `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}`;
+      const tgtShift = s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : 'Tek yönlü (üstüne al)';
+      let actions = '—';
+      if (s.status === 'AcceptedByTarget') {
+        actions = `<div class="btn-group" style="justify-content:flex-end">
+          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="approveSwap(${s.id})">Onayla</button>
+          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="rejectSwap(${s.id})">Reddet</button>
+        </div>`;
+      } else if (s.status === 'Pending') {
+        actions = '<small class="text-sub">Personel bekliyor</small>';
+      }
+      return `<tr>
+        <td><div class="name-cell">${avatar(s.requesterName, null)}<span>${esc(s.requesterName)}</span></div></td>
+        <td>${esc(reqShift)}</td>
+        <td>${esc(s.targetUserName)}</td>
+        <td>${esc(tgtShift)}</td>
+        <td>${swapStatusBadge(s.status)}</td>
+        <td class="text-right">${actions}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function approveSwap(id) {
+  if (!confirm('Vardiya değişimini onaylıyor musunuz? İki personelin vardiyaları takas edilecek.')) return;
+  try { await api('POST', `/api/ShiftSwap/${id}/approve`); toast('Onaylandı, vardiyalar takas edildi.', 'ok'); loadAdminSwaps(); }
+  catch(e) { toast(e.message, 'err'); }
+}
+async function rejectSwap(id) {
+  if (!confirm('Vardiya değişimini reddetmek istiyor musunuz?')) return;
+  try { await api('POST', `/api/ShiftSwap/${id}/reject`); toast('Reddedildi.'); loadAdminSwaps(); }
+  catch(e) { toast(e.message, 'err'); }
+}
+
+function swapStatusBadge(s) {
+  const map = {
+    Pending:            { cls:'badge-warn', lbl:'Personel Bekliyor' },
+    AcceptedByTarget:   { cls:'badge-info', lbl:'Onay Bekliyor' },
+    RejectedByTarget:   { cls:'badge-err',  lbl:'Reddedildi (Personel)' },
+    ApprovedByAdmin:    { cls:'badge-ok',   lbl:'Onaylandı' },
+    RejectedByAdmin:    { cls:'badge-err',  lbl:'Reddedildi (Yönetici)' },
+    CancelledByRequester:{ cls:'badge-emp', lbl:'İptal Edildi' },
+  };
+  const x = map[s] || { cls:'', lbl: s };
+  return `<span class="badge ${x.cls}">${x.lbl}</span>`;
 }
 
 // ── Init ────────────────────────────────────────────────────────────

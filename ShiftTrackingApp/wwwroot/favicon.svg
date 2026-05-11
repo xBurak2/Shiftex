@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="sxBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset=".5" stop-color="#5B5FCF"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="sxDot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <filter id="sxGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="0.8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Rounded gradient base -->
+  <rect width="32" height="32" rx="8" fill="url(#sxBg)"/>
+  <!-- Stylized "S" through 3 staggered shift rows (clock-flow) -->
+  <path d="M10 10h10" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
+  <path d="M8 16h14" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
+  <path d="M12 22h9" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>
+  <!-- Active shift accent (top-right corner) -->
+  <circle cx="22" cy="10" r="2.6" fill="url(#sxDot)" filter="url(#sxGlow)"/>
+</svg>

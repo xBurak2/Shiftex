@@ -134,6 +134,9 @@ builder.Services.AddScoped<ILeaveService,      LeaveService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IFaceDataService,   FaceDataService>();
+builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
+builder.Services.AddScoped<IShiftSwapService,    ShiftSwapService>();
+builder.Services.AddScoped<IOvertimeRequestService, OvertimeRequestService>();
 builder.Services.AddScoped<INotificationService, LoggerNotificationService>(); // Production'da SMTP/SendGrid impl ile değiştirin
 
 // ── CORS ──────────────────────────────────────────────────────────────────

@@ -374,6 +374,149 @@ namespace ShiftTrackingApp.Controllers
             => Ok(await _attendance.GetDashboardStatsAsync());
     }
 
+    // ════════════ LEAVE BALANCE ═════════════════════════════════════════
+    [ApiController]
+    [Route("api/LeaveBalance")]
+    [Authorize]
+    public class LeaveBalanceController : ControllerBase
+    {
+        private readonly ILeaveBalanceService _svc;
+        public LeaveBalanceController(ILeaveBalanceService svc) => _svc = svc;
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMine([FromQuery] int? year)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.GetBalanceAsync(userId, year));
+        }
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUser(int userId, [FromQuery] int? year)
+        {
+            var callerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var role     = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (role != Roles.Admin && callerId != userId) return Forbid();
+            return Ok(await _svc.GetBalanceAsync(userId, year));
+        }
+    }
+
+    // ════════════ SHIFT SWAP ════════════════════════════════════════════
+    [ApiController]
+    [Route("api/ShiftSwap")]
+    [Authorize]
+    public class ShiftSwapController : ControllerBase
+    {
+        private readonly IShiftSwapService _svc;
+        public ShiftSwapController(IShiftSwapService svc) => _svc = svc;
+
+        [HttpGet("my-outgoing")]
+        public async Task<IActionResult> MyOutgoing()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.GetMyOutgoingAsync(userId));
+        }
+
+        [HttpGet("my-incoming")]
+        public async Task<IActionResult> MyIncoming()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.GetMyIncomingAsync(userId));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> All([FromQuery] string? status)
+            => Ok(await _svc.GetAllAsync(status));
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateShiftSwapDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.CreateAsync(userId, dto));
+        }
+
+        [HttpPost("{id}/respond")]
+        public async Task<IActionResult> Respond(int id, [FromBody] RespondShiftSwapDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await _svc.RespondAsync(id, userId, dto);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost("{id}/approve")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var reviewerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result     = await _svc.ApproveAsync(id, reviewerId);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost("{id}/reject")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var reviewerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result     = await _svc.RejectAsync(id, reviewerId);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var userId  = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var success = await _svc.CancelAsync(id, userId);
+            return success ? NoContent() : NotFound();
+        }
+    }
+
+    // ════════════ OVERTIME REQUEST ══════════════════════════════════════
+    [ApiController]
+    [Route("api/Overtime")]
+    [Authorize]
+    public class OvertimeController : ControllerBase
+    {
+        private readonly IOvertimeRequestService _svc;
+        public OvertimeController(IOvertimeRequestService svc) => _svc = svc;
+
+        [HttpGet("my")]
+        public async Task<IActionResult> Mine()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.GetMyAsync(userId));
+        }
+
+        [HttpGet]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> All([FromQuery] string? status)
+            => Ok(await _svc.GetAllAsync(status));
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateOvertimeRequestDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.CreateAsync(userId, dto));
+        }
+
+        [HttpPost("{id}/approve")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var reviewerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result     = await _svc.ApproveAsync(id, reviewerId);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost("{id}/reject")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var reviewerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result     = await _svc.RejectAsync(id, reviewerId);
+            return result == null ? NotFound() : Ok(result);
+        }
+    }
+
     // ════════════ KIOSK ══════════════════════════════════════════════════
     /// <summary>
     /// Sabit cihazlardan (tablet/telefon) yüz tanıma turnike erişimi.

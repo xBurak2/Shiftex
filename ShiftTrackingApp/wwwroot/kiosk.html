@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Shiftex Turnike — Giriş & Çıkış</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
   <script>
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
@@ -28,9 +30,23 @@
   <div class="kiosk-auth-card">
     <div class="kiosk-brand">
       <div class="brand-mark brand-mark-lg">
-        <svg viewBox="0 0 32 32" fill="none">
-          <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/>
-          <path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sxLogoBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#8B5CF6"/>
+              <stop offset=".5" stop-color="#5B5FCF"/>
+              <stop offset="1" stop-color="#22D3EE"/>
+            </linearGradient>
+            <linearGradient id="sxLogoDot" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FBBF24"/>
+              <stop offset="1" stop-color="#F97316"/>
+            </linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="8" fill="url(#sxLogoBg)"/>
+          <path d="M10 10h10" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
+          <path d="M8 16h14"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
+          <path d="M12 22h9"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>
+          <circle cx="22" cy="10" r="2.6" fill="url(#sxLogoDot)"/>
         </svg>
       </div>
       <span>Shiftex Turnike</span>

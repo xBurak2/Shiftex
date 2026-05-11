@@ -7,14 +7,16 @@ namespace ShiftTrackingApp.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<User>            Users            => Set<User>();
-        public DbSet<Department>      Departments      => Set<Department>();
-        public DbSet<Shift>           Shifts           => Set<Shift>();
-        public DbSet<ShiftAssignment> ShiftAssignments => Set<ShiftAssignment>();
-        public DbSet<LeaveRequest>    LeaveRequests    => Set<LeaveRequest>();
-        public DbSet<AttendanceLog>   AttendanceLogs   => Set<AttendanceLog>();
-        public DbSet<RefreshToken>    RefreshTokens    => Set<RefreshToken>();
-        public DbSet<FaceData>        FaceData         => Set<FaceData>();
+        public DbSet<User>              Users              => Set<User>();
+        public DbSet<Department>        Departments        => Set<Department>();
+        public DbSet<Shift>             Shifts             => Set<Shift>();
+        public DbSet<ShiftAssignment>   ShiftAssignments   => Set<ShiftAssignment>();
+        public DbSet<LeaveRequest>      LeaveRequests      => Set<LeaveRequest>();
+        public DbSet<AttendanceLog>     AttendanceLogs     => Set<AttendanceLog>();
+        public DbSet<RefreshToken>      RefreshTokens      => Set<RefreshToken>();
+        public DbSet<FaceData>          FaceData           => Set<FaceData>();
+        public DbSet<ShiftSwapRequest>  ShiftSwapRequests  => Set<ShiftSwapRequest>();
+        public DbSet<OvertimeRequest>   OvertimeRequests   => Set<OvertimeRequest>();
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
@@ -67,6 +69,44 @@ namespace ShiftTrackingApp.Data
             mb.Entity<FaceData>()
               .HasIndex(fd => fd.UserId)
               .IsUnique(); // Bir personele yalnızca bir yüz kaydı
+
+            // ── VARDIYA DEĞİŞİM TALEPLERİ ────────────────────────────────
+            mb.Entity<ShiftSwapRequest>()
+              .HasOne(s => s.Requester)
+              .WithMany()
+              .HasForeignKey(s => s.RequesterId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<ShiftSwapRequest>()
+              .HasOne(s => s.TargetUser)
+              .WithMany()
+              .HasForeignKey(s => s.TargetUserId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<ShiftSwapRequest>()
+              .HasOne(s => s.RequesterShiftAssignment)
+              .WithMany()
+              .HasForeignKey(s => s.RequesterShiftAssignmentId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<ShiftSwapRequest>()
+              .HasOne(s => s.TargetShiftAssignment)
+              .WithMany()
+              .HasForeignKey(s => s.TargetShiftAssignmentId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // ── MESAİ TALEPLERİ ───────────────────────────────────────────
+            mb.Entity<OvertimeRequest>()
+              .HasOne(o => o.User)
+              .WithMany()
+              .HasForeignKey(o => o.UserId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            mb.Entity<OvertimeRequest>()
+              .HasOne(o => o.Shift)
+              .WithMany()
+              .HasForeignKey(o => o.ShiftId)
+              .OnDelete(DeleteBehavior.Restrict);
 
             // ── SEED DATA ─────────────────────────────────────────────────
             mb.Entity<Department>().HasData(

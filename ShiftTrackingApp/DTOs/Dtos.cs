@@ -262,6 +262,83 @@ namespace ShiftTrackingApp.DTOs
         public string? Description { get; set; }
     }
 
+    // ─── LEAVE BALANCE ──────────────────────────────────────
+    public class LeaveBalanceDto
+    {
+        public int UserId { get; set; }
+        public int Year { get; set; }
+        public int AnnualAllowance { get; set; }   // Varsayılan 14 gün/yıl
+        public int UsedDays { get; set; }          // Bu yıl onaylanmış Yıllık izinler
+        public int PendingDays { get; set; }       // Henüz onaylanmamış Yıllık izin talepleri
+        public int RemainingDays => Math.Max(0, AnnualAllowance - UsedDays);
+    }
+
+    // ─── SHIFT SWAP REQUEST ─────────────────────────────────
+    public class ShiftSwapRequestDto
+    {
+        public int Id { get; set; }
+        public int RequesterId { get; set; }
+        public string RequesterName { get; set; } = string.Empty;
+        public int RequesterShiftAssignmentId { get; set; }
+        public DateOnly RequesterDate { get; set; }
+        public string RequesterShiftName { get; set; } = string.Empty;
+        public string RequesterShiftColor { get; set; } = string.Empty;
+
+        public int TargetUserId { get; set; }
+        public string TargetUserName { get; set; } = string.Empty;
+        public int? TargetShiftAssignmentId { get; set; }
+        public DateOnly? TargetDate { get; set; }
+        public string? TargetShiftName { get; set; }
+        public string? TargetShiftColor { get; set; }
+
+        public string? Reason { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAt  { get; set; }
+        public DateTime? RespondedAt { get; set; }
+        public DateTime? ReviewedAt  { get; set; }
+    }
+
+    public class CreateShiftSwapDto
+    {
+        [Required] public int RequesterShiftAssignmentId { get; set; }
+        [Required] public int TargetUserId { get; set; }
+        public int? TargetShiftAssignmentId { get; set; }
+        [MaxLength(500)] public string? Reason { get; set; }
+    }
+
+    public class RespondShiftSwapDto
+    {
+        [Required]
+        [RegularExpression("^(Accept|Reject)$")]
+        public string Response { get; set; } = string.Empty;
+    }
+
+    // ─── OVERTIME REQUEST ───────────────────────────────────
+    public class OvertimeRequestDto
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public DateOnly Date { get; set; }
+        public int ShiftId { get; set; }
+        public string ShiftName { get; set; } = string.Empty;
+        public string ShiftColor { get; set; } = string.Empty;
+        public string ShiftStartTime { get; set; } = string.Empty;
+        public string ShiftEndTime { get; set; } = string.Empty;
+        public string? Reason { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+    }
+
+    public class CreateOvertimeRequestDto
+    {
+        [Required] public DateOnly Date { get; set; }
+        [Required, Range(7, 9, ErrorMessage = "Geçerli bir FM vardiyası seçin (7-9).")]
+        public int ShiftId { get; set; }
+        [MaxLength(500)] public string? Reason { get; set; }
+    }
+
     // ─── REFRESH TOKEN ─────────────────────────────────────
     public class RefreshRequestDto
     {
