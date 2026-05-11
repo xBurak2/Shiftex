@@ -15,6 +15,7 @@ let myShiftWeekStart = getMondayOf(new Date());
 let empCurrentPage = 1;
 let empTotalPages  = 1;
 const EMP_PAGE_SIZE = 50;
+let currentPage = null;
 
 // Camera streams (sadece yüz kaydı için — devam takip artık kiosk üzerinden)
 let enrStream = null;
@@ -99,12 +100,49 @@ function toast(msg, type='ok') {
 
 // ── Theme ───────────────────────────────────────────────────────────
 function getStoredTheme() { return localStorage.getItem('sx_theme') || 'dark'; }
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem('sx_theme', t);
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('sx_theme', theme);
   const lbl = document.getElementById('theme-label');
-  if (lbl) lbl.textContent = t === 'dark' ? 'Karanlık' : 'Açık';
+  if (lbl) lbl.textContent = theme === 'dark'
+    ? (window.t ? t('menu.theme_dark') : 'Karanlık')
+    : (window.t ? t('menu.theme_light') : 'Açık');
 }
+
+// Dil değiştiğinde tetiklenir (i18n.js'den çağrılır)
+window.onLanguageChanged = function(lang) {
+  // Aktif lang butonunu işaretle
+  document.querySelectorAll('.lang-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  // Tema label'ını güncelle
+  applyTheme(localStorage.getItem('sx_theme') || 'dark');
+  // Topbar role'ünü güncelle
+  if (currentUser) {
+    const r = document.getElementById('topbar-role');
+    if (r) r.textContent = currentUser.role === 'Admin' ? t('topbar.admin') : t('topbar.employee');
+  }
+  // Sidebar nav'i yeniden çiz
+  if (currentUser) buildNav();
+  // Sayfa başlığını güncelle
+  if (currentPage) {
+    const titleKey = PAGE_TITLE_KEYS[currentPage];
+    const titleEl = document.getElementById('topbar-title');
+    if (titleEl && titleKey) titleEl.textContent = t(titleKey);
+  }
+  // Aktif sayfayı yeniden yükle (dinamik metinler için)
+  if (currentPage) showPage(currentPage);
+  // Notification'ları yeniden render et
+  if (typeof renderNotifications === 'function') renderNotifications();
+};
+
+// Sayfa açıldığında aktif lang butonu işaretlensin
+document.addEventListener('DOMContentLoaded', () => {
+  const lang = (typeof getLang === 'function') ? getLang() : 'tr';
+  document.querySelectorAll('.lang-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+});
 function cycleTheme() {
   const cur = getStoredTheme();
   applyTheme(cur === 'dark' ? 'light' : 'dark');
@@ -326,7 +364,7 @@ function renderNotifications() {
   badge.textContent = total > 9 ? '9+' : String(total);
   badge.classList.toggle('hidden', total === 0);
   document.getElementById('notif-count-text').textContent =
-    total === 0 ? 'Yeni bildirim yok' : `${total} bildirim`;
+    total === 0 ? t('menu.no_notifs') : t('menu.notif_count', { count: total });
 
   list.innerHTML = items.length ? items.map(it => `
     <button class="notif-item" onclick="${it.onclick}">
@@ -336,7 +374,7 @@ function renderNotifications() {
         <div class="notif-body">${esc(it.body)}</div>
       </div>
     </button>
-  `).join('') : '<div class="empty">Yeni bildirim yok 🎉</div>';
+  `).join('') : `<div class="empty">${t('menu.no_notifs')} 🎉</div>`;
 }
 
 function closeNotifMenu() { document.getElementById('notif-menu')?.classList.remove('open'); }
@@ -362,33 +400,33 @@ function tryRestoreSession() {
 
 // ── Navigation ──────────────────────────────────────────────────────
 const NAV_ADMIN = [
-  { section: 'Genel' },
-  { id: 'dashboard',     label: 'Dashboard',           icon: ICONS.dashboard },
-  { section: 'Personel' },
-  { id: 'employees',     label: 'Personel',            icon: ICONS.users },
-  { id: 'departments',   label: 'Departmanlar',        icon: ICONS.building },
-  { section: 'Operasyon' },
-  { id: 'roster',        label: 'Vardiya Planlama',    icon: ICONS.calendar },
-  { id: 'attendance',    label: 'Devam Takip',         icon: ICONS.check },
-  { id: 'leaves',        label: 'İzin Yönetimi',       icon: ICONS.clipboard },
-  { id: 'overtime-admin',label: 'Mesai Talepleri',     icon: ICONS.trend },
-  { id: 'swap-admin',    label: 'Vardiya Değişimleri', icon: ICONS.scan },
-  { section: 'Raporlar' },
-  { id: 'enroll',        label: 'Yüz Kaydı',           icon: ICONS.scan },
-  { id: 'monthly',       label: 'Aylık Rapor',         icon: ICONS.chart },
+  { section: 'nav.general' },
+  { id: 'dashboard',      key: 'nav.dashboard',      icon: ICONS.dashboard },
+  { section: 'nav.personnel' },
+  { id: 'employees',      key: 'nav.employees',      icon: ICONS.users },
+  { id: 'departments',    key: 'nav.departments',    icon: ICONS.building },
+  { section: 'nav.operations' },
+  { id: 'roster',         key: 'nav.roster',         icon: ICONS.calendar },
+  { id: 'attendance',     key: 'nav.attendance',     icon: ICONS.check },
+  { id: 'leaves',         key: 'nav.leaves',         icon: ICONS.clipboard },
+  { id: 'overtime-admin', key: 'nav.overtime_admin', icon: ICONS.trend },
+  { id: 'swap-admin',     key: 'nav.swap_admin',     icon: ICONS.scan },
+  { section: 'nav.reports' },
+  { id: 'enroll',         key: 'nav.enroll',         icon: ICONS.scan },
+  { id: 'monthly',        key: 'nav.monthly',        icon: ICONS.chart },
 ];
 
 const NAV_EMP = [
-  { section: 'Kişisel' },
-  { id: 'my-dashboard',  label: 'Genel Bakış',         icon: ICONS.dashboard },
-  { id: 'my-shifts',     label: 'Vardiyalarım',        icon: ICONS.calendar },
-  { id: 'my-attendance', label: 'Devam Durumum',       icon: ICONS.check },
-  { id: 'my-leaves',     label: 'İzin Taleplerim',     icon: ICONS.clipboard },
-  { id: 'my-overtime',   label: 'Mesai Taleplerim',    icon: ICONS.trend },
-  { id: 'my-swaps',      label: 'Vardiya Değişimleri', icon: ICONS.scan },
-  { id: 'my-monthly',    label: 'Aylık Özetim',        icon: ICONS.chart },
-  { section: 'Takım' },
-  { id: 'roster',        label: 'Haftalık Plan',       icon: ICONS.calendar },
+  { section: 'nav.personal' },
+  { id: 'my-dashboard',  key: 'nav.my_dashboard',  icon: ICONS.dashboard },
+  { id: 'my-shifts',     key: 'nav.my_shifts',     icon: ICONS.calendar },
+  { id: 'my-attendance', key: 'nav.my_attendance', icon: ICONS.check },
+  { id: 'my-leaves',     key: 'nav.my_leaves',     icon: ICONS.clipboard },
+  { id: 'my-overtime',   key: 'nav.my_overtime',   icon: ICONS.trend },
+  { id: 'my-swaps',      key: 'nav.my_swaps',      icon: ICONS.scan },
+  { id: 'my-monthly',    key: 'nav.my_monthly',    icon: ICONS.chart },
+  { section: 'nav.team' },
+  { id: 'roster',        key: 'nav.weekly_plan',   icon: ICONS.calendar },
 ];
 
 // ── Vardiya kategorileri (Shift Id'ye göre) ─────────────────────────
@@ -413,20 +451,31 @@ function getShiftCategory(shiftId) {
 function buildNav() {
   const items = currentUser.role === 'Admin' ? NAV_ADMIN : NAV_EMP;
   const html = items.map(it => {
-    if (it.section) return `<div class="nav-section">${it.section}</div>`;
-    return `<a class="nav-link" data-page="${it.id}" onclick="navTo('${it.id}')">${it.icon}<span>${it.label}</span></a>`;
+    if (it.section) return `<div class="nav-section">${esc(t(it.section))}</div>`;
+    return `<a class="nav-link" data-page="${it.id}" onclick="navTo('${it.id}')">${it.icon}<span>${esc(t(it.key))}</span></a>`;
   }).join('');
   document.getElementById('sidebar-nav').innerHTML = html;
 }
 
-const PAGE_TITLES = {
-  'dashboard': 'Dashboard', 'employees': 'Personel', 'roster': 'Vardiya Planlama',
-  'attendance': 'Devam Takip', 'leaves': 'İzin Yönetimi', 'my-leaves': 'İzin Taleplerim',
-  'my-shifts': 'Vardiyalarım', 'my-attendance': 'Devam Durumum', 'profile': 'Profilim',
-  'enroll': 'Yüz Kaydı', 'monthly': 'Aylık Rapor', 'departments': 'Departmanlar',
-  'my-dashboard': 'Genel Bakış', 'my-monthly': 'Aylık Özetim',
-  'my-overtime': 'Mesai Taleplerim', 'my-swaps': 'Vardiya Değişimleri',
-  'overtime-admin': 'Mesai Talepleri', 'swap-admin': 'Vardiya Değişim Talepleri'
+const PAGE_TITLE_KEYS = {
+  'dashboard': 'nav.dashboard',
+  'employees': 'nav.employees',
+  'departments': 'nav.departments',
+  'roster': 'nav.roster',
+  'attendance': 'nav.attendance',
+  'leaves': 'nav.leaves',
+  'overtime-admin': 'nav.overtime_admin',
+  'swap-admin': 'nav.swap_admin',
+  'enroll': 'nav.enroll',
+  'monthly': 'nav.monthly',
+  'my-dashboard': 'nav.my_dashboard',
+  'my-shifts': 'nav.my_shifts',
+  'my-attendance': 'nav.my_attendance',
+  'my-leaves': 'nav.my_leaves',
+  'my-overtime': 'nav.my_overtime',
+  'my-swaps': 'nav.my_swaps',
+  'my-monthly': 'nav.my_monthly',
+  'profile': 'menu.profile'
 };
 
 function navTo(id) { showPage(id); }
@@ -437,7 +486,9 @@ function showPage(id) {
   if (el) el.classList.remove('hidden');
   document.querySelectorAll('.nav-link').forEach(a =>
     a.classList.toggle('active', a.dataset.page === id));
-  document.getElementById('topbar-title').textContent = PAGE_TITLES[id] || '';
+  const titleKey = PAGE_TITLE_KEYS[id];
+  document.getElementById('topbar-title').textContent = titleKey ? t(titleKey) : '';
+  currentPage = id;
   if (window.innerWidth <= 900) document.getElementById('sidebar')?.classList.remove('open');
 
   switch(id) {
@@ -467,7 +518,7 @@ function updateTopbarUser() {
   const u = currentUser;
   document.getElementById('topbar-avatar').innerHTML = avatar(u.fullName, u.photoBase64, 32);
   document.getElementById('topbar-name').textContent = u.fullName;
-  document.getElementById('topbar-role').textContent = u.role === 'Admin' ? 'Yönetici' : 'Personel';
+  document.getElementById('topbar-role').textContent = u.role === 'Admin' ? t('topbar.admin') : t('topbar.employee');
   document.getElementById('dropdown-header').innerHTML =
     `<strong>${u.fullName}</strong>${u.email}`;
 }
@@ -477,11 +528,12 @@ async function loadDashboard() {
   // Hero
   const firstName = currentUser.fullName.split(' ')[0];
   const hour = new Date().getHours();
-  const greet = hour < 6 ? 'İyi geceler' : hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
-  document.getElementById('hero-title').textContent = `${greet}, ${esc(firstName)} 👋`;
-  document.getElementById('hero-sub').textContent = 'İşte ekibinin bugünkü durumu — bir bakış at.';
+  const greetKey = hour < 6 ? 'dash.good_night' : hour < 12 ? 'dash.good_morning' : hour < 18 ? 'dash.good_day' : 'dash.good_evening';
+  document.getElementById('hero-title').textContent = `${t(greetKey)}, ${firstName} 👋`;
+  document.getElementById('hero-sub').textContent = t('dash.sub');
+  const localeStr = getLang() === 'en' ? 'en-US' : 'tr-TR';
   document.getElementById('hero-date').textContent =
-    new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' });
+    new Date().toLocaleDateString(localeStr, { day:'numeric', month:'long', year:'numeric', weekday:'long' });
   startHeroClock();
 
   try {
@@ -494,12 +546,12 @@ async function loadDashboard() {
     // Stat kartlar — daha zengin görsel
     const sg = document.getElementById('stat-grid');
     sg.innerHTML = [
-      {label:'Toplam Personel', val: stats.totalActiveEmployees, icon: ICONS.team,    cls:'icon-blue',   hint:'Aktif'},
-      {label:'Bugün Giriş',     val: stats.presentToday,         icon: ICONS.checkin, cls:'icon-green',  hint:'Çalışıyor'},
-      {label:'İzinli',          val: stats.onLeaveToday,         icon: ICONS.palm,    cls:'icon-amber',  hint:'Onaylı'},
-      {label:'Devamsız',        val: stats.absentToday,          icon: ICONS.cross,   cls:'icon-red',    hint:'Bildirimsiz'},
-      {label:'Bekleyen İzin',   val: stats.pendingLeaveRequests, icon: ICONS.pending, cls:'icon-cyan',   hint:'Onay bekliyor'},
-      {label:'Devam Oranı',     val: stats.attendanceRate+'%',   icon: ICONS.trend,   cls:'icon-violet', hint:'Bugün'},
+      {label:t('dash.total_emp'),       val: stats.totalActiveEmployees, icon: ICONS.team,    cls:'icon-blue',   hint:t('dash.hint_active')},
+      {label:t('dash.present_today'),   val: stats.presentToday,         icon: ICONS.checkin, cls:'icon-green',  hint:t('dash.hint_working')},
+      {label:t('dash.on_leave'),        val: stats.onLeaveToday,         icon: ICONS.palm,    cls:'icon-amber',  hint:t('dash.hint_approved')},
+      {label:t('dash.absent'),          val: stats.absentToday,          icon: ICONS.cross,   cls:'icon-red',    hint:t('dash.hint_unreported')},
+      {label:t('dash.pending_leaves'),  val: stats.pendingLeaveRequests, icon: ICONS.pending, cls:'icon-cyan',   hint:t('dash.hint_waiting')},
+      {label:t('dash.attendance_rate'), val: stats.attendanceRate+'%',   icon: ICONS.trend,   cls:'icon-violet', hint:t('dash.hint_today')},
     ].map(s => `
       <div class="stat-card stat-card-rich">
         <div class="stat-icon ${s.cls}">${s.icon}</div>
@@ -521,9 +573,9 @@ async function loadDashboard() {
           <strong>${esc(a.userFullName)}</strong>
           <small>→ ${fmtTime(a.checkIn)}${a.checkOut ? ' · ← ' + fmtTime(a.checkOut) : ''}</small>
         </div>
-        ${a.checkOut ? '<span class="badge badge-emp">Tamamlandı</span>' : '<span class="badge badge-on">Aktif</span>'}
+        ${a.checkOut ? `<span class="badge badge-emp">${t('att.completed')}</span>` : `<span class="badge badge-on">${t('att.active')}</span>`}
       </div>`).join('')
-    : '<div class="empty">Bugün henüz giriş yapılmadı.</div>';
+    : `<div class="empty">${t('dash.no_attendance')}</div>`;
 
     // Geç kalanlar
     const lates = today.filter(a => a.isLateArrival);
@@ -533,11 +585,11 @@ async function loadDashboard() {
         ${avatar(a.userFullName, a.userPhoto, 36)}
         <div class="pr-info">
           <strong>${esc(a.userFullName)}</strong>
-          <small>${fmtTime(a.checkIn)} · <span class="late-mins">+${a.lateMinutes} dk</span></small>
+          <small>${fmtTime(a.checkIn)} · <span class="late-mins">+${a.lateMinutes} ${t('common.minutes')}</span></small>
         </div>
-        <span class="badge badge-warn">Geç</span>
+        <span class="badge badge-warn">${getLang()==='en'?'Late':'Geç'}</span>
       </div>`).join('')
-    : '<div class="empty">🎉 Bugün geç kalan yok!</div>';
+    : `<div class="empty">${t('dash.no_late')}</div>`;
 
     // Bekleyen izinler
     const pd = document.getElementById('pending-leaves-dash');
@@ -546,11 +598,11 @@ async function loadDashboard() {
         ${avatar(l.userFullName, null, 32)}
         <div style="flex:1;min-width:0">
           <strong>${esc(l.userFullName)}</strong>
-          <span style="display:block;font-size:12px;color:var(--text-3)">${esc(l.leaveType)} · ${l.totalDays} gün</span>
+          <span style="display:block;font-size:12px;color:var(--text-3)">${esc(l.leaveType)} · ${l.totalDays} ${t('common.day')}</span>
         </div>
-        <span class="badge badge-warn">Bekliyor</span>
+        <span class="badge badge-warn">${t('leave.status_pending')}</span>
       </div>`).join('')
-    : '<div class="empty">Bekleyen talep yok.</div>';
+    : `<div class="empty">${t('dash.no_pending')}</div>`;
 
     // Yaklaşan izinler (7 gün)
     const all = await api('GET','/api/Leaves?status=Approved').catch(()=>[]);
@@ -562,15 +614,17 @@ async function loadDashboard() {
     });
     document.getElementById('upcoming-leaves').innerHTML = upcoming.length ? upcoming.slice(0,6).map(l => {
       const days = Math.ceil((new Date(l.startDate) - new Date()) / (1000*60*60*24));
+      const dayLabel = days <= 0 ? t('common.today')
+                     : (getLang()==='en' ? `in ${days} days` : `${days} gün sonra`);
       return `<div class="upcoming-row">
         ${avatar(l.userFullName, null, 32)}
         <div style="flex:1;min-width:0">
           <strong>${esc(l.userFullName)}</strong>
           <span style="display:block;font-size:12px;color:var(--text-3)">${esc(l.leaveType)} · ${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}</span>
         </div>
-        <span class="badge badge-info">${days <= 0 ? 'Bugün' : days + ' gün sonra'}</span>
+        <span class="badge badge-info">${dayLabel}</span>
       </div>`;
-    }).join('') : '<div class="empty">Önümüzdeki 7 günde planlı izin yok.</div>';
+    }).join('') : `<div class="empty">${t('dash.no_upcoming')}</div>`;
 
     // Bu hafta vardiya dağılımı
     await renderShiftDistribution();
@@ -592,17 +646,18 @@ async function renderShiftDistribution() {
   const ws = getMondayOf(new Date());
   try {
     const assignments = await api('GET', `/api/Shifts/weekly?weekStart=${fmtDateOnly(ws)}`);
-    const buckets = { 'Vardiyalar': 0, 'Tatil/İzin': 0, 'Fazla Mesai': 0 };
-    const colors = { 'Vardiyalar': '#4f6ef7', 'Tatil/İzin': '#ef4444', 'Fazla Mesai': '#f97316' };
+    const labelShift = t('dash.shift_regular'), labelLeave = t('dash.shift_leave'), labelOT = t('dash.shift_overtime');
+    const buckets = { [labelShift]: 0, [labelLeave]: 0, [labelOT]: 0 };
+    const colors = { [labelShift]: '#4f6ef7', [labelLeave]: '#ef4444', [labelOT]: '#f97316' };
     (assignments || []).forEach(a => {
       const cat = getShiftCategory(a.shiftId);
-      if (cat === 'shift')        buckets['Vardiyalar']++;
-      else if (cat === 'leave')   buckets['Tatil/İzin']++;
-      else if (cat === 'overtime') buckets['Fazla Mesai']++;
+      if (cat === 'shift')        buckets[labelShift]++;
+      else if (cat === 'leave')   buckets[labelLeave]++;
+      else if (cat === 'overtime') buckets[labelOT]++;
     });
     const total = Object.values(buckets).reduce((a,b)=>a+b,0);
     const el = document.getElementById('shift-distribution');
-    if (!total) { el.innerHTML = '<div class="empty">Bu hafta atanmış vardiya yok.</div>'; return; }
+    if (!total) { el.innerHTML = `<div class="empty">${t('dash.no_dist')}</div>`; return; }
     el.innerHTML = Object.entries(buckets).map(([name, count]) => {
       const pct = Math.round((count/total)*100);
       return `<div class="dist-row">
