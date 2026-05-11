@@ -330,7 +330,19 @@ using (var scope = app.Services.CreateScope())
     var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
+        // Migration durumunu logla (production'da debug için kritik)
+        var pending = db.Database.GetPendingMigrations().ToList();
+        if (pending.Any())
+        {
+            log.LogWarning("⚠ {Count} bekleyen migration var: {Migrations}",
+                pending.Count, string.Join(", ", pending));
+        }
+
         db.Database.Migrate();
+
+        var applied = db.Database.GetAppliedMigrations().ToList();
+        log.LogInformation("✓ DB migration tamamlandı. Toplam uygulanan: {Count}. Son: {Last}",
+            applied.Count, applied.LastOrDefault() ?? "(yok)");
 
         db.Database.ExecuteSqlRaw(@"
             IF OBJECT_ID('ShiftAssignments') IS NOT NULL

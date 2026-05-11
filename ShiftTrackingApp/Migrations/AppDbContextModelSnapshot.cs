@@ -176,6 +176,48 @@ namespace ShiftTrackingApp.Migrations
                     b.ToTable("LeaveRequests");
                 });
 
+            modelBuilder.Entity("ShiftTrackingApp.Models.OvertimeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OvertimeRequests");
+                });
+
             modelBuilder.Entity("ShiftTrackingApp.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -347,6 +389,58 @@ namespace ShiftTrackingApp.Migrations
                     b.ToTable("ShiftAssignments");
                 });
 
+            modelBuilder.Entity("ShiftTrackingApp.Models.ShiftSwapRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RequesterId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequesterShiftAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TargetShiftAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequesterId");
+
+                    b.HasIndex("RequesterShiftAssignmentId");
+
+                    b.HasIndex("TargetShiftAssignmentId");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.ToTable("ShiftSwapRequests");
+                });
+
             modelBuilder.Entity("ShiftTrackingApp.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -460,6 +554,25 @@ namespace ShiftTrackingApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShiftTrackingApp.Models.OvertimeRequest", b =>
+                {
+                    b.HasOne("ShiftTrackingApp.Models.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftTrackingApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShiftTrackingApp.Models.RefreshToken", b =>
                 {
                     b.HasOne("ShiftTrackingApp.Models.User", "User")
@@ -488,6 +601,40 @@ namespace ShiftTrackingApp.Migrations
                     b.Navigation("Shift");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShiftTrackingApp.Models.ShiftSwapRequest", b =>
+                {
+                    b.HasOne("ShiftTrackingApp.Models.User", "Requester")
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftTrackingApp.Models.ShiftAssignment", "RequesterShiftAssignment")
+                        .WithMany()
+                        .HasForeignKey("RequesterShiftAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftTrackingApp.Models.ShiftAssignment", "TargetShiftAssignment")
+                        .WithMany()
+                        .HasForeignKey("TargetShiftAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShiftTrackingApp.Models.User", "TargetUser")
+                        .WithMany()
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Requester");
+
+                    b.Navigation("RequesterShiftAssignment");
+
+                    b.Navigation("TargetShiftAssignment");
+
+                    b.Navigation("TargetUser");
                 });
 
             modelBuilder.Entity("ShiftTrackingApp.Models.User", b =>
