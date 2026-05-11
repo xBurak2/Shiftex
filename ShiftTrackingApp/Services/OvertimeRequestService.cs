@@ -24,16 +24,19 @@ namespace ShiftTrackingApp.Services
         public OvertimeRequestService(AppDbContext db) => _db = db;
 
         public async Task<List<OvertimeRequestDto>> GetMyAsync(int userId)
-            => await BaseQuery().Where(o => o.UserId == userId)
-                                .OrderByDescending(o => o.CreatedAt)
-                                .Select(o => ToDto(o)).ToListAsync();
+        {
+            var rows = await BaseQuery().Where(o => o.UserId == userId)
+                                        .OrderByDescending(o => o.CreatedAt)
+                                        .ToListAsync();
+            return rows.Select(ToDto).ToList();
+        }
 
         public async Task<List<OvertimeRequestDto>> GetAllAsync(string? status = null)
         {
             var q = BaseQuery();
             if (!string.IsNullOrEmpty(status)) q = q.Where(o => o.Status == status);
-            return await q.OrderByDescending(o => o.CreatedAt)
-                          .Select(o => ToDto(o)).ToListAsync();
+            var rows = await q.OrderByDescending(o => o.CreatedAt).ToListAsync();
+            return rows.Select(ToDto).ToList();
         }
 
         public async Task<OvertimeRequestDto> CreateAsync(int userId, CreateOvertimeRequestDto dto)
@@ -111,7 +114,10 @@ namespace ShiftTrackingApp.Services
                   .Include(o => o.Shift);
 
         private async Task<OvertimeRequestDto> LoadDto(int id)
-            => ToDto(await BaseQuery().FirstAsync(o => o.Id == id));
+        {
+            var row = await BaseQuery().FirstAsync(o => o.Id == id);
+            return ToDto(row);
+        }
 
         private static OvertimeRequestDto ToDto(OvertimeRequest o) => new()
         {

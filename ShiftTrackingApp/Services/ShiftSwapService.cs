@@ -23,21 +23,27 @@ namespace ShiftTrackingApp.Services
         public ShiftSwapService(AppDbContext db) => _db = db;
 
         public async Task<List<ShiftSwapRequestDto>> GetMyOutgoingAsync(int userId)
-            => await BaseQuery().Where(s => s.RequesterId == userId)
-                                .OrderByDescending(s => s.CreatedAt)
-                                .Select(s => ToDto(s)).ToListAsync();
+        {
+            var rows = await BaseQuery().Where(s => s.RequesterId == userId)
+                                        .OrderByDescending(s => s.CreatedAt)
+                                        .ToListAsync();
+            return rows.Select(ToDto).ToList();
+        }
 
         public async Task<List<ShiftSwapRequestDto>> GetMyIncomingAsync(int userId)
-            => await BaseQuery().Where(s => s.TargetUserId == userId)
-                                .OrderByDescending(s => s.CreatedAt)
-                                .Select(s => ToDto(s)).ToListAsync();
+        {
+            var rows = await BaseQuery().Where(s => s.TargetUserId == userId)
+                                        .OrderByDescending(s => s.CreatedAt)
+                                        .ToListAsync();
+            return rows.Select(ToDto).ToList();
+        }
 
         public async Task<List<ShiftSwapRequestDto>> GetAllAsync(string? status = null)
         {
             var q = BaseQuery();
             if (!string.IsNullOrEmpty(status)) q = q.Where(s => s.Status == status);
-            return await q.OrderByDescending(s => s.CreatedAt)
-                          .Select(s => ToDto(s)).ToListAsync();
+            var rows = await q.OrderByDescending(s => s.CreatedAt).ToListAsync();
+            return rows.Select(ToDto).ToList();
         }
 
         public async Task<ShiftSwapRequestDto> CreateAsync(int requesterId, CreateShiftSwapDto dto)
@@ -152,7 +158,10 @@ namespace ShiftTrackingApp.Services
                   .Include(s => s.TargetShiftAssignment).ThenInclude(sa => sa!.Shift);
 
         private async Task<ShiftSwapRequestDto> LoadDto(int id)
-            => ToDto(await BaseQuery().FirstAsync(s => s.Id == id));
+        {
+            var row = await BaseQuery().FirstAsync(s => s.Id == id);
+            return ToDto(row);
+        }
 
         private static ShiftSwapRequestDto ToDto(ShiftSwapRequest s) => new()
         {

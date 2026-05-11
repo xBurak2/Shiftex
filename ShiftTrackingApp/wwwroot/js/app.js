@@ -973,14 +973,21 @@ async function loadRoster() {
 
         let cellHtml = '';
         if (dayAssignments.length) {
-          cellHtml = dayAssignments.map(a => {
+          // Sıralama: Normal vardiya / İzin önce, Fazla mesai sonra (üstte normal, altta FM)
+          const sorted = [...dayAssignments].sort((x, y) => {
+            const xCat = getShiftCategory(x.shiftId);
+            const yCat = getShiftCategory(y.shiftId);
+            const order = { shift: 0, leave: 0, overtime: 1 };
+            return (order[xCat] ?? 0) - (order[yCat] ?? 0);
+          });
+          cellHtml = sorted.map(a => {
             const cat = getShiftCategory(a.shiftId);
             const catBadge = cat==='overtime' ? '<span class="fm-badge">FM</span>' : '';
             const onclick = isAdmin
               ? `onclick="openShiftModal('${ds}',${u.id},${a.id})"`
               : '';
             return `<div class="shift-chip cat-${cat}" style="background:${a.shiftColor}" ${onclick} title="${a.shiftName} ${a.startTime}–${a.endTime}">
-                <span class="chip-name">${a.shiftName}${catBadge}</span>
+                <span class="chip-name">${esc(a.shiftName)}${catBadge}</span>
                 <small>${a.startTime}–${a.endTime}</small>
               </div>`;
           }).join('');
@@ -998,7 +1005,11 @@ async function loadRoster() {
         return `<td>${cellHtml}</td>`;
       }).join('');
       const rowCls = isMe ? 'row-me' : '';
-      return `<tr class="${rowCls}"><td><div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${u.fullName}${isMe?' <small class="me-tag">(Sen)</small>':''}</span></div></td>${cells}</tr>`;
+      // Admin için personel ismine tıklanabilir profil görüntüleme
+      const nameCell = isAdmin
+        ? `<div class="name-cell name-cell-clickable" onclick="viewEmployeeProfile(${u.id})" title="Profili görüntüle">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}</span></div>`
+        : `<div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}${isMe?' <small class="me-tag">(Sen)</small>':''}</span></div>`;
+      return `<tr class="${rowCls}"><td>${nameCell}</td>${cells}</tr>`;
     }).join('');
     body.innerHTML = rows || '<tr><td colspan="8" class="empty">Personel bulunamadı.</td></tr>';
   } catch(e) { toast(e.message,'err'); }
@@ -1560,20 +1571,81 @@ async function loadDepts() {
   try { allDepts = await api('GET','/api/Departments'); return allDepts; }
   catch(e) { return []; }
 }
+// Modern departman renkleri — her departman benzersiz bir gradient alır
+const DEPT_GRADIENTS = [
+  { from:'#7B7FE0', to:'#22D3EE', icon:'🧑‍💼' },
+  { from:'#F97316', to:'#FBBF24', icon:'⚡' },
+  { from:'#34D399', to:'#22D3EE', icon:'🌿' },
+  { from:'#EC4899', to:'#A78BFA', icon:'✨' },
+  { from:'#6366F1', to:'#8B5CF6', icon:'🎯' },
+  { from:'#EF4444', to:'#F97316', icon:'🔥' },
+  { from:'#14B8A6', to:'#22D3EE', icon:'💎' },
+  { from:'#A855F7', to:'#EC4899', icon:'🌸' },
+];
+function deptStyle(idx) {
+  return DEPT_GRADIENTS[idx % DEPT_GRADIENTS.length];
+}
+
 function renderDepts() {
-  document.getElementById('dept-tbody').innerHTML = allDepts.length
-    ? allDepts.map(d => {
-        const count = d.employeeCount ?? 0;
-        const label = count === 0 ? 'Personel yok'
-                    : count === 1 ? '1 personel'
-                    : `${count} personel`;
-        return `<tr>
-          <td><strong>${d.name}</strong></td>
-          <td><span class="dept-count-badge">${ICONS.team}<span>${label}</span></span></td>
-          <td class="text-right"><button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="deleteDept(${d.id},'${d.name.replace(/'/g,"\\'")}')">Sil</button></td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="3" class="empty">Departman yok.</td></tr>';
+  const grid    = document.getElementById('dept-grid');
+  const summary = document.getElementById('dept-summary');
+  if (!allDepts.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <h3>Henüz departman yok</h3>
+      <p>Personellerinizi gruplamak için ilk departmanı oluşturun.</p>
+      <button class="btn btn-primary" onclick="openDeptModal()">Departman Ekle</button>
+    </div>`;
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+
+  const totalEmployees = allDepts.reduce((sum, d) => sum + (d.employeeCount || 0), 0);
+  const populated      = allDepts.filter(d => (d.employeeCount || 0) > 0).length;
+
+  summary.innerHTML = `
+    <div class="dept-summary-item">
+      <div class="dsi-val">${allDepts.length}</div>
+      <div class="dsi-lbl">Toplam Departman</div>
+    </div>
+    <div class="dept-summary-item">
+      <div class="dsi-val">${totalEmployees}</div>
+      <div class="dsi-lbl">Toplam Personel</div>
+    </div>
+    <div class="dept-summary-item">
+      <div class="dsi-val">${populated} / ${allDepts.length}</div>
+      <div class="dsi-lbl">Aktif Departman</div>
+    </div>`;
+
+  grid.innerHTML = allDepts.map((d, idx) => {
+    const count = d.employeeCount ?? 0;
+    const s     = deptStyle(idx);
+    const isEmpty = count === 0;
+    const label = isEmpty ? 'Henüz personel atanmamış'
+               : count === 1 ? '1 personel'
+               : `${count} personel`;
+    // Bu departmandaki personellerin küçük avatar dizimi (top 5)
+    const members = allUsers.filter(u => u.departmentId === d.id).slice(0, 5);
+    const memberAvatars = members.length ? members.map(m => `
+      <div class="dept-avatar" title="${esc(m.fullName)}">${avatar(m.fullName, m.photoBase64, 28)}</div>
+    `).join('') : '';
+    const extra = count > 5 ? `<div class="dept-avatar dept-avatar-more">+${count - 5}</div>` : '';
+
+    return `<div class="dept-card ${isEmpty?'dept-card-empty':''}">
+      <div class="dept-card-bg" style="background: linear-gradient(135deg, ${s.from} 0%, ${s.to} 100%)"></div>
+      <div class="dept-card-head">
+        <div class="dept-emoji">${s.icon}</div>
+        <button class="dept-card-menu" onclick="deleteDept(${d.id},'${esc(d.name).replace(/'/g,"\\'")}')" title="Departmanı sil">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M5 7h10M8 4h4l1 3M7 7v9a1 1 0 001 1h4a1 1 0 001-1V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <h3 class="dept-card-name">${esc(d.name)}</h3>
+      <div class="dept-card-count">
+        ${count > 0 ? `<span class="dcc-num">${count}</span><span class="dcc-lbl">${label.replace(count, '').trim()}</span>` : `<span class="dcc-empty">${label}</span>`}
+      </div>
+      ${members.length ? `<div class="dept-members">${memberAvatars}${extra}</div>` : '<div class="dept-members-empty">—</div>'}
+    </div>`;
+  }).join('');
 }
 function openDeptModal() {
   document.getElementById('dept-name').value = '';

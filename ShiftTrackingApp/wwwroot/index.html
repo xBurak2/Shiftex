@@ -781,21 +781,15 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">Departmanlar</h1>
-            <p class="page-sub">Şirket departmanlarını yönet</p>
+            <p class="page-sub">Şirket departmanlarını ve ekiplerini yönet</p>
           </div>
           <button class="btn btn-primary" onclick="openDeptModal()">
             <svg viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             Departman Ekle
           </button>
         </div>
-        <div class="card no-pad">
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Departman</th><th>Personel Sayısı</th><th class="text-right">İşlem</th></tr></thead>
-              <tbody id="dept-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+        <div class="dept-summary-bar" id="dept-summary"></div>
+        <div class="dept-grid" id="dept-grid"></div>
       </section>
 
     </main>
