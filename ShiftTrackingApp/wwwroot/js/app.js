@@ -276,33 +276,45 @@ let lastNotifData = { pending: [], lates: [] };
 function startNotificationPolling() {
   refreshNotifications();
   if (notifInterval) clearInterval(notifInterval);
-  notifInterval = setInterval(refreshNotifications, 60000); // 60 saniye
+  notifInterval = setInterval(refreshNotifications, 15000); // 15 saniye — hızlı bildirim
 }
 
 async function refreshNotifications() {
   try {
     const isAdmin = currentUser?.role === 'Admin';
     if (isAdmin) {
-      const [pending, today] = await Promise.all([
+      const [pending, today, swapPending] = await Promise.all([
         api('GET', '/api/Leaves?status=Pending').catch(()=>[]),
-        api('GET', '/api/Attendance/today').catch(()=>[])
+        api('GET', '/api/Attendance/today').catch(()=>[]),
+        api('GET', '/api/ShiftSwap?status=AcceptedByTarget').catch(()=>[])
       ]);
       const lates = (today || []).filter(a => a.isLateArrival);
-      lastNotifData = { kind: 'admin', pending: pending || [], lates };
+      lastNotifData = { kind: 'admin', pending: pending || [], lates, swapPending: swapPending || [] };
     } else {
-      // Personel için: kendi izin durumum + yaklaşan vardiyalar (yarın)
+      // Personel için: kendi izin durumum + yaklaşan vardiyalar + swap durumu
       const today = new Date();
       const tomorrow = new Date(); tomorrow.setDate(today.getDate()+1);
       const week     = new Date(); week.setDate(today.getDate()+7);
-      const [myLeaves, myShifts] = await Promise.all([
+      const [myLeaves, myShifts, mySwapOut, mySwapIn] = await Promise.all([
         api('GET', '/api/Leaves/my').catch(()=>[]),
-        api('GET', `/api/Shifts/my?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`).catch(()=>[])
+        api('GET', `/api/Shifts/my?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`).catch(()=>[]),
+        api('GET', '/api/ShiftSwap/my-outgoing').catch(()=>[]),
+        api('GET', '/api/ShiftSwap/my-incoming').catch(()=>[])
       ]);
       // Son 7 günde işlem gören kendi izinlerim
+      const sevenDays = 7*24*60*60*1000;
       const recentReviewed = (myLeaves || []).filter(l => {
         if (l.status === 'Pending') return false;
         const created = new Date(l.createdAt);
-        return (Date.now() - created.getTime()) < 7*24*60*60*1000;
+        return (Date.now() - created.getTime()) < sevenDays;
+      });
+      // Bana yöneltilen + bekleyen swap talepleri
+      const incomingPending = (mySwapIn || []).filter(s => s.status === 'Pending');
+      // Kendi swap'lerimin admin tarafından sonuçlananları (son 7 gün)
+      const myResolvedSwaps = (mySwapOut || []).filter(s => {
+        if (!['ApprovedByAdmin','RejectedByAdmin','AcceptedByTarget'].includes(s.status)) return false;
+        const ref = s.reviewedAt || s.respondedAt || s.createdAt;
+        return (Date.now() - new Date(ref).getTime()) < sevenDays;
       });
       // Yarın için vardiyam (eğer varsa) ve bugünkü vardiyam
       const upcomingShifts = (myShifts || []).filter(s => {
@@ -311,7 +323,7 @@ async function refreshNotifications() {
         const tmrStr   = fmtDateOnly(tomorrow);
         return fmtDateOnly(d) === todayStr || fmtDateOnly(d) === tmrStr;
       });
-      lastNotifData = { kind: 'employee', myLeaves: recentReviewed, upcomingShifts };
+      lastNotifData = { kind: 'employee', myLeaves: recentReviewed, upcomingShifts, incomingPending, myResolvedSwaps };
     }
     renderNotifications();
   } catch(_) { /* sessiz */ }
@@ -326,36 +338,59 @@ function renderNotifications() {
   if (d.kind === 'admin') {
     (d.pending || []).forEach(l => items.push({
       icon: '📋',
-      title: `${l.userFullName} izin talebi`,
-      body: `${l.leaveType} · ${l.totalDays} gün · ${fmtDate(l.startDate)}`,
+      title: t('notif.leave_pending', { name: l.userFullName }),
+      body: `${leaveTypeI18n(l.leaveType)} · ${l.totalDays} ${t('pv.days')} · ${fmtDate(l.startDate)}`,
       onclick: `navTo('leaves');closeNotifMenu()`
     }));
     (d.lates || []).forEach(a => items.push({
       icon: '⏰',
-      title: `${a.userFullName} geç kaldı`,
-      body: `${fmtTime(a.checkIn)} — +${a.lateMinutes} dakika`,
+      title: t('notif.late', { name: a.userFullName }),
+      body: `${fmtTime(a.checkIn)} — ${t('badge.late_min', { m: a.lateMinutes })}`,
       onclick: `navTo('attendance');closeNotifMenu()`
+    }));
+    (d.swapPending || []).forEach(s => items.push({
+      icon: '🔄',
+      title: t('notif.swap_admin', { name: s.requesterName }),
+      body: `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`,
+      onclick: `navTo('swap-admin');closeNotifMenu()`
     }));
   } else if (d.kind === 'employee') {
     (d.myLeaves || []).forEach(l => {
       const icon = l.status === 'Approved' ? '✅' : '❌';
-      const verb = l.status === 'Approved' ? 'onaylandı' : 'reddedildi';
       items.push({
         icon,
-        title: `İzin talebin ${verb}`,
-        body: `${l.leaveType} · ${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}`,
+        title: l.status === 'Approved' ? t('notif.leave_approved') : t('notif.leave_rejected'),
+        body: `${leaveTypeI18n(l.leaveType)} · ${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}`,
         onclick: `navTo('my-leaves');closeNotifMenu()`
       });
     });
     (d.upcomingShifts || []).forEach(s => {
       const d2 = new Date(s.date);
       const todayStr = fmtDateOnly(new Date());
-      const label = fmtDateOnly(d2) === todayStr ? 'Bugün' : 'Yarın';
+      const label = fmtDateOnly(d2) === todayStr ? t('mydash.days_today') : t('mydash.days_tomorrow');
       items.push({
         icon: '⏰',
-        title: `${label} vardiyan: ${s.shiftName}`,
+        title: t('notif.shift_upcoming', { label, shift: shiftNameById(s.shiftId, s.shiftName) }),
         body: `${s.startTime} – ${s.endTime}`,
         onclick: `navTo('my-shifts');closeNotifMenu()`
+      });
+    });
+    (d.incomingPending || []).forEach(s => items.push({
+      icon: '🔄',
+      title: t('notif.swap_incoming', { name: s.requesterName }),
+      body: `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`,
+      onclick: `navTo('my-swaps');closeNotifMenu()`
+    }));
+    (d.myResolvedSwaps || []).forEach(s => {
+      const icon = s.status === 'ApprovedByAdmin' ? '✅' : (s.status === 'AcceptedByTarget' ? '⏳' : '❌');
+      const titleKey = s.status === 'ApprovedByAdmin' ? 'notif.swap_approved'
+                     : s.status === 'AcceptedByTarget' ? 'notif.swap_my_accepted'
+                     : 'notif.swap_rejected';
+      items.push({
+        icon,
+        title: t(titleKey),
+        body: `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`,
+        onclick: `navTo('my-swaps');closeNotifMenu()`
       });
     });
   }
@@ -979,7 +1014,7 @@ async function deleteEmployee(id, name) {
 
 // ── Roster ──────────────────────────────────────────────────────────
 async function loadRoster() {
-  const DAYS = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  const dayKeys = ['day.mon','day.tue','day.wed','day.thu','day.fri','day.sat','day.sun'];
   const ws = rosterWeekStart;
   const we = new Date(ws); we.setDate(we.getDate()+6);
   document.getElementById('roster-week-label').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
@@ -993,12 +1028,17 @@ async function loadRoster() {
     el.classList.toggle('hidden', !isAdmin);
   });
 
-  // Departman filtresini doldur (admin için)
+  // Departman filtresini doldur (admin için) — mevcut seçimi koru
   if (isAdmin) {
     const filter = document.getElementById('roster-dept-filter');
     if (filter && allDepts.length) {
+      const currentVal = filter.value;
       filter.innerHTML = `<option value="">${t('roster.all_depts')}</option>` +
         allDepts.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+      // Seçim hâlâ listede mevcutsa geri yükle (yoksa "Tüm Departmanlar" kalır)
+      if (currentVal && [...filter.options].some(o => o.value === currentVal)) {
+        filter.value = currentVal;
+      }
     }
   }
 
@@ -1018,10 +1058,10 @@ async function loadRoster() {
     });
 
     const head = document.getElementById('roster-head');
-    head.innerHTML = '<th style="text-align:left">Personel</th>' +
-      DAYS.map((d,i) => {
+    head.innerHTML = `<th style="text-align:left">${t('roster.col_person')}</th>` +
+      dayKeys.map((dk,i) => {
         const dt = new Date(ws); dt.setDate(dt.getDate()+i);
-        return `<th>${d}<small>${fmtDate(dt)}</small></th>`;
+        return `<th>${t(dk)}<small>${fmtDate(dt)}</small></th>`;
       }).join('');
 
     // Departman filtresini uygula (admin)
@@ -1059,8 +1099,9 @@ async function loadRoster() {
             const onclick = isAdmin
               ? `onclick="openShiftModal('${ds}',${u.id},${a.id})"`
               : '';
-            return `<div class="shift-chip cat-${cat}" style="background:${a.shiftColor}" ${onclick} title="${a.shiftName} ${a.startTime}–${a.endTime}">
-                <span class="chip-name">${esc(a.shiftName)}${catBadge}</span>
+            const shiftLabel = shiftNameById(a.shiftId, a.shiftName);
+            return `<div class="shift-chip cat-${cat}" style="background:${a.shiftColor}" ${onclick} title="${esc(shiftLabel)} ${a.startTime}–${a.endTime}">
+                <span class="chip-name">${esc(shiftLabel)}${catBadge}</span>
                 <small>${a.startTime}–${a.endTime}</small>
               </div>`;
           }).join('');
@@ -1068,7 +1109,7 @@ async function loadRoster() {
           const hasOvertime  = dayAssignments.some(a => getShiftCategory(a.shiftId) === 'overtime');
           const hasBaseShift = dayAssignments.some(a => getShiftCategory(a.shiftId) !== 'overtime');
           if (isAdmin && !hasOvertime && hasBaseShift) {
-            cellHtml += `<div class="shift-add-more" onclick="openShiftModal('${ds}',${u.id})" title="Bu güne fazla mesai ekle">+ FM</div>`;
+            cellHtml += `<div class="shift-add-more" onclick="openShiftModal('${ds}',${u.id})" title="${t('shift.cat.overtime')}">${t('roster.add_ot')}</div>`;
           }
         } else {
           cellHtml = isAdmin
@@ -1080,11 +1121,11 @@ async function loadRoster() {
       const rowCls = isMe ? 'row-me' : '';
       // Admin için personel ismine tıklanabilir profil görüntüleme
       const nameCell = isAdmin
-        ? `<div class="name-cell name-cell-clickable" onclick="viewEmployeeProfile(${u.id})" title="Profili görüntüle">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}</span></div>`
-        : `<div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}${isMe?' <small class="me-tag">(Sen)</small>':''}</span></div>`;
+        ? `<div class="name-cell name-cell-clickable" onclick="viewEmployeeProfile(${u.id})" title="${t('view.emp_detail')}">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}</span></div>`
+        : `<div class="name-cell">${avatar(u.fullName,u.photoBase64)}<span>${esc(u.fullName)}${isMe?' <small class="me-tag">'+t('roster.me')+'</small>':''}</span></div>`;
       return `<tr class="${rowCls}"><td>${nameCell}</td>${cells}</tr>`;
     }).join('');
-    body.innerHTML = rows || '<tr><td colspan="8" class="empty">Personel bulunamadı.</td></tr>';
+    body.innerHTML = rows || `<tr><td colspan="8" class="empty">${t('common.empty')}</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
 function rosterNav(d) { rosterWeekStart.setDate(rosterWeekStart.getDate()+d*7); loadRoster(); }
@@ -2030,6 +2071,11 @@ async function loadMySwaps(tab) {
     tbody.innerHTML = items.length ? items.map(s => {
       const isOutgoing = s.requesterId === currentUser.userId;
       const otherName  = isOutgoing ? (s.targetUserName || t('swap.s.Open')) : s.requesterName;
+      const otherUid   = isOutgoing ? s.targetUserId : s.requesterId;
+      const otherUser  = otherUid ? allUsers.find(u => u.id === otherUid) : null;
+      const otherCell  = otherUid
+        ? `<div class="name-cell">${avatar(otherName, otherUser?.photoBase64)}<span>${esc(otherName)}</span></div>`
+        : `<span class="text-sub">${esc(otherName)}</span>`;
       const reqShift   = `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`;
       const tgtShift   = s.targetDate ? `${fmtDate(s.targetDate)} · ${shiftNameById(s.targetShiftId, s.targetShiftName)}`
                         : (s.desiredShiftId ? `→ ${shiftNameById(s.desiredShiftId, s.desiredShiftName)}` : '—');
@@ -2047,7 +2093,7 @@ async function loadMySwaps(tab) {
       }
       return `<tr>
         <td>${esc(myShift)}</td>
-        <td>${esc(otherName)}</td>
+        <td>${otherCell}</td>
         <td>${esc(theirShift)}</td>
         <td>${swapStatusBadge(s.status)}</td>
         <td class="text-right">${actions}</td>
@@ -2067,9 +2113,10 @@ async function loadOpenListings() {
     wrap.innerHTML = `<div class="dept-grid">${items.map(s => {
       const reqShift     = shiftNameById(s.requesterShiftId, s.requesterShiftName);
       const desired      = s.desiredShiftId ? shiftNameById(s.desiredShiftId, s.desiredShiftName) : t('swap.any_shift');
+      const reqUser      = allUsers.find(u => u.id === s.requesterId);
       return `<div class="card open-swap-card">
-        <div class="card-head" style="border:0;padding-bottom:8px">
-          <strong>${esc(s.requesterName)}</strong>
+        <div class="card-head" style="border:0;padding-bottom:8px;gap:10px">
+          <div class="name-cell">${avatar(s.requesterName, reqUser?.photoBase64, 32)}<strong>${esc(s.requesterName)}</strong></div>
           <span class="badge badge-warn">${t('swap.s.Open')}</span>
         </div>
         <div style="padding:0 16px 14px">
@@ -2178,6 +2225,7 @@ async function claimOpenSwap(id) {
     await api('POST', `/api/ShiftSwap/${id}/claim`);
     toast(t('swap.claimed'), 'ok');
     loadOpenListings();
+    refreshNotifications();
   } catch(e) { toast(e.message, 'err'); }
 }
 
@@ -2188,6 +2236,7 @@ async function respondSwap(id, response) {
     await api('POST', `/api/ShiftSwap/${id}/respond`, { response });
     toast(response === 'Accept' ? t('swap.accepted_admin') : t('swap.rejected'), 'ok');
     loadMySwaps(currentSwapTab);
+    refreshNotifications();
   } catch(e) { toast(e.message, 'err'); }
 }
 
@@ -2209,6 +2258,11 @@ async function loadAdminSwaps() {
       const reqShift = `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`;
       const tgtShift = s.targetDate ? `${fmtDate(s.targetDate)} · ${shiftNameById(s.targetShiftId, s.targetShiftName)}` : t('swap.one_way');
       const tgtName  = s.targetUserName || t('swap.s.Open');
+      const reqUser  = allUsers.find(u => u.id === s.requesterId);
+      const tgtUser  = s.targetUserId ? allUsers.find(u => u.id === s.targetUserId) : null;
+      const tgtCell  = s.targetUserId
+        ? `<div class="name-cell">${avatar(tgtName, tgtUser?.photoBase64)}<span>${esc(tgtName)}</span></div>`
+        : `<span class="badge badge-warn">${t('swap.s.Open')}</span>`;
       let actions = '—';
       if (s.status === 'AcceptedByTarget') {
         actions = `<div class="btn-group" style="justify-content:flex-end">
@@ -2221,9 +2275,9 @@ async function loadAdminSwaps() {
         actions = `<small class="text-sub">${t('swap.s.Open')}</small>`;
       }
       return `<tr>
-        <td><div class="name-cell">${avatar(s.requesterName, null)}<span>${esc(s.requesterName)}</span></div></td>
+        <td><div class="name-cell">${avatar(s.requesterName, reqUser?.photoBase64)}<span>${esc(s.requesterName)}</span></div></td>
         <td>${esc(reqShift)}</td>
-        <td>${esc(tgtName)}</td>
+        <td>${tgtCell}</td>
         <td>${esc(tgtShift)}</td>
         <td>${swapStatusBadge(s.status)}</td>
         <td class="text-right">${actions}</td>
@@ -2234,12 +2288,12 @@ async function loadAdminSwaps() {
 
 async function approveSwap(id) {
   if (!confirm(t('swap.approve_confirm'))) return;
-  try { await api('POST', `/api/ShiftSwap/${id}/approve`); toast(t('swap.approved'), 'ok'); loadAdminSwaps(); }
+  try { await api('POST', `/api/ShiftSwap/${id}/approve`); toast(t('swap.approved'), 'ok'); loadAdminSwaps(); refreshNotifications(); }
   catch(e) { toast(e.message, 'err'); }
 }
 async function rejectSwap(id) {
   if (!confirm(t('swap.reject_admin_confirm'))) return;
-  try { await api('POST', `/api/ShiftSwap/${id}/reject`); toast(t('swap.rejected')); loadAdminSwaps(); }
+  try { await api('POST', `/api/ShiftSwap/${id}/reject`); toast(t('swap.rejected')); loadAdminSwaps(); refreshNotifications(); }
   catch(e) { toast(e.message, 'err'); }
 }
 

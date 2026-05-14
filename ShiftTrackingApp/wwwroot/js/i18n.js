@@ -669,6 +669,18 @@ const I18N = {
     'swap.any_shift':         'Herhangi bir vardiya',
     'swap.s.Open':            'Açık İlan',
     'swap.posted':            'Açıldı',
+
+    // ─── Bildirimler (notifs) ───
+    'notif.leave_pending':    '{name} izin talebi',
+    'notif.late':             '{name} geç kaldı',
+    'notif.swap_admin':       '{name} vardiya değişimi onay bekliyor',
+    'notif.leave_approved':   'İzin talebin onaylandı',
+    'notif.leave_rejected':   'İzin talebin reddedildi',
+    'notif.shift_upcoming':   '{label} vardiyan: {shift}',
+    'notif.swap_incoming':    '{name} seninle vardiya değişmek istiyor',
+    'notif.swap_approved':    'Vardiya değişimin onaylandı',
+    'notif.swap_my_accepted': 'İlanın kabul edildi — yönetici onayı bekleniyor',
+    'notif.swap_rejected':    'Vardiya değişim talebin reddedildi',
   },
 
   en: {
@@ -1323,6 +1335,18 @@ const I18N = {
     'swap.any_shift':         'Any shift',
     'swap.s.Open':            'Open Listing',
     'swap.posted':            'Posted',
+
+    // ─── Notifications ───
+    'notif.leave_pending':    'Leave request from {name}',
+    'notif.late':             '{name} is late',
+    'notif.swap_admin':       'Swap from {name} awaiting approval',
+    'notif.leave_approved':   'Your leave request was approved',
+    'notif.leave_rejected':   'Your leave request was rejected',
+    'notif.shift_upcoming':   '{label}\'s shift: {shift}',
+    'notif.swap_incoming':    '{name} wants to swap shifts with you',
+    'notif.swap_approved':    'Your shift swap was approved',
+    'notif.swap_my_accepted': 'Your listing was accepted — awaiting manager approval',
+    'notif.swap_rejected':    'Your shift swap was rejected',
   }
 };
 
