@@ -1417,6 +1417,8 @@ async function loadMyDashboard() {
   const hour = new Date().getHours();
   const greetKey = hour < 6 ? 'dash.good_night' : hour < 12 ? 'dash.good_morning' : hour < 18 ? 'dash.good_day' : 'dash.good_evening';
   document.getElementById('my-hero-title').textContent = `${t(greetKey)}, ${esc(firstName)}`;
+  const subEl = document.getElementById('my-hero-sub');
+  if (subEl) subEl.textContent = t('mydash.sub');
   const locale = getLang()==='en' ? 'en-US' : 'tr-TR';
   document.getElementById('my-hero-date').textContent =
     new Date().toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric', weekday:'long' });

@@ -109,81 +109,141 @@
   <aside class="login-visual" aria-hidden="true">
     <div class="visual-bg"></div>
     <div class="visual-inner">
-      <svg class="visual-illust" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <svg class="visual-illust" viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <defs>
-          <linearGradient id="visGradA" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="vGradPurple" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#A78BFA"/>
-            <stop offset="1" stop-color="#22D3EE"/>
+            <stop offset="1" stop-color="#5B5FCF"/>
           </linearGradient>
-          <linearGradient id="visGradB" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="vGradCyan" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#22D3EE"/>
+            <stop offset="1" stop-color="#0EA5E9"/>
+          </linearGradient>
+          <linearGradient id="vGradAmber" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#FBBF24"/>
             <stop offset="1" stop-color="#F97316"/>
           </linearGradient>
-          <linearGradient id="visGradC" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="vGradGreen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#34D399"/>
+            <stop offset="1" stop-color="#10B981"/>
+          </linearGradient>
+          <linearGradient id="vGradPink" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#EC4899"/>
-            <stop offset="1" stop-color="#8B5CF6"/>
+            <stop offset="1" stop-color="#BE185D"/>
           </linearGradient>
         </defs>
 
-        <!-- Dekoratif takvim grid -->
-        <g transform="translate(120,140)" opacity=".95">
-          <rect x="0" y="0" width="280" height="220" rx="20" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/>
-          <rect x="0" y="0" width="280" height="44" rx="20" fill="rgba(255,255,255,.06)"/>
-          <circle cx="22" cy="22" r="6" fill="#FBBF24"/>
-          <circle cx="42" cy="22" r="6" fill="#22D3EE"/>
-          <circle cx="62" cy="22" r="6" fill="#EC4899"/>
+        <!-- Pulse halkaları (yüz tanıma scan etkisi) -->
+        <circle cx="260" cy="170" r="120" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+        <circle cx="260" cy="170" r="155" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/>
 
-          <!-- Takvim hücreleri -->
-          <g transform="translate(20,60)" fill="rgba(255,255,255,.12)">
-            <rect x="0" y="0" width="34" height="34" rx="6"/>
-            <rect x="44" y="0" width="34" height="34" rx="6"/>
-            <rect x="88" y="0" width="34" height="34" rx="6" fill="url(#visGradA)"/>
-            <rect x="132" y="0" width="34" height="34" rx="6"/>
-            <rect x="176" y="0" width="34" height="34" rx="6"/>
-            <rect x="220" y="0" width="34" height="34" rx="6" fill="url(#visGradB)"/>
-
-            <rect x="0" y="44" width="34" height="34" rx="6"/>
-            <rect x="44" y="44" width="34" height="34" rx="6" fill="url(#visGradC)"/>
-            <rect x="88" y="44" width="34" height="34" rx="6"/>
-            <rect x="132" y="44" width="34" height="34" rx="6"/>
-            <rect x="176" y="44" width="34" height="34" rx="6" fill="url(#visGradA)"/>
-            <rect x="220" y="44" width="34" height="34" rx="6"/>
-
-            <rect x="0" y="88" width="34" height="34" rx="6"/>
-            <rect x="44" y="88" width="34" height="34" rx="6"/>
-            <rect x="88" y="88" width="34" height="34" rx="6"/>
-            <rect x="132" y="88" width="34" height="34" rx="6" fill="url(#visGradB)"/>
-            <rect x="176" y="88" width="34" height="34" rx="6"/>
-            <rect x="220" y="88" width="34" height="34" rx="6"/>
-          </g>
+        <!-- Merkez: yüz tanıma kamera çerçevesi -->
+        <g transform="translate(190,100)">
+          <rect x="0" y="0" width="140" height="140" rx="20" fill="rgba(255,255,255,.96)"/>
+          <!-- Köşe işaretleri -->
+          <path d="M12 28 L12 12 L28 12" stroke="#5B5FCF" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M128 12 L128 28 M128 12 L112 12" stroke="#5B5FCF" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M12 112 L12 128 L28 128" stroke="#5B5FCF" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M112 128 L128 128 L128 112" stroke="#5B5FCF" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <!-- Stylized face inside -->
+          <circle cx="70" cy="58" r="22" fill="url(#vGradPurple)"/>
+          <path d="M40 110 c0 -16 13 -28 30 -28 s30 12 30 28 z" fill="url(#vGradCyan)"/>
+          <!-- Tarama çizgisi -->
+          <line x1="20" y1="74" x2="120" y2="74" stroke="#22D3EE" stroke-width="2" stroke-dasharray="4 4" opacity=".8"/>
+          <circle cx="70" cy="74" r="3" fill="#22D3EE"/>
         </g>
 
-        <!-- Şift kartları -->
-        <g transform="translate(60,120)">
-          <rect x="0" y="0" width="120" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
-          <circle cx="20" cy="20" r="6" fill="#34D399"/>
-          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Onaylı</text>
+        <!-- Etrafa dağılmış personel avatarları (departmanı temsil eder) -->
+        <g transform="translate(80,60)">
+          <circle cx="0" cy="0" r="24" fill="url(#vGradAmber)"/>
+          <text x="0" y="6" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">AY</text>
         </g>
-        <g transform="translate(360,90)">
-          <rect x="0" y="0" width="110" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
-          <circle cx="20" cy="20" r="6" fill="#FBBF24"/>
-          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Sabah</text>
+        <g transform="translate(440,80)">
+          <circle cx="0" cy="0" r="22" fill="url(#vGradGreen)"/>
+          <text x="0" y="6" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">MK</text>
         </g>
-        <g transform="translate(380,380)">
-          <rect x="0" y="0" width="100" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
-          <circle cx="20" cy="20" r="6" fill="#A78BFA"/>
-          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Gece</text>
+        <g transform="translate(60,240)">
+          <circle cx="0" cy="0" r="20" fill="url(#vGradPink)"/>
+          <text x="0" y="5" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" fill="white" text-anchor="middle">ZD</text>
         </g>
-        <g transform="translate(50,410)">
-          <rect x="0" y="0" width="140" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
-          <circle cx="20" cy="20" r="6" fill="#22D3EE"/>
-          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Devam %96</text>
+        <g transform="translate(460,260)">
+          <circle cx="0" cy="0" r="24" fill="url(#vGradPurple)"/>
+          <text x="0" y="6" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">SB</text>
+        </g>
+        <g transform="translate(140,310)">
+          <circle cx="0" cy="0" r="18" fill="url(#vGradCyan)"/>
+          <text x="0" y="5" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" fill="white" text-anchor="middle">EÇ</text>
+        </g>
+
+        <!-- Vardiya etiketleri (çevreye dağıtılmış) -->
+        <g transform="translate(20,140)">
+          <rect x="0" y="0" width="110" height="32" rx="16" fill="rgba(255,255,255,.96)"/>
+          <circle cx="16" cy="16" r="5" fill="#FBBF24"/>
+          <text x="28" y="20" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" fill="#0E0E11">Sabah · 08–16</text>
+        </g>
+        <g transform="translate(390,180)">
+          <rect x="0" y="0" width="110" height="32" rx="16" fill="rgba(255,255,255,.96)"/>
+          <circle cx="16" cy="16" r="5" fill="#22D3EE"/>
+          <text x="28" y="20" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" fill="#0E0E11">Öğle · 14–22</text>
+        </g>
+        <g transform="translate(20,210)">
+          <rect x="0" y="0" width="100" height="32" rx="16" fill="rgba(255,255,255,.96)"/>
+          <circle cx="16" cy="16" r="5" fill="#A78BFA"/>
+          <text x="28" y="20" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" fill="#0E0E11">Gece · 22–06</text>
+        </g>
+
+        <!-- Bağlantı çizgileri (network/teamwork hissi) -->
+        <g opacity=".25" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-dasharray="3 4" fill="none">
+          <line x1="100" y1="80" x2="200" y2="140"/>
+          <line x1="440" y1="100" x2="335" y2="140"/>
+          <line x1="80" y1="240" x2="200" y2="220"/>
+          <line x1="440" y1="260" x2="335" y2="220"/>
         </g>
       </svg>
 
       <div class="visual-title">
-        <h2 data-i18n="login.hero_title_v2">Vardiyalarınız, otomasyonla yönetilsin.</h2>
-        <p data-i18n="login.hero_sub_v2">Modern vardiya planlama, yüz tanıma ile devam takibi ve raporlama — tüm ekibiniz tek panelde.</p>
+        <h2 data-i18n="login.hero_title_v2">Tüm ekibinizi tek panelden yönetin.</h2>
+        <p data-i18n="login.hero_sub_v2">Yüz tanıma ile devam takibi, otomatik vardiya planlama ve gerçek-zamanlı raporlama.</p>
+      </div>
+
+      <div class="visual-features">
+        <div class="vf-card">
+          <div class="vf-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="9" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M5 21c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M3 7l2-2 2 2M17 7l2-2 2 2M3 7v-3M19 7v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="vf-title" data-i18n="login.feat_face">Yüz Tanıma</div>
+          <div class="vf-sub" data-i18n="login.feat_face_sub">AES-256 şifreli biyometrik turnike</div>
+        </div>
+
+        <div class="vf-card">
+          <div class="vf-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M8 14l2.5 2.5L16 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="vf-title" data-i18n="login.feat_att">Devam Takibi</div>
+          <div class="vf-sub" data-i18n="login.feat_att_sub">Anlık giriş-çıkış, aylık raporlar</div>
+        </div>
+
+        <div class="vf-card">
+          <div class="vf-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/>
+              <rect x="6" y="13" width="3" height="3" rx=".6" fill="currentColor"/>
+              <rect x="11" y="13" width="3" height="3" rx=".6" fill="currentColor" opacity=".5"/>
+              <rect x="16" y="13" width="3" height="3" rx=".6" fill="currentColor" opacity=".7"/>
+            </svg>
+          </div>
+          <div class="vf-title" data-i18n="login.feat_roster">Vardiya Planlama</div>
+          <div class="vf-sub" data-i18n="login.feat_roster_sub">Sürükle-bırak haftalık takvim</div>
+        </div>
       </div>
     </div>
   </aside>

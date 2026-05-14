@@ -68,8 +68,14 @@ const I18N = {
     'login.kiosk':        'Turnike (Kiosk) Modu',
     'login.or':           'veya',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title_v2':'Vardiyalarınız, otomasyonla yönetilsin.',
-    'login.hero_sub_v2':  'Modern vardiya planlama, yüz tanıma ile devam takibi ve raporlama — tüm ekibiniz tek panelde.',
+    'login.hero_title_v2':'Tüm ekibinizi tek panelden yönetin.',
+    'login.hero_sub_v2':  'Yüz tanıma ile devam takibi, otomatik vardiya planlama ve gerçek-zamanlı raporlama.',
+    'login.feat_face':       'Yüz Tanıma',
+    'login.feat_face_sub':   'AES-256 şifreli biyometrik turnike',
+    'login.feat_att':        'Devam Takibi',
+    'login.feat_att_sub':    'Anlık giriş-çıkış, aylık raporlar',
+    'login.feat_roster':     'Vardiya Planlama',
+    'login.feat_roster_sub': 'Sürükle-bırak haftalık takvim',
     'login.err_credentials': 'E-posta ve şifre zorunludur.',
 
     // ─── Nav: Admin ───
@@ -735,8 +741,14 @@ const I18N = {
     'login.kiosk':        'Turnstile (Kiosk) Mode',
     'login.or':           'or',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title_v2':'Let your shifts run themselves.',
-    'login.hero_sub_v2':  'Modern shift planning, face-recognition attendance and reporting — your whole team on a single panel.',
+    'login.hero_title_v2':'Manage your whole team from one panel.',
+    'login.hero_sub_v2':  'Face-recognition attendance, automated shift planning and real-time reporting.',
+    'login.feat_face':       'Face Recognition',
+    'login.feat_face_sub':   'AES-256 encrypted biometric turnstile',
+    'login.feat_att':        'Attendance Tracking',
+    'login.feat_att_sub':    'Live check-in/out, monthly reports',
+    'login.feat_roster':     'Shift Planning',
+    'login.feat_roster_sub': 'Drag-and-drop weekly schedule',
     'login.err_credentials': 'Email and password are required.',
 
     // ─── Nav: Admin ───
