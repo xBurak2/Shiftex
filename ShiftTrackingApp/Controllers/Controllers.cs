@@ -468,6 +468,29 @@ namespace ShiftTrackingApp.Controllers
             var success = await _svc.CancelAsync(id, userId);
             return success ? NoContent() : NotFound();
         }
+
+        // ── Açık İlanlar (Open Listings) ─────────────────────────────────
+        [HttpGet("open")]
+        public async Task<IActionResult> Open()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.GetOpenListingsAsync(userId));
+        }
+
+        [HttpPost("open")]
+        public async Task<IActionResult> CreateOpen([FromBody] CreateOpenSwapDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _svc.CreateOpenAsync(userId, dto));
+        }
+
+        [HttpPost("{id}/claim")]
+        public async Task<IActionResult> Claim(int id)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await _svc.ClaimOpenAsync(id, userId);
+            return result == null ? NotFound() : Ok(result);
+        }
     }
 
     // ════════════ OVERTIME REQUEST ══════════════════════════════════════

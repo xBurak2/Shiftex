@@ -61,14 +61,22 @@ namespace ShiftTrackingApp.Models
         public int RequesterId { get; set; }
         public int RequesterShiftAssignmentId { get; set; }
 
-        // Hedef personel
-        public int TargetUserId { get; set; }
+        // Hedef personel — açık ilan (Open) durumunda NULL
+        public int? TargetUserId { get; set; }
         public int? TargetShiftAssignmentId { get; set; } // null ise tek yönlü "üstüme al"
+
+        // Açık ilan için: ilan veren hangi shift türüne geçmek istiyor
+        // (NULL = "vardiyamı isteyen alsın", dolu = "şu vardiya türüyle takas isterim")
+        public int? DesiredShiftId { get; set; }
 
         public string? Reason { get; set; }
 
-        // State: Pending (target onay bekliyor) → AcceptedByTarget (admin onayı bekliyor)
-        //        → ApprovedByAdmin (uygulandı) | RejectedByTarget | RejectedByAdmin | CancelledByRequester
+        // State:
+        //   Open                — açık ilan, kimse henüz kabul etmedi (TargetUserId NULL)
+        //   Pending             — belirli hedefe yapılan talep, hedef cevap bekliyor
+        //   AcceptedByTarget    — hedef kabul etti, admin onayı bekliyor
+        //   ApprovedByAdmin     — admin onayladı, vardiyalar takas edildi
+        //   RejectedByTarget / RejectedByAdmin / CancelledByRequester — sonlanmış
         public string Status { get; set; } = "Pending";
 
         public DateTime CreatedAt   { get; set; } = DateTime.UtcNow;
@@ -77,9 +85,10 @@ namespace ShiftTrackingApp.Models
         public int? ReviewedBy      { get; set; }
 
         public User Requester  { get; set; } = null!;
-        public User TargetUser { get; set; } = null!;
+        public User? TargetUser { get; set; }
         public ShiftAssignment RequesterShiftAssignment { get; set; } = null!;
         public ShiftAssignment? TargetShiftAssignment   { get; set; }
+        public Shift? DesiredShift { get; set; }
     }
 
     /// <summary>

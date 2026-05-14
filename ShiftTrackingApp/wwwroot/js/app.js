@@ -1995,10 +1995,30 @@ function overtimeStatusBadge(s) {
 // VARDİYA DEĞİŞİM TALEPLERİ (Shift Swap)
 // ════════════════════════════════════════════════════════════════
 let currentSwapTab = 'outgoing';
+let currentSwapMode = 'direct';
+
 function switchSwapTab(tab) {
   currentSwapTab = tab;
   document.querySelectorAll('.swap-tab').forEach(t => t.classList.toggle('active', t.dataset.swapTab === tab));
-  loadMySwaps(tab);
+  const tableCard = document.getElementById('my-swap-table-card');
+  const openWrap  = document.getElementById('open-swap-grid-wrap');
+  if (tab === 'open') {
+    tableCard?.classList.add('hidden');
+    openWrap?.classList.remove('hidden');
+    loadOpenListings();
+  } else {
+    openWrap?.classList.add('hidden');
+    tableCard?.classList.remove('hidden');
+    loadMySwaps(tab);
+  }
+}
+
+function switchSwapMode(mode) {
+  currentSwapMode = mode;
+  document.querySelectorAll('#swap-modal [data-swap-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.swapMode === mode));
+  document.getElementById('swap-direct-fields').classList.toggle('hidden', mode !== 'direct');
+  document.getElementById('swap-open-fields').classList.toggle('hidden', mode !== 'open');
 }
 
 async function loadMySwaps(tab) {
@@ -2009,18 +2029,21 @@ async function loadMySwaps(tab) {
     const tbody = document.getElementById('my-swap-tbody');
     tbody.innerHTML = items.length ? items.map(s => {
       const isOutgoing = s.requesterId === currentUser.userId;
-      const otherName  = isOutgoing ? s.targetUserName : s.requesterName;
-      const myShift    = isOutgoing ? `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}` : (s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : '—');
-      const theirShift = isOutgoing ? (s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : '—') : `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}`;
+      const otherName  = isOutgoing ? (s.targetUserName || t('swap.s.Open')) : s.requesterName;
+      const reqShift   = `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`;
+      const tgtShift   = s.targetDate ? `${fmtDate(s.targetDate)} · ${shiftNameById(s.targetShiftId, s.targetShiftName)}`
+                        : (s.desiredShiftId ? `→ ${shiftNameById(s.desiredShiftId, s.desiredShiftName)}` : '—');
+      const myShift    = isOutgoing ? reqShift : tgtShift;
+      const theirShift = isOutgoing ? tgtShift : reqShift;
 
       let actions = '—';
       if (!isOutgoing && s.status === 'Pending') {
         actions = `<div class="btn-group" style="justify-content:flex-end">
-          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="respondSwap(${s.id},'Accept')">Kabul Et</button>
-          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="respondSwap(${s.id},'Reject')">Reddet</button>
+          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="respondSwap(${s.id},'Accept')">${t('swap.accept')}</button>
+          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="respondSwap(${s.id},'Reject')">${t('common.reject')}</button>
         </div>`;
-      } else if (isOutgoing && (s.status === 'Pending' || s.status === 'AcceptedByTarget')) {
-        actions = `<button class="btn btn-sm btn-ghost" onclick="cancelSwap(${s.id})">İptal</button>`;
+      } else if (isOutgoing && (s.status === 'Open' || s.status === 'Pending' || s.status === 'AcceptedByTarget')) {
+        actions = `<button class="btn btn-sm btn-ghost" onclick="cancelSwap(${s.id})">${t('common.cancel')}</button>`;
       }
       return `<tr>
         <td>${esc(myShift)}</td>
@@ -2029,7 +2052,44 @@ async function loadMySwaps(tab) {
         <td>${swapStatusBadge(s.status)}</td>
         <td class="text-right">${actions}</td>
       </tr>`;
-    }).join('') : `<tr><td colspan="5" class="empty">${tab==='outgoing'?'Gönderdiğin değişim talebi yok.':'Sana gelen değişim talebi yok.'}</td></tr>`;
+    }).join('') : `<tr><td colspan="5" class="empty">${tab==='outgoing'?t('swap.no_outgoing'):t('swap.no_incoming')}</td></tr>`;
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadOpenListings() {
+  const wrap = document.getElementById('open-swap-grid-wrap');
+  try {
+    const items = await api('GET', '/api/ShiftSwap/open');
+    if (!items.length) {
+      wrap.innerHTML = `<div class="card"><div class="empty">${t('swap.no_open')}</div></div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="dept-grid">${items.map(s => {
+      const reqShift     = shiftNameById(s.requesterShiftId, s.requesterShiftName);
+      const desired      = s.desiredShiftId ? shiftNameById(s.desiredShiftId, s.desiredShiftName) : t('swap.any_shift');
+      return `<div class="card open-swap-card">
+        <div class="card-head" style="border:0;padding-bottom:8px">
+          <strong>${esc(s.requesterName)}</strong>
+          <span class="badge badge-warn">${t('swap.s.Open')}</span>
+        </div>
+        <div style="padding:0 16px 14px">
+          <div class="open-swap-row">
+            <small class="text-sub">${t('swap.col_my')}</small>
+            <div class="ms-chip" style="background:${s.requesterShiftColor};margin-top:4px">${esc(reqShift)}</div>
+            <div class="font-mono text-sub" style="font-size:12px;margin-top:4px">${fmtDate(s.requesterDate)}</div>
+          </div>
+          <div class="open-swap-row" style="margin-top:10px">
+            <small class="text-sub">${t('swap.wants')}</small>
+            <div class="ms-chip" style="background:${s.desiredShiftColor || '#6B6B72'};margin-top:4px">${esc(desired)}</div>
+          </div>
+          ${s.reason ? `<p style="margin-top:10px;font-size:13px;color:var(--text-2)">"${esc(s.reason)}"</p>` : ''}
+          <div class="open-swap-foot" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+            <small class="text-sub">${t('swap.posted')}: ${fmtDate(s.createdAt)}</small>
+            <button class="btn btn-primary btn-sm" onclick="claimOpenSwap(${s.id})">${t('swap.claim')}</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
   } catch(e) { toast(e.message, 'err'); }
 }
 
@@ -2040,18 +2100,29 @@ async function openSwapModal() {
   try {
     const myShifts = await api('GET', `/api/Shifts/my?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`);
     const future   = (myShifts || []).filter(s => new Date(s.date) >= new Date(new Date().toDateString()));
-    if (!future.length) { toast('Önümüzdeki 30 günde değişebilecek vardiyan yok.', 'warn'); return; }
+    if (!future.length) { toast(t('swap.no_future'), 'warn'); return; }
 
     document.getElementById('swap-my-shift').innerHTML = future.map(s =>
-      `<option value="${s.id}">${fmtDate(s.date)} · ${s.shiftName} (${s.startTime}–${s.endTime})</option>`).join('');
+      `<option value="${s.id}">${fmtDate(s.date)} · ${shiftNameById(s.shiftId, s.shiftName)} (${s.startTime}–${s.endTime})</option>`).join('');
 
-    // Diğer personel listesi (kendisi hariç)
-    const others = allUsers.filter(u => u.id !== currentUser.userId);
+    // Diğer personel listesi (kendisi hariç + aynı departman)
+    const others = allUsers.filter(u => u.id !== currentUser.userId && u.departmentId === currentUser.departmentId);
     document.getElementById('swap-target-user').innerHTML = others.map(u =>
       `<option value="${u.id}">${esc(u.fullName)}</option>`).join('');
 
-    document.getElementById('swap-target-shift').innerHTML = '<option value="">Vardiyamı üstüne almasını rica ediyorum</option>';
+    document.getElementById('swap-target-shift').innerHTML = `<option value="">${t('swap.cover_default')}</option>`;
     document.getElementById('swap-reason').value = '';
+
+    // Açık ilan için "geçmek istediği vardiya türü" listesi (sadece shift kategorisi)
+    const sel = document.getElementById('swap-desired-shift');
+    if (sel) {
+      sel.innerHTML = `<option value="">${t('swap.desired_any')}</option>` +
+        SHIFT_TYPES.filter(x => x.cat === 'shift').map(x =>
+          `<option value="${x.id}">${esc(shiftTypeName(x))} (${x.startTime}–${x.endTime})</option>`).join('');
+    }
+
+    // Varsayılan mod = direct
+    switchSwapMode('direct');
 
     // İlk seçili kullanıcının vardiyalarını yükle
     if (others.length) await loadSwapTargetShifts();
@@ -2068,45 +2139,63 @@ async function loadSwapTargetShifts() {
   try {
     const shifts = await api('GET', `/api/Shifts/user/${targetUserId}?from=${fmtDateOnly(today)}&to=${fmtDateOnly(week)}`);
     const future = (shifts || []).filter(s => new Date(s.date) >= new Date(new Date().toDateString()));
-    document.getElementById('swap-target-shift').innerHTML = '<option value="">Vardiyamı üstüne almasını rica ediyorum</option>' +
-      future.map(s => `<option value="${s.id}">${fmtDate(s.date)} · ${s.shiftName} (${s.startTime}–${s.endTime})</option>`).join('');
+    document.getElementById('swap-target-shift').innerHTML = `<option value="">${t('swap.cover_default')}</option>` +
+      future.map(s => `<option value="${s.id}">${fmtDate(s.date)} · ${shiftNameById(s.shiftId, s.shiftName)} (${s.startTime}–${s.endTime})</option>`).join('');
   } catch(_) { /* sessiz */ }
 }
 
 async function submitSwapRequest() {
-  const body = {
-    requesterShiftAssignmentId: +document.getElementById('swap-my-shift').value,
-    targetUserId:               +document.getElementById('swap-target-user').value,
-    targetShiftAssignmentId:    +document.getElementById('swap-target-shift').value || null,
-    reason:                     document.getElementById('swap-reason').value || null
-  };
-  if (!body.requesterShiftAssignmentId || !body.targetUserId) {
-    toast('Vardiya ve hedef personel seçin.', 'warn'); return;
-  }
+  const requesterShiftAssignmentId = +document.getElementById('swap-my-shift').value;
+  if (!requesterShiftAssignmentId) { toast(t('toast.shift_pick_type'), 'warn'); return; }
+  const reason = document.getElementById('swap-reason').value || null;
+
   try {
-    await api('POST', '/api/ShiftSwap', body);
-    toast('Değişim talebin gönderildi.', 'ok');
-    closeModal('swap-modal');
-    loadMySwaps('outgoing');
-    switchSwapTab('outgoing');
+    if (currentSwapMode === 'open') {
+      const desiredShiftId = +document.getElementById('swap-desired-shift').value || null;
+      await api('POST', '/api/ShiftSwap/open', { requesterShiftAssignmentId, desiredShiftId, reason });
+      toast(t('swap.open_listed'), 'ok');
+      closeModal('swap-modal');
+      switchSwapTab('outgoing');
+    } else {
+      const body = {
+        requesterShiftAssignmentId,
+        targetUserId:            +document.getElementById('swap-target-user').value,
+        targetShiftAssignmentId: +document.getElementById('swap-target-shift').value || null,
+        reason
+      };
+      if (!body.targetUserId) { toast(t('toast.shift_pick_type'), 'warn'); return; }
+      await api('POST', '/api/ShiftSwap', body);
+      toast(t('swap.sent'), 'ok');
+      closeModal('swap-modal');
+      switchSwapTab('outgoing');
+    }
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function claimOpenSwap(id) {
+  if (!confirm(t('swap.claim_confirm'))) return;
+  try {
+    await api('POST', `/api/ShiftSwap/${id}/claim`);
+    toast(t('swap.claimed'), 'ok');
+    loadOpenListings();
   } catch(e) { toast(e.message, 'err'); }
 }
 
 async function respondSwap(id, response) {
-  if (response === 'Reject' && !confirm('Değişim talebini reddediyor musun?')) return;
-  if (response === 'Accept' && !confirm('Bu değişimi kabul ediyor musun? Yönetici son onayı verecek.')) return;
+  if (response === 'Reject' && !confirm(t('swap.reject_confirm'))) return;
+  if (response === 'Accept' && !confirm(t('swap.accept_confirm'))) return;
   try {
     await api('POST', `/api/ShiftSwap/${id}/respond`, { response });
-    toast(response === 'Accept' ? 'Kabul edildi, yönetici onayı bekleniyor.' : 'Reddedildi.', 'ok');
+    toast(response === 'Accept' ? t('swap.accepted_admin') : t('swap.rejected'), 'ok');
     loadMySwaps(currentSwapTab);
   } catch(e) { toast(e.message, 'err'); }
 }
 
 async function cancelSwap(id) {
-  if (!confirm('Değişim talebini iptal etmek istiyor musun?')) return;
+  if (!confirm(t('swap.cancel_confirm'))) return;
   try {
     await api('DELETE', `/api/ShiftSwap/${id}`);
-    toast('İptal edildi.');
+    toast(t('swap.canceled'));
     loadMySwaps(currentSwapTab);
   } catch(e) { toast(e.message, 'err'); }
 }
@@ -2117,51 +2206,55 @@ async function loadAdminSwaps() {
     const items = await api('GET', `/api/ShiftSwap${status?`?status=${status}`:''}`);
     const tbody = document.getElementById('swap-admin-tbody');
     tbody.innerHTML = items.length ? items.map(s => {
-      const reqShift = `${fmtDate(s.requesterDate)} · ${s.requesterShiftName}`;
-      const tgtShift = s.targetDate ? `${fmtDate(s.targetDate)} · ${s.targetShiftName}` : 'Tek yönlü (üstüne al)';
+      const reqShift = `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`;
+      const tgtShift = s.targetDate ? `${fmtDate(s.targetDate)} · ${shiftNameById(s.targetShiftId, s.targetShiftName)}` : t('swap.one_way');
+      const tgtName  = s.targetUserName || t('swap.s.Open');
       let actions = '—';
       if (s.status === 'AcceptedByTarget') {
         actions = `<div class="btn-group" style="justify-content:flex-end">
-          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="approveSwap(${s.id})">Onayla</button>
-          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="rejectSwap(${s.id})">Reddet</button>
+          <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="approveSwap(${s.id})">${t('common.approve')}</button>
+          <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="rejectSwap(${s.id})">${t('common.reject')}</button>
         </div>`;
       } else if (s.status === 'Pending') {
-        actions = '<small class="text-sub">Personel bekliyor</small>';
+        actions = `<small class="text-sub">${t('swap.waiting_emp')}</small>`;
+      } else if (s.status === 'Open') {
+        actions = `<small class="text-sub">${t('swap.s.Open')}</small>`;
       }
       return `<tr>
         <td><div class="name-cell">${avatar(s.requesterName, null)}<span>${esc(s.requesterName)}</span></div></td>
         <td>${esc(reqShift)}</td>
-        <td>${esc(s.targetUserName)}</td>
+        <td>${esc(tgtName)}</td>
         <td>${esc(tgtShift)}</td>
         <td>${swapStatusBadge(s.status)}</td>
         <td class="text-right">${actions}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>';
+    }).join('') : `<tr><td colspan="6" class="empty">${t('common.empty')}</td></tr>`;
   } catch(e) { toast(e.message, 'err'); }
 }
 
 async function approveSwap(id) {
-  if (!confirm('Vardiya değişimini onaylıyor musunuz? İki personelin vardiyaları takas edilecek.')) return;
-  try { await api('POST', `/api/ShiftSwap/${id}/approve`); toast('Onaylandı, vardiyalar takas edildi.', 'ok'); loadAdminSwaps(); }
+  if (!confirm(t('swap.approve_confirm'))) return;
+  try { await api('POST', `/api/ShiftSwap/${id}/approve`); toast(t('swap.approved'), 'ok'); loadAdminSwaps(); }
   catch(e) { toast(e.message, 'err'); }
 }
 async function rejectSwap(id) {
-  if (!confirm('Vardiya değişimini reddetmek istiyor musunuz?')) return;
-  try { await api('POST', `/api/ShiftSwap/${id}/reject`); toast('Reddedildi.'); loadAdminSwaps(); }
+  if (!confirm(t('swap.reject_admin_confirm'))) return;
+  try { await api('POST', `/api/ShiftSwap/${id}/reject`); toast(t('swap.rejected')); loadAdminSwaps(); }
   catch(e) { toast(e.message, 'err'); }
 }
 
 function swapStatusBadge(s) {
   const map = {
-    Pending:            { cls:'badge-warn', lbl:'Personel Bekliyor' },
-    AcceptedByTarget:   { cls:'badge-info', lbl:'Onay Bekliyor' },
-    RejectedByTarget:   { cls:'badge-err',  lbl:'Reddedildi (Personel)' },
-    ApprovedByAdmin:    { cls:'badge-ok',   lbl:'Onaylandı' },
-    RejectedByAdmin:    { cls:'badge-err',  lbl:'Reddedildi (Yönetici)' },
-    CancelledByRequester:{ cls:'badge-emp', lbl:'İptal Edildi' },
+    Open:                { cls:'badge-warn', key:'swap.s.Open' },
+    Pending:             { cls:'badge-warn', key:'swap.s.Pending' },
+    AcceptedByTarget:    { cls:'badge-info', key:'swap.s.AcceptedByTarget' },
+    RejectedByTarget:    { cls:'badge-err',  key:'swap.s.RejectedByTarget' },
+    ApprovedByAdmin:     { cls:'badge-ok',   key:'swap.s.ApprovedByAdmin' },
+    RejectedByAdmin:     { cls:'badge-err',  key:'swap.s.RejectedByAdmin' },
+    CancelledByRequester:{ cls:'badge-emp',  key:'swap.s.CancelledByRequester' },
   };
-  const x = map[s] || { cls:'', lbl: s };
-  return `<span class="badge ${x.cls}">${x.lbl}</span>`;
+  const x = map[s];
+  return x ? `<span class="badge ${x.cls}">${t(x.key)}</span>` : `<span class="badge">${s}</span>`;
 }
 
 // ── Init ────────────────────────────────────────────────────────────

@@ -279,17 +279,26 @@ namespace ShiftTrackingApp.DTOs
         public int Id { get; set; }
         public int RequesterId { get; set; }
         public string RequesterName { get; set; } = string.Empty;
+        public int? RequesterDepartmentId { get; set; }
         public int RequesterShiftAssignmentId { get; set; }
         public DateOnly RequesterDate { get; set; }
+        public int RequesterShiftId { get; set; }
         public string RequesterShiftName { get; set; } = string.Empty;
         public string RequesterShiftColor { get; set; } = string.Empty;
 
-        public int TargetUserId { get; set; }
-        public string TargetUserName { get; set; } = string.Empty;
+        // Açık ilanda NULL kalır
+        public int? TargetUserId { get; set; }
+        public string? TargetUserName { get; set; }
         public int? TargetShiftAssignmentId { get; set; }
         public DateOnly? TargetDate { get; set; }
+        public int? TargetShiftId { get; set; }
         public string? TargetShiftName { get; set; }
         public string? TargetShiftColor { get; set; }
+
+        // Açık ilan: ilan veren hangi vardiya türüne geçmek istiyor
+        public int? DesiredShiftId { get; set; }
+        public string? DesiredShiftName { get; set; }
+        public string? DesiredShiftColor { get; set; }
 
         public string? Reason { get; set; }
         public string Status { get; set; } = string.Empty;
@@ -303,6 +312,13 @@ namespace ShiftTrackingApp.DTOs
         [Required] public int RequesterShiftAssignmentId { get; set; }
         [Required] public int TargetUserId { get; set; }
         public int? TargetShiftAssignmentId { get; set; }
+        [MaxLength(500)] public string? Reason { get; set; }
+    }
+
+    public class CreateOpenSwapDto
+    {
+        [Required] public int RequesterShiftAssignmentId { get; set; }
+        public int? DesiredShiftId { get; set; }
         [MaxLength(500)] public string? Reason { get; set; }
     }
 

@@ -81,7 +81,8 @@ namespace ShiftTrackingApp.Data
               .HasOne(s => s.TargetUser)
               .WithMany()
               .HasForeignKey(s => s.TargetUserId)
-              .OnDelete(DeleteBehavior.Restrict);
+              .OnDelete(DeleteBehavior.Restrict)
+              .IsRequired(false);
 
             mb.Entity<ShiftSwapRequest>()
               .HasOne(s => s.RequesterShiftAssignment)
@@ -93,6 +94,12 @@ namespace ShiftTrackingApp.Data
               .HasOne(s => s.TargetShiftAssignment)
               .WithMany()
               .HasForeignKey(s => s.TargetShiftAssignmentId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<ShiftSwapRequest>()
+              .HasOne(s => s.DesiredShift)
+              .WithMany()
+              .HasForeignKey(s => s.DesiredShiftId)
               .OnDelete(DeleteBehavior.Restrict);
 
             // ── MESAİ TALEPLERİ ───────────────────────────────────────────

@@ -670,8 +670,9 @@
         <div class="swap-tabs">
           <button class="swap-tab active" data-swap-tab="outgoing" onclick="switchSwapTab('outgoing')" data-i18n="swap.outgoing">Gönderdiklerim</button>
           <button class="swap-tab" data-swap-tab="incoming" onclick="switchSwapTab('incoming')" data-i18n="swap.incoming">Bana Gelenler</button>
+          <button class="swap-tab" data-swap-tab="open" onclick="switchSwapTab('open')" data-i18n="swap.open_tab">Açık İlanlar</button>
         </div>
-        <div class="card no-pad">
+        <div id="my-swap-table-card" class="card no-pad">
           <div class="table-wrap">
             <table class="data-table">
               <thead>
@@ -681,6 +682,7 @@
             </table>
           </div>
         </div>
+        <div id="open-swap-grid-wrap" class="hidden"></div>
       </section>
 
       <!-- ═════ ADMIN: MESAİ TALEPLERİ ═════ -->
@@ -722,6 +724,7 @@
             <option value="ApprovedByAdmin" data-i18n="swap.filter_approved">Onaylanan</option>
             <option value="RejectedByAdmin" data-i18n="swap.filter_rejected">Reddedilen</option>
             <option value="Pending" data-i18n="swap.filter_emp_wait">Personel Bekliyor</option>
+            <option value="Open" data-i18n="swap.s.Open">Açık İlan</option>
           </select>
         </div>
         <div class="card no-pad">
@@ -1081,26 +1084,55 @@
 <div id="swap-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-head">
-      <h3 data-i18n="swap.modal_new">Vardiya Değişim Talebi</h3>
+      <h3 id="swap-modal-title" data-i18n="swap.modal_new">Vardiya Değişim Talebi</h3>
       <button class="icon-btn" onclick="closeModal('swap-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
+      <!-- Mode toggle: Belirli personele vs. Açık ilan -->
+      <div class="shift-cat-tabs">
+        <button type="button" class="shift-cat-tab active" data-swap-mode="direct" onclick="switchSwapMode('direct')">
+          <span class="cat-dot" style="background:#5B5FCF"></span>
+          <span data-i18n="swap.mode_direct">Belirli Personele</span>
+        </button>
+        <button type="button" class="shift-cat-tab" data-swap-mode="open" onclick="switchSwapMode('open')">
+          <span class="cat-dot" style="background:#F97316"></span>
+          <span data-i18n="swap.mode_open">İlan Ver</span>
+        </button>
+      </div>
+
       <div class="form-group">
         <label class="form-label" data-i18n="swap.my_label">Vardiyam *</label>
         <select id="swap-my-shift" class="form-select"></select>
         <small class="text-sub" data-i18n="swap.my_shift_hint">Önümüzdeki 30 günde atanmış vardiyalarından birini seç</small>
       </div>
-      <div class="form-group">
-        <label class="form-label" data-i18n="swap.target_label">Değişeceğin Personel *</label>
-        <select id="swap-target-user" class="form-select" onchange="loadSwapTargetShifts()"></select>
+
+      <!-- DIRECT mode fields -->
+      <div id="swap-direct-fields">
+        <div class="form-group">
+          <label class="form-label" data-i18n="swap.target_label">Değişeceğin Personel *</label>
+          <select id="swap-target-user" class="form-select" onchange="loadSwapTargetShifts()"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="swap.their_label">Onun Vardiyası (opsiyonel)</label>
+          <select id="swap-target-shift" class="form-select">
+            <option value="" data-i18n="swap.cover_default">Vardiyamı üstüne almasını rica ediyorum</option>
+          </select>
+          <small class="text-sub" data-i18n="swap.target_shift_hint">Boş bırakırsan tek yönlü "vardiyamı üstüne al" talebi olur</small>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label" data-i18n="swap.their_label">Onun Vardiyası (opsiyonel)</label>
-        <select id="swap-target-shift" class="form-select">
-          <option value="" data-i18n="swap.cover_default">Vardiyamı üstüne almasını rica ediyorum</option>
-        </select>
-        <small class="text-sub" data-i18n="swap.target_shift_hint">Boş bırakırsan tek yönlü "vardiyamı üstüne al" talebi olur</small>
+
+      <!-- OPEN mode fields -->
+      <div id="swap-open-fields" class="hidden">
+        <div class="info-banner" data-i18n="swap.open_info">İlan, aynı departmandaki tüm personellere görünür. İsteyen personel kabul ederse yöneticinin onayına düşer.</div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="swap.desired_label">Geçmek istediğim vardiya türü</label>
+          <select id="swap-desired-shift" class="form-select">
+            <option value="" data-i18n="swap.desired_any">Fark etmez — vardiyamı isteyen alsın</option>
+          </select>
+          <small class="text-sub" data-i18n="swap.desired_hint">İsteğe bağlı. Belirtirseniz sadece o gün için bu vardiyaya sahip personel ilanı kabul edebilir.</small>
+        </div>
       </div>
+
       <div class="form-group">
         <label class="form-label" data-i18n="ot.reason_label">Sebep (opsiyonel)</label>
         <textarea id="swap-reason" class="form-input" rows="3" data-i18n-placeholder="swap.reason_ph" placeholder="Örn: Doktor randevusu, kişisel..."></textarea>

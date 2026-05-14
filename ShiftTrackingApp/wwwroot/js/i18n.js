@@ -650,7 +650,25 @@ const I18N = {
     'leave.srv.annual':     'Yıllık',
     'leave.srv.health':     'Sağlık',
     'leave.srv.excuse':     'Mazeret',
-  },
+
+    // ─── Açık İlan (Open Swap) ───
+    'swap.open_tab':          'Açık İlanlar',
+    'swap.mode_direct':       'Belirli Personele',
+    'swap.mode_open':         'İlan Ver',
+    'swap.desired_label':     'Geçmek istediğim vardiya türü',
+    'swap.desired_any':       'Fark etmez — vardiyamı isteyen alsın',
+    'swap.desired_hint':      'İsteğe bağlı. Belirtirseniz sadece o gün için bu vardiyaya sahip personel ilanı kabul edebilir.',
+    'swap.open_info':         'İlan, aynı departmandaki tüm personellere görünür. İsteyen personel kabul ederse yöneticinin onayına düşer.',
+    'swap.open_listed':       'İlanın yayınlandı.',
+    'swap.no_open':           'Şu an departmanında açık ilan yok.',
+    'swap.claim':             'Kabul Et',
+    'swap.claim_confirm':     'Bu ilanı kabul ediyorsun. Yönetici onayı sonrasında vardiyalarınız takas edilecek.',
+    'swap.claimed':           'İlan kabul edildi, yönetici onayı bekleniyor.',
+    'swap.open_by':           'İlan veren',
+    'swap.wants':             'İsteği',
+    'swap.any_shift':         'Herhangi bir vardiya',
+    'swap.s.Open':            'Açık İlan',
+    'swap.posted':            'Açıldı',
 
   en: {
     // ─── General ───
@@ -1285,6 +1303,25 @@ const I18N = {
     'leave.srv.annual':     'Annual',
     'leave.srv.health':     'Health',
     'leave.srv.excuse':     'Excuse',
+
+    // ─── Open Swap Listings ───
+    'swap.open_tab':          'Open Listings',
+    'swap.mode_direct':       'To Specific Person',
+    'swap.mode_open':         'Post Open Listing',
+    'swap.desired_label':     'Shift type I want instead',
+    'swap.desired_any':       'No preference — anyone can take my shift',
+    'swap.desired_hint':      'Optional. If set, only employees who have this shift type on that day can accept.',
+    'swap.open_info':         'The listing is visible to everyone in your department. When someone accepts, the request goes to manager approval.',
+    'swap.open_listed':       'Your listing has been posted.',
+    'swap.no_open':           'No open listings in your department right now.',
+    'swap.claim':             'Accept',
+    'swap.claim_confirm':     'You are accepting this listing. After manager approval your shifts will be swapped.',
+    'swap.claimed':           'Listing accepted, awaiting manager approval.',
+    'swap.open_by':           'Posted by',
+    'swap.wants':             'Wants',
+    'swap.any_shift':         'Any shift',
+    'swap.s.Open':            'Open Listing',
+    'swap.posted':            'Posted',
   }
 };
 
