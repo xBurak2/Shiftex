@@ -297,6 +297,14 @@ const I18N = {
     'leave.filter_approved': 'Onaylanan',
     'leave.filter_rejected': 'Reddedilen',
     'leave.no_request':      'İzin talebiniz yok.',
+    'leave.doc_label':       'Belge Eki (opsiyonel)',
+    'leave.doc_hint':        'PDF, JPG veya PNG · maks. 5 MB',
+    'leave.doc_choose':      'Dosya Seç',
+    'leave.doc_none':        'Belge seçilmedi',
+    'leave.doc_too_big':     'Belge 5 MB\'dan büyük olamaz.',
+    'leave.doc_bad_type':    'Sadece PDF, JPG veya PNG dosyaları kabul edilir.',
+    'leave.doc_download':    'Belgeyi indir',
+    'leave.doc_view':        'Belge',
 
     // ─── Departments ───
     'dept.title':           'Departmanlar',
@@ -970,6 +978,14 @@ const I18N = {
     'leave.filter_approved': 'Approved',
     'leave.filter_rejected': 'Rejected',
     'leave.no_request':      'No leave requests.',
+    'leave.doc_label':       'Document (optional)',
+    'leave.doc_hint':        'PDF, JPG or PNG · max 5 MB',
+    'leave.doc_choose':      'Choose File',
+    'leave.doc_none':        'No file selected',
+    'leave.doc_too_big':     'Document cannot exceed 5 MB.',
+    'leave.doc_bad_type':    'Only PDF, JPG or PNG files are accepted.',
+    'leave.doc_download':    'Download document',
+    'leave.doc_view':        'Document',
 
     // ─── Departments ───
     'dept.title':           'Departments',

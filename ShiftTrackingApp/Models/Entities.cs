@@ -46,6 +46,11 @@ namespace ShiftTrackingApp.Models
         public DateTime? ReviewedAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Belge eki (sağlık raporu, cenaze belgesi, sınav belgesi vb.)
+        public byte[]? DocumentBytes      { get; set; }
+        public string? DocumentFileName   { get; set; }
+        public string? DocumentContentType{ get; set; }
+
         public User User { get; set; } = null!;
     }
 

@@ -1350,36 +1350,69 @@ async function doCheckIn() { try { await api('POST','/api/Attendance/checkin'); 
 async function doCheckOut() { try { await api('POST','/api/Attendance/checkout'); toast(t('toast.checkout_saved')); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
 
 // ── Leaves ──────────────────────────────────────────────────────────
+// Belge indir helper (auth header gerekiyor — direkt href yerine fetch + blob)
+async function downloadLeaveDoc(id, fallbackName) {
+  try {
+    const res = await fetch(API_BASE + `/api/Leaves/${id}/document`, {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    if (!res.ok) throw new Error(t('toast.report_dl_err'));
+    // Server Content-Disposition'da dosya adını gönderir, ama tarayıcıya hatırlatalım
+    const disp = res.headers.get('Content-Disposition') || '';
+    const m = disp.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+    const filename = (m && decodeURIComponent(m[1])) || fallbackName || 'belge';
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+function leaveDocCell(l) {
+  if (!l.hasDocument) return '<span class="text-sub">—</span>';
+  const safeName = (l.documentFileName || 'belge').replace(/'/g, '');
+  return `<button class="btn btn-ghost btn-sm" onclick="downloadLeaveDoc(${l.id},'${esc(safeName)}')" title="${t('leave.doc_download')}">
+    <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M10 3v10m0 0l-4-4m4 4l4-4M3 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>${t('leave.doc_view')}</span>
+  </button>`;
+}
+
 async function loadLeaves() {
   const status = document.getElementById('leave-filter')?.value||'';
   try {
     const leaves = await api('GET', `/api/Leaves${status?`?status=${status}`:''}`);
     document.getElementById('leave-tbody').innerHTML = leaves.length
-      ? leaves.map(l => `<tr>
-          <td><div class="name-cell">${avatar(l.userFullName,null)}<span>${l.userFullName}</span></div></td>
-          <td>${l.leaveType}</td>
+      ? leaves.map(l => {
+          const reqUser = allUsers.find(u => u.id === l.userId);
+          return `<tr>
+          <td><div class="name-cell">${avatar(l.userFullName, reqUser?.photoBase64)}<span>${esc(l.userFullName)}</span></div></td>
+          <td>${esc(leaveTypeI18n(l.leaveType))}</td>
           <td>${fmtDate(l.startDate)}</td>
           <td>${fmtDate(l.endDate)}</td>
           <td class="font-mono">${l.totalDays}</td>
+          <td>${leaveDocCell(l)}</td>
           <td>${statusBadge(l.status)}</td>
           <td class="text-right">${l.status==='Pending'
             ? `<div class="btn-group" style="justify-content:flex-end">
-                <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="reviewLeave(${l.id},'Approved')">Onayla</button>
-                <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="reviewLeave(${l.id},'Rejected')">Reddet</button>
+                <button class="btn btn-sm" style="background:var(--ok-soft);color:var(--ok)" onclick="reviewLeave(${l.id},'Approved')">${t('common.approve')}</button>
+                <button class="btn btn-sm" style="background:var(--err-soft);color:var(--err)" onclick="reviewLeave(${l.id},'Rejected')">${t('common.reject')}</button>
               </div>` : '—'}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="7" class="empty">Kayıt bulunamadı.</td></tr>';
+        </tr>`;
+        }).join('')
+      : `<tr><td colspan="8" class="empty">${t('common.empty')}</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
 async function reviewLeave(id, status) {
-  if (status==='Rejected' && !confirm('Reddetmek istediğinize emin misiniz?')) return;
-  try { await api('PATCH', `/api/Leaves/${id}/review`, {status}); toast(status==='Approved'?'Onaylandı.':'Reddedildi.'); loadLeaves(); }
+  if (status==='Rejected' && !confirm(t('swap.reject_admin_confirm'))) return;
+  try { await api('PATCH', `/api/Leaves/${id}/review`, {status}); toast(status==='Approved'?t('toast.saved'):t('swap.rejected')); loadLeaves(); refreshNotifications(); }
   catch(e) { toast(e.message,'err'); }
 }
 function statusBadge(s) {
   const map = {Pending:'badge-warn',Approved:'badge-ok',Rejected:'badge-err'};
-  const labels = {Pending:'Bekliyor',Approved:'Onaylandı',Rejected:'Reddedildi'};
-  return `<span class="badge ${map[s]||''}">${labels[s]||s}</span>`;
+  const keyMap = {Pending:'leave.status_pending', Approved:'leave.status_approved', Rejected:'leave.status_rejected'};
+  return `<span class="badge ${map[s]||''}">${t(keyMap[s]) || s}</span>`;
 }
 
 async function loadMyLeaves() {
@@ -1387,17 +1420,58 @@ async function loadMyLeaves() {
     const leaves = await api('GET','/api/Leaves/my');
     document.getElementById('my-leave-tbody').innerHTML = leaves.length
       ? leaves.map(l => `<tr>
-          <td>${l.leaveType}</td>
+          <td>${esc(leaveTypeI18n(l.leaveType))}</td>
           <td>${fmtDate(l.startDate)}</td>
           <td>${fmtDate(l.endDate)}</td>
           <td class="font-mono">${l.totalDays}</td>
+          <td>${leaveDocCell(l)}</td>
           <td>${statusBadge(l.status)}</td>
           <td>${fmtDate(l.createdAt)}</td>
         </tr>`).join('')
-      : '<tr><td colspan="6" class="empty">İzin talebiniz yok.</td></tr>';
+      : `<tr><td colspan="7" class="empty">${t('leave.no_request')}</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
-function openLeaveModal() { document.getElementById('leave-modal').classList.remove('hidden'); }
+
+// Leave modal'daki dosya yükleme
+let leaveDocState = null; // { base64, fileName, contentType }
+function handleLeaveDoc(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast(t('leave.doc_too_big'),'err'); evt.target.value=''; return; }
+  const allowed = ['application/pdf','image/jpeg','image/jpg','image/png'];
+  if (!allowed.includes(file.type)) { toast(t('leave.doc_bad_type'),'err'); evt.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    leaveDocState = { base64: e.target.result, fileName: file.name, contentType: file.type };
+    const nameEl = document.getElementById('leave-doc-name');
+    const iconEl = document.getElementById('leave-doc-icon');
+    const clrBtn = document.getElementById('leave-doc-clear');
+    if (nameEl) { nameEl.removeAttribute('data-i18n'); nameEl.textContent = file.name; }
+    if (iconEl) iconEl.textContent = file.type === 'application/pdf' ? '📄' : '🖼️';
+    if (clrBtn) clrBtn.style.display = '';
+  };
+  reader.readAsDataURL(file);
+}
+function clearLeaveDoc() {
+  leaveDocState = null;
+  document.getElementById('leave-doc-input').value = '';
+  const nameEl = document.getElementById('leave-doc-name');
+  const iconEl = document.getElementById('leave-doc-icon');
+  const clrBtn = document.getElementById('leave-doc-clear');
+  if (nameEl) { nameEl.setAttribute('data-i18n','leave.doc_none'); nameEl.textContent = t('leave.doc_none'); }
+  if (iconEl) iconEl.textContent = '📎';
+  if (clrBtn) clrBtn.style.display = 'none';
+}
+function openLeaveModal() {
+  // Reset
+  document.getElementById('leave-type').value = 'Yıllık';
+  document.getElementById('leave-start').value = '';
+  document.getElementById('leave-end').value = '';
+  document.getElementById('leave-desc').value = '';
+  document.getElementById('leave-report').checked = false;
+  clearLeaveDoc();
+  document.getElementById('leave-modal').classList.remove('hidden');
+}
 async function submitLeave() {
   const body = {
     leaveType:        document.getElementById('leave-type').value,
@@ -1406,9 +1480,19 @@ async function submitLeave() {
     description:      document.getElementById('leave-desc').value,
     hasMedicalReport: document.getElementById('leave-report').checked
   };
-  if (!body.startDate || !body.endDate) { toast('Tarihler zorunludur.','err'); return; }
-  try { await api('POST','/api/Leaves', body); toast('Talep gönderildi.'); closeModal('leave-modal'); loadMyLeaves(); }
-  catch(e) { toast(e.message,'err'); }
+  if (!body.startDate || !body.endDate) { toast(t('leave.start_label'),'err'); return; }
+  if (leaveDocState) {
+    body.documentBase64      = leaveDocState.base64;
+    body.documentFileName    = leaveDocState.fileName;
+    body.documentContentType = leaveDocState.contentType;
+  }
+  try {
+    await api('POST','/api/Leaves', body);
+    toast(t('toast.saved'));
+    closeModal('leave-modal');
+    loadMyLeaves();
+    refreshNotifications();
+  } catch(e) { toast(e.message,'err'); }
 }
 
 // ════════ PERSONEL: GENEL BAKIŞ ════════════════════════════════════

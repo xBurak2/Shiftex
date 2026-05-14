@@ -166,6 +166,11 @@ namespace ShiftTrackingApp.DTOs
         public bool HasMedicalReport { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+
+        // Belge eki (yalnızca meta — gerçek byte indirme endpoint'inden gelir)
+        public bool HasDocument           { get; set; }
+        public string? DocumentFileName   { get; set; }
+        public string? DocumentContentType{ get; set; }
     }
 
     public class CreateLeaveRequestDto
@@ -184,6 +189,17 @@ namespace ShiftTrackingApp.DTOs
         public string? Description { get; set; }
 
         public bool HasMedicalReport { get; set; } = false;
+
+        // Belge ek alanı (opsiyonel) — frontend'den Base64 string olarak iletilir.
+        // Maksimum ~5MB (Base64 overhead'i dahil ≈ 7MB string).
+        [MaxLength(7_500_000, ErrorMessage = "Belge boyutu en fazla 5 MB olabilir.")]
+        public string? DocumentBase64 { get; set; }
+
+        [MaxLength(200, ErrorMessage = "Dosya adı en fazla 200 karakter olabilir.")]
+        public string? DocumentFileName { get; set; }
+
+        [MaxLength(100)]
+        public string? DocumentContentType { get; set; }
     }
 
     public class ReviewLeaveDto

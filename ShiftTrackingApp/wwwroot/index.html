@@ -550,7 +550,7 @@
               <thead>
                 <tr>
                   <th data-i18n="leave.col_person">Personel</th><th data-i18n="leave.col_type">Tür</th><th data-i18n="leave.col_start">Başlangıç</th><th data-i18n="leave.col_end">Bitiş</th>
-                  <th data-i18n="leave.col_days">Gün</th><th data-i18n="common.status">Durum</th><th class="text-right" data-i18n="common.actions">İşlem</th>
+                  <th data-i18n="leave.col_days">Gün</th><th data-i18n="leave.doc_view">Belge</th><th data-i18n="common.status">Durum</th><th class="text-right" data-i18n="common.actions">İşlem</th>
                 </tr>
               </thead>
               <tbody id="leave-tbody"></tbody>
@@ -574,7 +574,7 @@
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th data-i18n="leave.col_type">Tür</th><th data-i18n="leave.col_start">Başlangıç</th><th data-i18n="leave.col_end">Bitiş</th><th data-i18n="leave.col_days">Gün</th><th data-i18n="common.status">Durum</th><th data-i18n="leave.col_date">Tarih</th></tr>
+                <tr><th data-i18n="leave.col_type">Tür</th><th data-i18n="leave.col_start">Başlangıç</th><th data-i18n="leave.col_end">Bitiş</th><th data-i18n="leave.col_days">Gün</th><th data-i18n="leave.doc_view">Belge</th><th data-i18n="common.status">Durum</th><th data-i18n="leave.col_date">Tarih</th></tr>
               </thead>
               <tbody id="my-leave-tbody"></tbody>
             </table>
@@ -1083,6 +1083,24 @@
       </div>
       <div class="form-group"><label class="form-label" data-i18n="leave.desc_label">Açıklama</label><textarea id="leave-desc" class="form-input" rows="3"></textarea></div>
       <label class="checkbox-row"><input id="leave-report" type="checkbox" /><span data-i18n="leave.report_check">Sağlık raporum var</span></label>
+
+      <!-- Belge eki: sağlık raporu, cenaze belgesi, sınav belgesi vb. -->
+      <div class="form-group">
+        <label class="form-label" data-i18n="leave.doc_label">Belge Eki (opsiyonel)</label>
+        <input id="leave-doc-meta" type="hidden" />
+        <input id="leave-doc-input" type="file" accept="application/pdf,image/jpeg,image/png" hidden onchange="handleLeaveDoc(event)" />
+        <div id="leave-doc-row" class="emp-photo-row" style="align-items:flex-start">
+          <div class="emp-photo-preview" id="leave-doc-icon" style="width:48px;height:48px;border-radius:10px;background:var(--surface-3);font-size:22px">📎</div>
+          <div class="emp-photo-actions" style="flex:1">
+            <div id="leave-doc-name" class="text-sub" style="font-weight:600;color:var(--text)" data-i18n="leave.doc_none">Belge seçilmedi</div>
+            <small class="text-sub" style="display:block;margin-top:2px" data-i18n="leave.doc_hint">PDF, JPG veya PNG · maks. 5 MB</small>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('leave-doc-input').click()" data-i18n="leave.doc_choose">Dosya Seç</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="leave-doc-clear" onclick="clearLeaveDoc()" style="display:none" data-i18n="emp.photo_remove2">Kaldır</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('leave-modal')" data-i18n="common.cancel">İptal</button>

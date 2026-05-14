@@ -313,6 +313,17 @@ namespace ShiftTrackingApp.Controllers
             var result     = await _leaves.ReviewAsync(id, reviewerId, dto);
             return result == null ? NotFound() : Ok(result);
         }
+
+        // Belge indirme: admin her şeyi, personel sadece kendi belgesini indirebilir
+        [HttpGet("{id}/document")]
+        public async Task<IActionResult> Document(int id)
+        {
+            var userId  = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var isAdmin = User.IsInRole(Roles.Admin);
+            var doc = await _leaves.GetDocumentAsync(id, userId, isAdmin);
+            if (doc == null) return NotFound();
+            return File(doc.Value.Bytes, doc.Value.ContentType, doc.Value.FileName);
+        }
     }
 
     // ════════════ ATTENDANCE ═════════════════════════════════════════════

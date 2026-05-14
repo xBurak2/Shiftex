@@ -37,6 +37,7 @@ namespace ShiftTrackingApp.Services.Interfaces
         Task<List<LeaveRequestDto>> GetByUserAsync(int userId);
         Task<LeaveRequestDto> CreateAsync(int userId, CreateLeaveRequestDto dto);
         Task<LeaveRequestDto?> ReviewAsync(int id, int reviewerId, ReviewLeaveDto dto);
+        Task<(byte[] Bytes, string FileName, string ContentType)?> GetDocumentAsync(int id, int viewerId, bool isAdmin);
     }
 
     public interface IAttendanceService

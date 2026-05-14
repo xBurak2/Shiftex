@@ -14,17 +14,48 @@ namespace ShiftTrackingApp.Services
 
         public async Task<List<LeaveRequestDto>> GetAllAsync(string? status = null)
         {
-            var q = _db.LeaveRequests.Include(l => l.User).AsQueryable();
+            // Performans: DocumentBytes'ı list sorgularında çekme — sadece HasDocument'i türet
+            var q = _db.LeaveRequests.AsNoTracking().AsQueryable();
             if (!string.IsNullOrEmpty(status)) q = q.Where(l => l.Status == status);
-            return await q.OrderByDescending(l => l.CreatedAt).Select(l => ToDto(l)).ToListAsync();
+            return await q.OrderByDescending(l => l.CreatedAt).Select(l => new LeaveRequestDto
+            {
+                Id                  = l.Id,
+                UserId              = l.UserId,
+                UserFullName        = l.User.FullName,
+                LeaveType           = l.LeaveType,
+                StartDate           = l.StartDate,
+                EndDate             = l.EndDate,
+                Description         = l.Description,
+                HasMedicalReport    = l.HasMedicalReport,
+                Status              = l.Status,
+                CreatedAt           = l.CreatedAt,
+                HasDocument         = l.DocumentBytes != null && l.DocumentBytes.Length > 0,
+                DocumentFileName    = l.DocumentFileName,
+                DocumentContentType = l.DocumentContentType
+            }).ToListAsync();
         }
 
         public async Task<List<LeaveRequestDto>> GetByUserAsync(int userId)
             => await _db.LeaveRequests
-                .Include(l => l.User)
+                .AsNoTracking()
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.CreatedAt)
-                .Select(l => ToDto(l))
+                .Select(l => new LeaveRequestDto
+                {
+                    Id                  = l.Id,
+                    UserId              = l.UserId,
+                    UserFullName        = l.User.FullName,
+                    LeaveType           = l.LeaveType,
+                    StartDate           = l.StartDate,
+                    EndDate             = l.EndDate,
+                    Description         = l.Description,
+                    HasMedicalReport    = l.HasMedicalReport,
+                    Status              = l.Status,
+                    CreatedAt           = l.CreatedAt,
+                    HasDocument         = l.DocumentBytes != null && l.DocumentBytes.Length > 0,
+                    DocumentFileName    = l.DocumentFileName,
+                    DocumentContentType = l.DocumentContentType
+                })
                 .ToListAsync();
 
         public async Task<LeaveRequestDto> CreateAsync(int userId, CreateLeaveRequestDto dto)
@@ -32,21 +63,62 @@ namespace ShiftTrackingApp.Services
             if (dto.EndDate < dto.StartDate)
                 throw new ArgumentException("Bitiş tarihi başlangıç tarihinden önce olamaz.");
 
+            byte[]? docBytes = null;
+            string? docName  = null;
+            string? docType  = null;
+            if (!string.IsNullOrWhiteSpace(dto.DocumentBase64))
+            {
+                // Frontend "data:application/pdf;base64,..." veya saf base64 gönderebilir
+                var raw = dto.DocumentBase64;
+                var commaIdx = raw.IndexOf(',');
+                if (raw.StartsWith("data:") && commaIdx > 0) raw = raw[(commaIdx + 1)..];
+                try
+                {
+                    docBytes = Convert.FromBase64String(raw);
+                }
+                catch (FormatException)
+                {
+                    throw new ArgumentException("Geçersiz belge formatı. Lütfen geçerli bir dosya yükleyin.");
+                }
+                if (docBytes.Length > 5 * 1024 * 1024)
+                    throw new ArgumentException("Belge boyutu en fazla 5 MB olabilir.");
+
+                // İzin verilen content-type'lar
+                docType = dto.DocumentContentType?.ToLowerInvariant();
+                var allowed = new[] { "application/pdf", "image/jpeg", "image/jpg", "image/png" };
+                if (string.IsNullOrEmpty(docType) || Array.IndexOf(allowed, docType) < 0)
+                    throw new ArgumentException("Sadece PDF, JPG veya PNG dosyaları kabul edilir.");
+
+                docName = string.IsNullOrWhiteSpace(dto.DocumentFileName) ? "belge" : dto.DocumentFileName;
+            }
+
             var leave = new LeaveRequest
             {
-                UserId          = userId,
-                LeaveType       = dto.LeaveType,
-                StartDate       = dto.StartDate,
-                EndDate         = dto.EndDate,
-                Description     = dto.Description,
-                HasMedicalReport = dto.HasMedicalReport,
-                Status          = "Pending",
-                CreatedAt       = DateTime.UtcNow
+                UserId              = userId,
+                LeaveType           = dto.LeaveType,
+                StartDate           = dto.StartDate,
+                EndDate             = dto.EndDate,
+                Description         = dto.Description,
+                HasMedicalReport    = dto.HasMedicalReport,
+                Status              = "Pending",
+                CreatedAt           = DateTime.UtcNow,
+                DocumentBytes       = docBytes,
+                DocumentFileName    = docName,
+                DocumentContentType = docType
             };
             _db.LeaveRequests.Add(leave);
             await _db.SaveChangesAsync();
             await _db.Entry(leave).Reference(l => l.User).LoadAsync();
             return ToDto(leave);
+        }
+
+        public async Task<(byte[] Bytes, string FileName, string ContentType)?> GetDocumentAsync(int id, int viewerId, bool isAdmin)
+        {
+            var leave = await _db.LeaveRequests.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+            if (leave == null || leave.DocumentBytes == null) return null;
+            // Sadece admin veya talep sahibi indirebilir
+            if (!isAdmin && leave.UserId != viewerId) return null;
+            return (leave.DocumentBytes, leave.DocumentFileName ?? "belge", leave.DocumentContentType ?? "application/octet-stream");
         }
 
         public async Task<LeaveRequestDto?> ReviewAsync(int id, int reviewerId, ReviewLeaveDto dto)
@@ -63,16 +135,19 @@ namespace ShiftTrackingApp.Services
 
         private static LeaveRequestDto ToDto(LeaveRequest l) => new()
         {
-            Id               = l.Id,
-            UserId           = l.UserId,
-            UserFullName     = l.User.FullName,
-            LeaveType        = l.LeaveType,
-            StartDate        = l.StartDate,
-            EndDate          = l.EndDate,
-            Description      = l.Description,
-            HasMedicalReport = l.HasMedicalReport,
-            Status           = l.Status,
-            CreatedAt        = l.CreatedAt
+            Id                  = l.Id,
+            UserId              = l.UserId,
+            UserFullName        = l.User.FullName,
+            LeaveType           = l.LeaveType,
+            StartDate           = l.StartDate,
+            EndDate             = l.EndDate,
+            Description         = l.Description,
+            HasMedicalReport    = l.HasMedicalReport,
+            Status              = l.Status,
+            CreatedAt           = l.CreatedAt,
+            HasDocument         = l.DocumentBytes != null && l.DocumentBytes.Length > 0,
+            DocumentFileName    = l.DocumentFileName,
+            DocumentContentType = l.DocumentContentType
         };
     }
 
