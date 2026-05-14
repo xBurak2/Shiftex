@@ -622,6 +622,34 @@ const I18N = {
     'toast.dept_added':     'Departman eklendi.',
     'toast.checkin_saved':  'Giriş kaydedildi.',
     'toast.checkout_saved': 'Çıkış kaydedildi.',
+    'toast.report_downloading': 'Rapor indiriliyor…',
+    'toast.report_dl_err':  'İndirilemedi',
+
+    // PV (employee detail modal) stat labels
+    'pv.hours':             'Saat',
+    'pv.no_month':          'Bu ay için kayıt yok.',
+    'pv.no_leaves':         'İzin talebi yok.',
+    'pv.days':              'gün',
+
+    // My dashboard hints
+    'mydash.hint_total':    'Toplam',
+    'mydash.hint_week':     'Bu hafta',
+    'mydash.hint_leave':    'İzin',
+    'mydash.hint_year':     '{year} yılı',
+    'mydash.days_today':    'Bugün',
+    'mydash.days_tomorrow': 'Yarın',
+    'mydash.days_after':    '{n} gün sonra',
+    'mydash.today_marker':  'Bugün',
+
+    // Shift modal title dynamic
+    'shift.title_edit':     'Vardiyayı Düzenle',
+    'shift.title_extra':    'Ek Vardiya / Fazla Mesai',
+    'shift.title_assign':   'Vardiya Ata',
+
+    // Leave types (server returns)
+    'leave.srv.annual':     'Yıllık',
+    'leave.srv.health':     'Sağlık',
+    'leave.srv.excuse':     'Mazeret',
   },
 
   en: {
@@ -1229,6 +1257,34 @@ const I18N = {
     'toast.dept_added':     'Department added.',
     'toast.checkin_saved':  'Check-in saved.',
     'toast.checkout_saved': 'Check-out saved.',
+    'toast.report_downloading': 'Downloading report…',
+    'toast.report_dl_err':  'Could not download',
+
+    // PV (employee detail modal) stat labels
+    'pv.hours':             'Hours',
+    'pv.no_month':          'No records for this month.',
+    'pv.no_leaves':         'No leave requests.',
+    'pv.days':              'days',
+
+    // My dashboard hints
+    'mydash.hint_total':    'Total',
+    'mydash.hint_week':     'This week',
+    'mydash.hint_leave':    'Leave',
+    'mydash.hint_year':     '{year}',
+    'mydash.days_today':    'Today',
+    'mydash.days_tomorrow': 'Tomorrow',
+    'mydash.days_after':    'In {n} days',
+    'mydash.today_marker':  'Today',
+
+    // Shift modal title dynamic
+    'shift.title_edit':     'Edit Shift',
+    'shift.title_extra':    'Additional / Overtime Shift',
+    'shift.title_assign':   'Assign Shift',
+
+    // Leave types (server returns)
+    'leave.srv.annual':     'Annual',
+    'leave.srv.health':     'Health',
+    'leave.srv.excuse':     'Excuse',
   }
 };
 

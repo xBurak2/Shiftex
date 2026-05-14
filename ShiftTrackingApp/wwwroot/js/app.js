@@ -449,6 +449,25 @@ function getShiftCategory(shiftId) {
   return x?.cat || 'shift';
 }
 
+// Server'dan gelen shift verisini (shiftId ile) i18n'li isme çevirir
+function shiftNameById(shiftId, fallback) {
+  const st = SHIFT_TYPES.find(x => x.id === shiftId);
+  return st?.nameKey ? t(st.nameKey) : (fallback || '—');
+}
+
+// Gün isimleri (Monday-Sunday = 0-6, mantıken Pazartesi başlangıç)
+const DAY_KEYS_FULL  = ['day.full.mon','day.full.tue','day.full.wed','day.full.thu','day.full.fri','day.full.sat','day.full.sun'];
+const DAY_KEYS_SHORT = ['day.mon','day.tue','day.wed','day.thu','day.fri','day.sat','day.sun'];
+function dayFullName(monBasedIdx) { return t(DAY_KEYS_FULL[monBasedIdx] || 'day.full.mon'); }
+// JS Date.getDay(): 0=Pazar..6=Cumartesi → biz Pazartesi=0 istiyoruz
+function dayFullFromDate(d) { return dayFullName((d.getDay() + 6) % 7); }
+
+// Server'ın leaveType alanı (Yıllık/Sağlık/Mazeret) için lookup
+function leaveTypeI18n(srvType) {
+  const map = { 'Yıllık': 'leave.type_a', 'Sağlık': 'leave.type_b', 'Mazeret': 'leave.type_c' };
+  return map[srvType] ? t(map[srvType]) : (srvType || '');
+}
+
 function buildNav() {
   const items = currentUser.role === 'Admin' ? NAV_ADMIN : NAV_EMP;
   const html = items.map(it => {
@@ -924,15 +943,15 @@ async function viewEmployeeProfile(id) {
     if (summary) {
       document.getElementById('pv-monthly').innerHTML = `
         <div class="pv-stats">
-          <div class="pv-stat"><strong>${summary.presentDays}</strong><small>Mevcut</small></div>
-          <div class="pv-stat"><strong>${summary.leaveDays}</strong><small>İzinli</small></div>
-          <div class="pv-stat"><strong>${summary.absentDays}</strong><small>Devamsız</small></div>
-          <div class="pv-stat"><strong>${(summary.totalWorkedHours||0).toFixed(1)}</strong><small>Saat</small></div>
-          <div class="pv-stat"><strong>${(summary.totalOvertimeHours||0).toFixed(1)}</strong><small>FM Saat</small></div>
-          <div class="pv-stat"><strong>${summary.overtimeShiftCount}</strong><small>FM Vardiya</small></div>
+          <div class="pv-stat"><strong>${summary.presentDays}</strong><small>${t('mydash.present')}</small></div>
+          <div class="pv-stat"><strong>${summary.leaveDays}</strong><small>${t('mydash.leaved')}</small></div>
+          <div class="pv-stat"><strong>${summary.absentDays}</strong><small>${t('mydash.absent2')}</small></div>
+          <div class="pv-stat"><strong>${(summary.totalWorkedHours||0).toFixed(1)}</strong><small>${t('pv.hours')}</small></div>
+          <div class="pv-stat"><strong>${(summary.totalOvertimeHours||0).toFixed(1)}</strong><small>${t('monthly.ot_hours')}</small></div>
+          <div class="pv-stat"><strong>${summary.overtimeShiftCount}</strong><small>${t('monthly.ot_count')}</small></div>
         </div>`;
     } else {
-      document.getElementById('pv-monthly').innerHTML = '<div class="empty">Bu ay için kayıt yok.</div>';
+      document.getElementById('pv-monthly').innerHTML = `<div class="empty">${t('pv.no_month')}</div>`;
     }
 
     const myLeaves = (leaves || []).filter(l => l.userId === id).slice(0, 5);
@@ -940,12 +959,12 @@ async function viewEmployeeProfile(id) {
       ? myLeaves.map(l => `
           <div class="leave-mini">
             <div class="lm-info">
-              <strong>${esc(l.leaveType)}</strong>
-              <small>${fmtDate(l.startDate)} - ${fmtDate(l.endDate)} · ${l.totalDays} gün</small>
+              <strong>${esc(leaveTypeI18n(l.leaveType))}</strong>
+              <small>${fmtDate(l.startDate)} - ${fmtDate(l.endDate)} · ${l.totalDays} ${t('pv.days')}</small>
             </div>
             ${statusBadge(l.status)}
           </div>`).join('')
-      : '<div class="empty">İzin talebi yok.</div>';
+      : `<div class="empty">${t('pv.no_leaves')}</div>`;
   } catch(_) { /* sessiz */ }
 }
 
@@ -977,17 +996,15 @@ async function loadRoster() {
   // Departman filtresini doldur (admin için)
   if (isAdmin) {
     const filter = document.getElementById('roster-dept-filter');
-    if (filter && filter.options.length <= 1 && allDepts.length) {
-      filter.innerHTML = '<option value="">Tüm Departmanlar</option>' +
+    if (filter && allDepts.length) {
+      filter.innerHTML = `<option value="">${t('roster.all_depts')}</option>` +
         allDepts.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
     }
   }
 
   // Personel için sayfa altyazısı güncelle + filtre butonu opsiyonel
   const subEl = document.querySelector('#page-roster .page-sub');
-  if (subEl) subEl.textContent = isAdmin
-    ? 'Haftalık vardiya planı — hücreye tıklayarak vardiya, tatil veya fazla mesai atayabilirsiniz.'
-    : 'Haftalık vardiya planı — sadece görüntüleme. Kendi vardiyalarınız vurgulanır.';
+  if (subEl) subEl.textContent = t(isAdmin ? 'roster.sub_admin' : 'roster.sub_emp');
 
   try {
     const assignments = await api('GET', `/api/Shifts/weekly?weekStart=${fmtDateOnly(ws)}`);
@@ -1114,9 +1131,9 @@ async function openShiftModal(dateStr, userId, assignId) {
   let currentShift = null;
   if (assignId) {
     currentShift = shifts.find(s => s.id === assignId);
-    titleEl.textContent = 'Vardiyayı Düzenle';
+    titleEl.textContent = t('shift.title_edit');
   } else {
-    titleEl.textContent = shifts.length ? 'Ek Vardiya / Fazla Mesai' : 'Vardiya Ata';
+    titleEl.textContent = shifts.length ? t('shift.title_extra') : t('shift.title_assign');
   }
 
   // Mevcut atamalar listesi (sadece eklerken — düzenlemede gerek yok)
@@ -1127,8 +1144,8 @@ async function openShiftModal(dateStr, userId, assignId) {
     existingList.innerHTML = shifts.map(s => {
       const cat = getShiftCategory(s.shiftId);
       return `<div class="existing-shift-item">
-        <span class="shift-chip sm cat-${cat}" style="background:${s.shiftColor}">${s.shiftName}<small>${s.startTime}–${s.endTime}</small></span>
-        <button type="button" class="btn-icon-mini" onclick="openShiftModal('${dateStr}',${userId},${s.id})" title="Düzenle">✎</button>
+        <span class="shift-chip sm cat-${cat}" style="background:${s.shiftColor}">${esc(shiftNameById(s.shiftId, s.shiftName))}<small>${s.startTime}–${s.endTime}</small></span>
+        <button type="button" class="btn-icon-mini" onclick="openShiftModal('${dateStr}',${userId},${s.id})" title="${t('common.edit')}">✎</button>
       </div>`;
     }).join('');
   } else {
@@ -1393,12 +1410,12 @@ async function loadMyDashboard() {
     const pendingLeaves  = myLeaves.filter(l => l.status === 'Pending').length;
 
     document.getElementById('my-stat-grid').innerHTML = [
-      { label: 'İzin Bakiyem',     val: (balance?.remainingDays ?? 0)+'/'+(balance?.annualAllowance ?? 14), icon: ICONS.palm, cls:'icon-green', hint:`${balance?.year || new Date().getFullYear()} yılı` },
-      { label: 'Bu Hafta Vardiya', val: totalShifts,    icon: ICONS.calendar, cls:'icon-blue',  hint:'Toplam'    },
-      { label: 'Fazla Mesai',      val: overtimeShifts, icon: ICONS.trend,    cls:'icon-amber', hint:'Bu hafta'  },
-      { label: 'Bekleyen Talep',   val: pendingLeaves,  icon: ICONS.pending,  cls:'icon-cyan',  hint:'İzin'      },
-      { label: 'Bu Ay Devam',      val: (summary?.presentDays ?? 0)+' gün', icon: ICONS.checkin, cls:'icon-violet', hint:'Mevcut' },
-      { label: 'Bu Ay Çalışma',    val: (summary?.totalWorkedHours ?? 0).toFixed(1)+' sa', icon: ICONS.trend, cls:'icon-red', hint:'Toplam' },
+      { label: t('mydash.stat_balance'),    val: (balance?.remainingDays ?? 0)+'/'+(balance?.annualAllowance ?? 14), icon: ICONS.palm, cls:'icon-green', hint:t('mydash.hint_year',{year: balance?.year || new Date().getFullYear()}) },
+      { label: t('mydash.stat_shifts'),     val: totalShifts,    icon: ICONS.calendar, cls:'icon-blue',  hint:t('mydash.hint_total')    },
+      { label: t('mydash.stat_overtime'),   val: overtimeShifts, icon: ICONS.trend,    cls:'icon-amber', hint:t('mydash.hint_week')  },
+      { label: t('mydash.stat_pending'),    val: pendingLeaves,  icon: ICONS.pending,  cls:'icon-cyan',  hint:t('mydash.hint_leave')      },
+      { label: t('mydash.stat_month_att'),  val: (summary?.presentDays ?? 0)+' '+t('common.day'), icon: ICONS.checkin, cls:'icon-violet', hint:t('mydash.present') },
+      { label: t('mydash.stat_month_hrs'),  val: (summary?.totalWorkedHours ?? 0).toFixed(1)+' '+t('badge.hour_short'), icon: ICONS.trend, cls:'icon-red', hint:t('mydash.hint_total') },
     ].map(s => `
       <div class="stat-card stat-card-rich">
         <div class="stat-icon ${s.cls}">${s.icon}</div>
@@ -1411,7 +1428,6 @@ async function loadMyDashboard() {
     `).join('');
 
     // Bu hafta vardiyalarım
-    const DAYS = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
     document.getElementById('my-week-shifts').innerHTML = thisWeek.length
       ? thisWeek.slice(0,6).map(s => {
           const dt = new Date(s.date);
@@ -1420,14 +1436,14 @@ async function loadMyDashboard() {
           const catBadge = cat === 'overtime' ? '<span class="fm-badge">FM</span>' : '';
           return `<div class="ms-row ${isToday?'ms-today':''}">
             <div class="ms-day">
-              <strong>${DAYS[(dt.getDay()+6)%7]}</strong>
-              <small>${fmtDate(dt)}${isToday?' · Bugün':''}</small>
+              <strong>${dayFullFromDate(dt)}</strong>
+              <small>${fmtDate(dt)}${isToday?' · '+t('mydash.today_marker'):''}</small>
             </div>
-            <div class="ms-chip" style="background:${s.shiftColor}">${esc(s.shiftName)}${catBadge}</div>
+            <div class="ms-chip" style="background:${s.shiftColor}">${esc(shiftNameById(s.shiftId, s.shiftName))}${catBadge}</div>
             <div class="ms-time font-mono">${s.startTime}–${s.endTime}</div>
           </div>`;
         }).join('')
-      : '<div class="empty">Bu hafta vardiya yok.</div>';
+      : `<div class="empty">${t('mydash.no_week')}</div>`;
 
     // Sonraki vardiya
     const upcomingShifts = (futureShifts || []).filter(s => {
@@ -1438,26 +1454,26 @@ async function loadMyDashboard() {
     document.getElementById('my-next-shift').innerHTML = next ? (() => {
       const dt = new Date(next.date);
       const days = Math.ceil((dt - new Date(new Date().toDateString())) / 86400000);
-      const dayLabel = days === 0 ? 'Bugün' : days === 1 ? 'Yarın' : `${days} gün sonra`;
+      const dayLabel = days === 0 ? t('mydash.days_today') : days === 1 ? t('mydash.days_tomorrow') : t('mydash.days_after',{n:days});
       return `<div class="next-shift">
         <div class="ns-day">${esc(dayLabel)}</div>
-        <div class="ns-chip" style="background:${next.shiftColor}">${esc(next.shiftName)}</div>
+        <div class="ns-chip" style="background:${next.shiftColor}">${esc(shiftNameById(next.shiftId, next.shiftName))}</div>
         <div class="ns-time font-mono">${next.startTime} – ${next.endTime}</div>
         <div class="ns-date">${fmtDate(dt)}</div>
       </div>`;
-    })() : '<div class="empty">Önümüzdeki vardiyan yok 🌴</div>';
+    })() : `<div class="empty">${t('mydash.no_future')}</div>`;
 
     // İzin durumum özeti
     const recent = myLeaves.slice(0,4);
     document.getElementById('my-leaves-summary').innerHTML = recent.length ? recent.map(l => `
       <div class="leave-mini">
         <div class="lm-info">
-          <strong>${esc(l.leaveType)}</strong>
+          <strong>${esc(leaveTypeI18n(l.leaveType))}</strong>
           <small>${fmtDate(l.startDate)} - ${fmtDate(l.endDate)}</small>
         </div>
         ${statusBadge(l.status)}
       </div>
-    `).join('') : '<div class="empty">Henüz izin talebin yok.</div>';
+    `).join('') : `<div class="empty">${t('mydash.no_leaves')}</div>`;
 
     // Bu ay özet
     if (summary) {
@@ -1468,25 +1484,25 @@ async function loadMyDashboard() {
       document.getElementById('my-month-summary').innerHTML = `
         <div class="month-bars">
           <div class="dist-row">
-            <div class="dist-label"><span class="dist-dot" style="background:#34D399"></span>Mevcut</div>
+            <div class="dist-label"><span class="dist-dot" style="background:#34D399"></span>${t('mydash.present')}</div>
             <div class="dist-bar"><div class="dist-fill" style="width:${presentPct}%;background:#34D399"></div></div>
             <div class="dist-val"><strong>${summary.presentDays}</strong><small>${presentPct}%</small></div>
           </div>
           <div class="dist-row">
-            <div class="dist-label"><span class="dist-dot" style="background:#22D3EE"></span>İzinli</div>
+            <div class="dist-label"><span class="dist-dot" style="background:#22D3EE"></span>${t('mydash.leaved')}</div>
             <div class="dist-bar"><div class="dist-fill" style="width:${leavePct}%;background:#22D3EE"></div></div>
             <div class="dist-val"><strong>${summary.leaveDays}</strong><small>${leavePct}%</small></div>
           </div>
           <div class="dist-row">
-            <div class="dist-label"><span class="dist-dot" style="background:#F87171"></span>Devamsız</div>
+            <div class="dist-label"><span class="dist-dot" style="background:#F87171"></span>${t('mydash.absent2')}</div>
             <div class="dist-bar"><div class="dist-fill" style="width:${absentPct}%;background:#F87171"></div></div>
             <div class="dist-val"><strong>${summary.absentDays}</strong><small>${absentPct}%</small></div>
           </div>
         </div>
         <div class="month-totals">
-          <div><strong>${(summary.totalWorkedHours ?? 0).toFixed(1)}</strong><small>Toplam Saat</small></div>
-          <div><strong>${(summary.totalOvertimeHours ?? 0).toFixed(1)}</strong><small>Fazla Mesai</small></div>
-          <div><strong>${summary.overtimeShiftCount ?? 0}</strong><small>FM Vardiyası</small></div>
+          <div><strong>${(summary.totalWorkedHours ?? 0).toFixed(1)}</strong><small>${t('monthly.total_hours')}</small></div>
+          <div><strong>${(summary.totalOvertimeHours ?? 0).toFixed(1)}</strong><small>${t('shift.cat.overtime')}</small></div>
+          <div><strong>${summary.overtimeShiftCount ?? 0}</strong><small>${t('monthly.ot_count')}</small></div>
         </div>`;
     } else {
       document.getElementById('my-month-summary').innerHTML = '<div class="empty">Bu ay için kayıt yok.</div>';
@@ -1512,17 +1528,18 @@ async function loadMyMonthlyData() {
   const month = document.getElementById('my-month-sel').value;
   try {
     const s = await api('GET', `/api/Users/${currentUser.userId}/attendance-summary?year=${year}&month=${month}`);
+    const hr = t('badge.hour_short');
     document.getElementById('my-monthly-result').innerHTML = `
       <div class="stat-grid" style="margin-top:20px">
         ${[
-          ['Mevcut Gün',   s.presentDays,         ICONS.checkin,    'icon-green'],
-          ['İzinli Gün',   s.leaveDays,           ICONS.palm,       'icon-amber'],
-          ['Devamsız',     s.absentDays,          ICONS.cross,      'icon-red'],
-          ['Raporlu',      s.absentWithReport,    ICONS.clipboard,  'icon-cyan'],
-          ['Raporsuz',     s.absentWithoutReport, ICONS.cross,      'icon-amber'],
-          ['Toplam Saat',  s.totalWorkedHours.toFixed(1)+' sa', ICONS.trend, 'icon-blue'],
-          ['FM Saat',      s.totalOvertimeHours.toFixed(1)+' sa', ICONS.trend, 'icon-violet'],
-          ['FM Vardiya',   s.overtimeShiftCount,  ICONS.calendar,   'icon-blue'],
+          [t('monthly.present_days'), s.presentDays,         ICONS.checkin,    'icon-green'],
+          [t('monthly.leave_days'),   s.leaveDays,           ICONS.palm,       'icon-amber'],
+          [t('monthly.absent_days'),  s.absentDays,          ICONS.cross,      'icon-red'],
+          [t('monthly.with_report'),  s.absentWithReport,    ICONS.clipboard,  'icon-cyan'],
+          [t('monthly.no_report'),    s.absentWithoutReport, ICONS.cross,      'icon-amber'],
+          [t('monthly.total_hours'),  s.totalWorkedHours.toFixed(1)+' '+hr,   ICONS.trend, 'icon-blue'],
+          [t('monthly.ot_hours'),     s.totalOvertimeHours.toFixed(1)+' '+hr, ICONS.trend, 'icon-violet'],
+          [t('monthly.ot_count'),     s.overtimeShiftCount,  ICONS.calendar,   'icon-blue'],
         ].map(([lbl,val,icon,cls])=>`
           <div class="stat-card stat-card-rich">
             <div class="stat-icon ${cls}">${icon}</div>
@@ -1541,20 +1558,19 @@ async function exportMyMonthly() {
     const res = await fetch(API_BASE + `/api/Users/${currentUser.userId}/attendance-summary/export?year=${year}&month=${month}`, {
       headers: { 'Authorization': 'Bearer ' + authToken }
     });
-    if (!res.ok) throw new Error('İndirilemedi');
+    if (!res.ok) throw new Error(t('toast.report_dl_err'));
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url; a.download = `devam-raporu-${year}-${String(month).padStart(2,'0')}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    toast('Rapor indiriliyor…', 'ok');
+    toast(t('toast.report_downloading'), 'ok');
   } catch(e) { toast(e.message, 'err'); }
 }
 
 // ── My Shifts ───────────────────────────────────────────────────────
 async function loadMyShifts() {
-  const DAYS = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
   const ws = myShiftWeekStart;
   const we = new Date(ws); we.setDate(we.getDate()+6);
   document.getElementById('my-shift-label').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
@@ -1563,8 +1579,8 @@ async function loadMyShifts() {
     document.getElementById('my-shift-tbody').innerHTML = shifts.length
       ? shifts.map(s => `<tr>
           <td class="font-mono">${fmtDate(s.date)}</td>
-          <td>${DAYS[new Date(s.date).getDay()-1]||'—'}</td>
-          <td><span class="shift-chip sm" style="background:${s.shiftColor}">${s.shiftName}</span></td>
+          <td>${dayFullFromDate(new Date(s.date))}</td>
+          <td><span class="shift-chip sm" style="background:${s.shiftColor}">${esc(shiftNameById(s.shiftId, s.shiftName))}</span></td>
           <td class="font-mono">${s.startTime}</td>
           <td class="font-mono">${s.endTime}</td>
         </tr>`).join('')
@@ -1754,7 +1770,7 @@ async function exportAdminMonthly() {
     a.download = `${safeName}-${year}-${String(month).padStart(2,'0')}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    toast('Rapor indiriliyor…', 'ok');
+    toast(t('toast.report_downloading'), 'ok');
   } catch(e) { toast(e.message, 'err'); }
 }
 
@@ -1764,17 +1780,18 @@ async function loadMonthlySummary() {
   const year = document.getElementById('monthly-year-sel').value;
   try {
     const s = await api('GET', `/api/Users/${userId}/attendance-summary?year=${year}&month=${month}`);
+    const hr2 = t('badge.hour_short');
     document.getElementById('monthly-result').innerHTML = `
       <div class="stat-grid" style="margin-top:20px">
         ${[
-          ['Mevcut Gün',  s.presentDays,        ICONS.checkin,'icon-green'],
-          ['İzin',        s.leaveDays,          ICONS.palm,   'icon-amber'],
-          ['Devamsız',    s.absentDays,         ICONS.cross,  'icon-red'],
-          ['Raporlu',     s.absentWithReport,   ICONS.clipboard,'icon-cyan'],
-          ['Raporsuz',    s.absentWithoutReport,ICONS.cross,  'icon-amber'],
-          ['Toplam Saat', s.totalWorkedHours+'sa',ICONS.trend,'icon-blue'],
-          ['FM Saat',     s.totalOvertimeHours+'sa',ICONS.trend,'icon-violet'],
-          ['FM Vardiya',  s.overtimeShiftCount, ICONS.calendar,'icon-blue'],
+          [t('monthly.present_days'), s.presentDays,        ICONS.checkin,'icon-green'],
+          [t('mydash.stat_leave'),    s.leaveDays,          ICONS.palm,   'icon-amber'],
+          [t('monthly.absent_days'),  s.absentDays,         ICONS.cross,  'icon-red'],
+          [t('monthly.with_report'),  s.absentWithReport,   ICONS.clipboard,'icon-cyan'],
+          [t('monthly.no_report'),    s.absentWithoutReport,ICONS.cross,  'icon-amber'],
+          [t('monthly.total_hours'),  s.totalWorkedHours+hr2,ICONS.trend, 'icon-blue'],
+          [t('monthly.ot_hours'),     s.totalOvertimeHours+hr2,ICONS.trend,'icon-violet'],
+          [t('monthly.ot_count'),     s.overtimeShiftCount, ICONS.calendar,'icon-blue'],
         ].map(([lbl,val,icon,cls])=>`
           <div class="stat-card">
             <div class="stat-icon ${cls}">${icon}</div>
