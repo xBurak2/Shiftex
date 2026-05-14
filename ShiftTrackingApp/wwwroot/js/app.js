@@ -224,7 +224,7 @@ async function doLogin() {
   const pass  = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-error');
   errEl.classList.add('hidden');
-  if (!email || !pass) { errEl.textContent = 'E-posta ve şifre zorunludur.'; errEl.classList.remove('hidden'); return; }
+  if (!email || !pass) { errEl.textContent = t('login.err_credentials'); errEl.classList.remove('hidden'); return; }
   try {
     const data = await api('POST', '/api/Auth/login', { email, password: pass });
     authToken    = data.token;
@@ -235,7 +235,7 @@ async function doLogin() {
     sessionStorage.setItem('sx_user',    JSON.stringify(data));
     startApp();
   } catch(e) {
-    errEl.textContent = e.message || 'Giriş başarısız.';
+    errEl.textContent = e.message || t('toast.error');
     errEl.classList.remove('hidden');
   }
 }

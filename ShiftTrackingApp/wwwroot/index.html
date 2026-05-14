@@ -28,15 +28,6 @@
 
 <!-- ══════════════════ LOGIN ══════════════════ -->
 <div id="login-screen" class="login-screen">
-  <!-- Animasyonlu mesh gradient arkaplan -->
-  <div class="login-bg-mesh">
-    <div class="mesh-blob mesh-blob-1"></div>
-    <div class="mesh-blob mesh-blob-2"></div>
-    <div class="mesh-blob mesh-blob-3"></div>
-    <div class="mesh-grid"></div>
-    <div class="particle-field" id="particle-field"></div>
-  </div>
-
   <!-- Üst sağ: dil + tema toggle -->
   <div class="login-controls">
     <div class="lang-toggle lang-toggle-login">
@@ -51,165 +42,34 @@
     </button>
   </div>
 
-  <!-- Sol panel: marka hikayesi -->
-  <div class="login-hero">
-    <div class="login-hero-brand">
-      <div class="brand-mark brand-mark-lg">
-        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="sxLogoBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stop-color="#8B5CF6"/>
-              <stop offset=".5" stop-color="#5B5FCF"/>
-              <stop offset="1" stop-color="#22D3EE"/>
-            </linearGradient>
-            <linearGradient id="sxLogoDot" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#FBBF24"/>
-              <stop offset="1" stop-color="#F97316"/>
-            </linearGradient>
-          </defs>
-          <rect width="32" height="32" rx="8" fill="url(#sxLogoBg)"/>
-          <path d="M10 10h10" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
-          <path d="M8 16h14"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
-          <path d="M12 22h9"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>
-          <circle cx="22" cy="10" r="2.6" fill="url(#sxLogoDot)"/>
-        </svg>
-      </div>
-      <span>Shiftex</span>
-    </div>
-
-    <!-- Animasyonlu hero illüstrasyon: saat dial + 3 vardiya silüeti + uçan kartlar -->
-    <div class="hero-illust" aria-hidden="true">
-      <div class="hero-ring hero-ring-1"></div>
-      <div class="hero-ring hero-ring-2"></div>
-      <div class="hero-ring hero-ring-3"></div>
-
-      <svg class="hero-clock" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="clockGrad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#7B7FE0"/>
-            <stop offset=".5" stop-color="#5B5FCF"/>
-            <stop offset="1" stop-color="#22D3EE"/>
-          </linearGradient>
-          <radialGradient id="clockGlow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="rgba(123,127,224,0.4)"/>
-            <stop offset="1" stop-color="rgba(123,127,224,0)"/>
-          </radialGradient>
-        </defs>
-        <circle cx="100" cy="100" r="95" fill="url(#clockGlow)"/>
-        <circle cx="100" cy="100" r="78" fill="none" stroke="url(#clockGrad)" stroke-width="2" opacity=".6"/>
-        <g class="clock-ticks" stroke="currentColor" stroke-linecap="round">
-          <line x1="100" y1="22" x2="100" y2="32" stroke-width="2.5"/>
-          <line x1="100" y1="168" x2="100" y2="178" stroke-width="2.5"/>
-          <line x1="22" y1="100" x2="32" y2="100" stroke-width="2.5"/>
-          <line x1="168" y1="100" x2="178" y2="100" stroke-width="2.5"/>
-          <line x1="50" y1="35" x2="55" y2="43" stroke-width="1.5" opacity=".5"/>
-          <line x1="145" y1="35" x2="150" y2="43" stroke-width="1.5" opacity=".5"/>
-          <line x1="50" y1="165" x2="55" y2="157" stroke-width="1.5" opacity=".5"/>
-          <line x1="145" y1="165" x2="150" y2="157" stroke-width="1.5" opacity=".5"/>
-          <line x1="35" y1="55" x2="43" y2="50" stroke-width="1.5" opacity=".5"/>
-          <line x1="35" y1="145" x2="43" y2="150" stroke-width="1.5" opacity=".5"/>
-          <line x1="165" y1="55" x2="157" y2="50" stroke-width="1.5" opacity=".5"/>
-          <line x1="165" y1="145" x2="157" y2="150" stroke-width="1.5" opacity=".5"/>
-        </g>
-        <g class="clock-hand-hour" style="transform-origin: 100px 100px">
-          <line x1="100" y1="100" x2="100" y2="55" stroke="url(#clockGrad)" stroke-width="4" stroke-linecap="round"/>
-        </g>
-        <g class="clock-hand-min" style="transform-origin: 100px 100px">
-          <line x1="100" y1="100" x2="100" y2="38" stroke="url(#clockGrad)" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
-        </g>
-        <circle cx="100" cy="100" r="5" fill="url(#clockGrad)"/>
-        <circle cx="100" cy="100" r="2" fill="white"/>
-      </svg>
-
-      <!-- 3 vardiya karakter ikonu (saatin etrafında) -->
-      <div class="hero-character hero-char-morning">
-        <div class="hero-char-bubble" style="background: linear-gradient(135deg,#FBBF24,#F97316)">
-          <svg viewBox="0 0 32 32" fill="white">
-            <path d="M9 13c0-3 3-5 7-5s7 2 7 5v2H9v-2z"/>
-            <path d="M9 15h14v3H9z"/>
-            <path d="M11 18h10v6H11z" opacity=".7"/>
-          </svg>
-        </div>
-        <div class="hero-char-label">08:00</div>
-      </div>
-
-      <div class="hero-character hero-char-afternoon">
-        <div class="hero-char-bubble" style="background: linear-gradient(135deg,#22D3EE,#0EA5E9)">
-          <svg viewBox="0 0 32 32" fill="white">
-            <rect x="6" y="9" width="20" height="13" rx="1.5"/>
-            <path d="M4 24h24l-1 3H5z" opacity=".7"/>
-            <rect x="9" y="12" width="14" height="7" rx=".5" fill="rgba(0,0,0,.3)"/>
-          </svg>
-        </div>
-        <div class="hero-char-label">14:00</div>
-      </div>
-
-      <div class="hero-character hero-char-night">
-        <div class="hero-char-bubble" style="background: linear-gradient(135deg,#A78BFA,#6366F1)">
-          <svg viewBox="0 0 32 32" fill="white">
-            <path d="M22 17a8 8 0 11-9-9 6 6 0 009 9z"/>
-          </svg>
-        </div>
-        <div class="hero-char-label">22:00</div>
-      </div>
-
-      <!-- Uçan shift cards -->
-      <div class="hero-card hero-card-1">
-        <span class="hcd-dot" style="background:#FBBF24"></span>
-        <span class="hcd-text">Sabah</span>
-        <span class="hcd-time">08–16</span>
-      </div>
-      <div class="hero-card hero-card-2">
-        <span class="hcd-dot" style="background:#22D3EE"></span>
-        <span class="hcd-text">Öğle</span>
-        <span class="hcd-time">14–22</span>
-      </div>
-      <div class="hero-card hero-card-3">
-        <span class="hcd-dot" style="background:#A78BFA"></span>
-        <span class="hcd-text">Gece</span>
-        <span class="hcd-time">22–06</span>
-      </div>
-      <div class="hero-card hero-card-4 hero-card-success">
-        <span class="hcd-check">✓</span>
-        <span class="hcd-text">Giriş</span>
-      </div>
-    </div>
-
-    <h1 class="login-hero-title">
-      <span data-i18n="login.hero_title">Vardiyalarınız,</span><br>
-      <span class="gradient-text" data-i18n="login.hero_title2">otomasyonla</span>
-      <span data-i18n="login.hero_title3">yönetilsin.</span>
-    </h1>
-    <p class="login-hero-sub" data-i18n="login.hero_sub">Modern bir vardiya planlama, yüz tanıma ile devam takibi ve raporlama platformu. Tek panelden tüm ekibiniz.</p>
-    <ul class="login-features">
-      <li>
-        <span class="lf-dot lf-dot-violet"></span>
-        <div><strong data-i18n="login.feat1_title">Yüz tanıma turnikesi</strong><small data-i18n="login.feat1_sub">AES-256 şifreli biyometrik veri</small></div>
-      </li>
-      <li>
-        <span class="lf-dot lf-dot-blue"></span>
-        <div><strong data-i18n="login.feat2_title">Kategorize vardiya planlama</strong><small data-i18n="login.feat2_sub">Vardiyalar, tatil, fazla mesai — aynı güne çoklu atama</small></div>
-      </li>
-      <li>
-        <span class="lf-dot lf-dot-green"></span>
-        <div><strong data-i18n="login.feat3_title">Aylık devam raporları</strong><small data-i18n="login.feat3_sub">CSV / Excel uyumlu çıktı</small></div>
-      </li>
-    </ul>
-  </div>
-
-  <!-- Sağ panel: form -->
+  <!-- Sol panel: form -->
   <div class="login-card-wrap">
-    <div class="login-card login-card-glass">
-      <div class="login-brand mobile-only">
-        <div class="brand-mark">
-          <svg viewBox="0 0 32 32" fill="none">
-            <rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/>
-            <path d="M9 11h14M9 16h10M9 21h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-mark brand-mark-lg">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sxLogoBgLogin" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#8B5CF6"/>
+                <stop offset=".5" stop-color="#5B5FCF"/>
+                <stop offset="1" stop-color="#22D3EE"/>
+              </linearGradient>
+              <linearGradient id="sxLogoDotLogin" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#FBBF24"/>
+                <stop offset="1" stop-color="#F97316"/>
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="8" fill="url(#sxLogoBgLogin)"/>
+            <path d="M10 10h10" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
+            <path d="M8 16h14"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
+            <path d="M12 22h9"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>
+            <circle cx="22" cy="10" r="2.6" fill="url(#sxLogoDotLogin)"/>
           </svg>
         </div>
         <span>Shiftex</span>
       </div>
-      <h2 class="login-title" data-i18n="login.welcome">Hoş geldin 👋</h2>
+
+      <h2 class="login-title" data-i18n="login.welcome">Hoş geldin</h2>
       <p class="login-subtitle" data-i18n="login.subtitle">Hesabınla giriş yap, ekibini yönet.</p>
       <div id="login-error" class="alert alert-error hidden"></div>
       <div class="form-group">
@@ -244,6 +104,89 @@
       <p class="login-foot" data-i18n="login.foot">© 2026 Shiftex · v1.2 Production</p>
     </div>
   </div>
+
+  <!-- Sağ panel: illüstrasyon -->
+  <aside class="login-visual" aria-hidden="true">
+    <div class="visual-bg"></div>
+    <div class="visual-inner">
+      <svg class="visual-illust" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="visGradA" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#A78BFA"/>
+            <stop offset="1" stop-color="#22D3EE"/>
+          </linearGradient>
+          <linearGradient id="visGradB" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FBBF24"/>
+            <stop offset="1" stop-color="#F97316"/>
+          </linearGradient>
+          <linearGradient id="visGradC" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#EC4899"/>
+            <stop offset="1" stop-color="#8B5CF6"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Dekoratif takvim grid -->
+        <g transform="translate(120,140)" opacity=".95">
+          <rect x="0" y="0" width="280" height="220" rx="20" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/>
+          <rect x="0" y="0" width="280" height="44" rx="20" fill="rgba(255,255,255,.06)"/>
+          <circle cx="22" cy="22" r="6" fill="#FBBF24"/>
+          <circle cx="42" cy="22" r="6" fill="#22D3EE"/>
+          <circle cx="62" cy="22" r="6" fill="#EC4899"/>
+
+          <!-- Takvim hücreleri -->
+          <g transform="translate(20,60)" fill="rgba(255,255,255,.12)">
+            <rect x="0" y="0" width="34" height="34" rx="6"/>
+            <rect x="44" y="0" width="34" height="34" rx="6"/>
+            <rect x="88" y="0" width="34" height="34" rx="6" fill="url(#visGradA)"/>
+            <rect x="132" y="0" width="34" height="34" rx="6"/>
+            <rect x="176" y="0" width="34" height="34" rx="6"/>
+            <rect x="220" y="0" width="34" height="34" rx="6" fill="url(#visGradB)"/>
+
+            <rect x="0" y="44" width="34" height="34" rx="6"/>
+            <rect x="44" y="44" width="34" height="34" rx="6" fill="url(#visGradC)"/>
+            <rect x="88" y="44" width="34" height="34" rx="6"/>
+            <rect x="132" y="44" width="34" height="34" rx="6"/>
+            <rect x="176" y="44" width="34" height="34" rx="6" fill="url(#visGradA)"/>
+            <rect x="220" y="44" width="34" height="34" rx="6"/>
+
+            <rect x="0" y="88" width="34" height="34" rx="6"/>
+            <rect x="44" y="88" width="34" height="34" rx="6"/>
+            <rect x="88" y="88" width="34" height="34" rx="6"/>
+            <rect x="132" y="88" width="34" height="34" rx="6" fill="url(#visGradB)"/>
+            <rect x="176" y="88" width="34" height="34" rx="6"/>
+            <rect x="220" y="88" width="34" height="34" rx="6"/>
+          </g>
+        </g>
+
+        <!-- Şift kartları -->
+        <g transform="translate(60,120)">
+          <rect x="0" y="0" width="120" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
+          <circle cx="20" cy="20" r="6" fill="#34D399"/>
+          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Onaylı</text>
+        </g>
+        <g transform="translate(360,90)">
+          <rect x="0" y="0" width="110" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
+          <circle cx="20" cy="20" r="6" fill="#FBBF24"/>
+          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Sabah</text>
+        </g>
+        <g transform="translate(380,380)">
+          <rect x="0" y="0" width="100" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
+          <circle cx="20" cy="20" r="6" fill="#A78BFA"/>
+          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Gece</text>
+        </g>
+        <g transform="translate(50,410)">
+          <rect x="0" y="0" width="140" height="40" rx="20" fill="rgba(255,255,255,.95)"/>
+          <circle cx="20" cy="20" r="6" fill="#22D3EE"/>
+          <text x="36" y="25" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700" fill="#0E0E11">Devam %96</text>
+        </g>
+      </svg>
+
+      <div class="visual-title">
+        <h2 data-i18n="login.hero_title_v2">Vardiyalarınız, otomasyonla yönetilsin.</h2>
+        <p data-i18n="login.hero_sub_v2">Modern vardiya planlama, yüz tanıma ile devam takibi ve raporlama — tüm ekibiniz tek panelde.</p>
+      </div>
+    </div>
+  </aside>
 </div>
 
 <!-- ══════════════════ APP ══════════════════ -->
@@ -251,24 +194,24 @@
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-mark">
+      <div class="brand-mark brand-mark-gradient">
         <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="sxLogoBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <linearGradient id="sxLogoBgSide" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
               <stop offset="0" stop-color="#8B5CF6"/>
               <stop offset=".5" stop-color="#5B5FCF"/>
               <stop offset="1" stop-color="#22D3EE"/>
             </linearGradient>
-            <linearGradient id="sxLogoDot" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id="sxLogoDotSide" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stop-color="#FBBF24"/>
               <stop offset="1" stop-color="#F97316"/>
             </linearGradient>
           </defs>
-          <rect width="32" height="32" rx="8" fill="url(#sxLogoBg)"/>
+          <rect width="32" height="32" rx="8" fill="url(#sxLogoBgSide)"/>
           <path d="M10 10h10" stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
           <path d="M8 16h14"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>
           <path d="M12 22h9"  stroke="white" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>
-          <circle cx="22" cy="10" r="2.6" fill="url(#sxLogoDot)"/>
+          <circle cx="22" cy="10" r="2.6" fill="url(#sxLogoDotSide)"/>
         </svg>
       </div>
       <span>Shiftex</span>
@@ -704,7 +647,7 @@
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th>Tarih</th><th>Vardiya</th><th>Saat</th><th>Sebep</th><th>Durum</th><th>Talep Tarihi</th></tr>
+                <tr><th data-i18n="ot.col_date">Tarih</th><th data-i18n="ot.col_shift">Vardiya</th><th data-i18n="ot.col_hour">Saat</th><th data-i18n="ot.col_reason">Sebep</th><th data-i18n="ot.col_status">Durum</th><th data-i18n="ot.col_request_date">Talep Tarihi</th></tr>
               </thead>
               <tbody id="my-overtime-tbody"></tbody>
             </table>
@@ -732,7 +675,7 @@
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th>Senin Vardiyan</th><th>Diğer Personel</th><th>Onun Vardiyası</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+                <tr><th data-i18n="swap.col_my">Senin Vardiyan</th><th data-i18n="swap.col_other">Diğer Personel</th><th data-i18n="swap.col_their">Onun Vardiyası</th><th data-i18n="swap.col_status">Durum</th><th class="text-right" data-i18n="swap.col_action">İşlem</th></tr>
               </thead>
               <tbody id="my-swap-tbody"></tbody>
             </table>
@@ -758,7 +701,7 @@
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th>Personel</th><th>Tarih</th><th>Vardiya</th><th>Saat</th><th>Sebep</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+                <tr><th data-i18n="leave.col_person">Personel</th><th data-i18n="ot.col_date">Tarih</th><th data-i18n="ot.col_shift">Vardiya</th><th data-i18n="ot.col_hour">Saat</th><th data-i18n="ot.col_reason">Sebep</th><th data-i18n="ot.col_status">Durum</th><th class="text-right" data-i18n="swap.col_action">İşlem</th></tr>
               </thead>
               <tbody id="overtime-admin-tbody"></tbody>
             </table>
@@ -774,18 +717,18 @@
             <p class="page-sub" data-i18n="swap.admin_sub">İki personel arası onaylanmış takasları gözden geçir</p>
           </div>
           <select id="swap-filter" class="form-select" onchange="loadAdminSwaps()">
-            <option value="">Tümü</option>
-            <option value="AcceptedByTarget" selected>Onay Bekleyen</option>
-            <option value="ApprovedByAdmin">Onaylanan</option>
-            <option value="RejectedByAdmin">Reddedilen</option>
-            <option value="Pending">Personel Bekliyor</option>
+            <option value="" data-i18n="swap.filter_all">Tümü</option>
+            <option value="AcceptedByTarget" selected data-i18n="swap.filter_pending_admin">Onay Bekleyen</option>
+            <option value="ApprovedByAdmin" data-i18n="swap.filter_approved">Onaylanan</option>
+            <option value="RejectedByAdmin" data-i18n="swap.filter_rejected">Reddedilen</option>
+            <option value="Pending" data-i18n="swap.filter_emp_wait">Personel Bekliyor</option>
           </select>
         </div>
         <div class="card no-pad">
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th>Talep Eden</th><th>Vardiya</th><th>Hedef</th><th>Hedef Vardiya</th><th>Durum</th><th class="text-right">İşlem</th></tr>
+                <tr><th data-i18n="swap.col_requester">Talep Eden</th><th data-i18n="swap.col_shift">Vardiya</th><th data-i18n="swap.col_target">Hedef</th><th data-i18n="swap.col_target_shift">Hedef Vardiya</th><th data-i18n="swap.col_status">Durum</th><th class="text-right" data-i18n="swap.col_action">İşlem</th></tr>
               </thead>
               <tbody id="swap-admin-tbody"></tbody>
             </table>
@@ -809,7 +752,7 @@
           <div class="table-wrap">
             <table class="data-table">
               <thead>
-                <tr><th>Tarih</th><th>Gün</th><th>Vardiya</th><th>Başlangıç</th><th>Bitiş</th></tr>
+                <tr><th data-i18n="myshift.col_date">Tarih</th><th data-i18n="myshift.col_day">Gün</th><th data-i18n="myshift.col_shift">Vardiya</th><th data-i18n="myshift.col_start">Başlangıç</th><th data-i18n="myshift.col_end">Bitiş</th></tr>
               </thead>
               <tbody id="my-shift-tbody"></tbody>
             </table>
@@ -831,18 +774,18 @@
             <div class="profile-photo-role" id="profile-photo-role"></div>
             <label class="btn btn-secondary btn-full" style="cursor:pointer;margin-top:1rem">
               <svg viewBox="0 0 20 20" fill="none"><path d="M3 16l4-4 3 3 7-7M14 4h3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Fotoğraf Değiştir
+              <span data-i18n="profile.photo_change2">Fotoğraf Değiştir</span>
               <input id="photo-input" type="file" accept="image/*" hidden onchange="handlePhoto(event)" />
             </label>
             <div class="divider"></div>
             <div class="form-group" style="width:100%">
-              <label class="form-label">Yeni Şifre</label>
-              <input id="new-pw" type="password" class="form-input" placeholder="En az 6 karakter" />
+              <label class="form-label" data-i18n="profile.new_pw_label">Yeni Şifre</label>
+              <input id="new-pw" type="password" class="form-input" data-i18n-placeholder="profile.pw_min_label" placeholder="En az 6 karakter" />
             </div>
-            <button class="btn btn-primary btn-full" onclick="saveProfile()">Şifreyi Güncelle</button>
+            <button class="btn btn-primary btn-full" onclick="saveProfile()" data-i18n="profile.pw_update_btn">Şifreyi Güncelle</button>
           </div>
           <div class="card">
-            <div class="card-head"><h3>Bilgilerim</h3></div>
+            <div class="card-head"><h3 data-i18n="profile.info_title">Bilgilerim</h3></div>
             <div id="profile-info"></div>
           </div>
         </div>
@@ -857,27 +800,27 @@
         </div>
         <div class="enroll-grid">
           <div class="card">
-            <div class="card-head"><h3>Yeni Kayıt</h3></div>
+            <div class="card-head"><h3 data-i18n="enroll.new_title">Yeni Kayıt</h3></div>
             <div class="face-cam-wrap">
               <video id="enr-video" autoplay playsinline></video>
               <canvas id="enr-canvas"></canvas>
             </div>
             <div class="form-group" style="margin-top:1rem">
-              <label class="form-label">Personel</label>
+              <label class="form-label" data-i18n="enroll.user_label">Personel</label>
               <select id="enr-user-select" class="form-select">
-                <option value="">— Personel Seçin —</option>
+                <option value="" data-i18n="enroll.user_ph">— Personel Seçin —</option>
               </select>
             </div>
             <div class="btn-group">
-              <button class="btn btn-primary btn-full" id="enr-start-btn" onclick="startEnrCam()">Kamerayı Aç</button>
-              <button class="btn btn-primary btn-full hidden" id="enr-capture-btn" onclick="captureEnroll()">Yüzü Kaydet</button>
-              <button class="btn btn-secondary btn-full hidden" id="enr-stop-btn" onclick="stopEnrCam()">Kapat</button>
+              <button class="btn btn-primary btn-full" id="enr-start-btn" onclick="startEnrCam()" data-i18n="enroll.start_btn">Kamerayı Aç</button>
+              <button class="btn btn-primary btn-full hidden" id="enr-capture-btn" onclick="captureEnroll()" data-i18n="enroll.capture_btn">Yüzü Kaydet</button>
+              <button class="btn btn-secondary btn-full hidden" id="enr-stop-btn" onclick="stopEnrCam()" data-i18n="enroll.stop_btn">Kapat</button>
             </div>
             <div id="enr-status" class="face-status"></div>
           </div>
           <div class="card">
             <div class="card-head">
-              <h3>Kayıtlı Yüzler</h3>
+              <h3 data-i18n="enroll.list_title">Kayıtlı Yüzler</h3>
               <span class="card-tag" id="enr-count">0</span>
             </div>
             <div id="enr-list" class="card-body"></div>
@@ -929,17 +872,17 @@
 <div id="emp-view-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-head">
-      <h3>Personel Detayı</h3>
+      <h3 data-i18n="view.emp_detail">Personel Detayı</h3>
       <button class="icon-btn" onclick="closeModal('emp-view-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <div id="emp-view-content"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('emp-view-modal')">Kapat</button>
+      <button class="btn btn-secondary" onclick="closeModal('emp-view-modal')" data-i18n="view.close">Kapat</button>
       <button class="btn btn-primary" id="emp-view-edit-btn">
         <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 17v-4l11-11 4 4-11 11H3z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Düzenle
+        <span data-i18n="view.edit">Düzenle</span>
       </button>
     </div>
   </div>
@@ -961,36 +904,36 @@
         <div class="emp-photo-actions">
           <label class="btn btn-secondary btn-sm" style="cursor:pointer">
             <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 16l4-4 3 3 7-7M14 4h3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Fotoğraf Seç
+            <span data-i18n="emp.photo_select">Fotoğraf Seç</span>
             <input id="emp-photo-input" type="file" accept="image/*" hidden onchange="handleEmpPhoto(event)" />
           </label>
-          <button type="button" class="btn btn-ghost btn-sm" id="emp-photo-clear" onclick="clearEmpPhoto()" style="display:none">Kaldır</button>
-          <small class="text-sub" style="display:block;margin-top:4px">Maks. 400 KB · JPG/PNG</small>
+          <button type="button" class="btn btn-ghost btn-sm" id="emp-photo-clear" onclick="clearEmpPhoto()" style="display:none" data-i18n="emp.photo_remove2">Kaldır</button>
+          <small class="text-sub" style="display:block;margin-top:4px" data-i18n="emp.photo_hint2">Maks. 400 KB · JPG/PNG</small>
         </div>
       </div>
 
       <div class="form-grid-2">
-        <div class="form-group"><label class="form-label">Ad Soyad *</label><input id="emp-name" type="text" class="form-input" /></div>
-        <div class="form-group"><label class="form-label">E-posta *</label><input id="emp-email" type="email" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="emp.name_req">Ad Soyad *</label><input id="emp-name" type="text" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="emp.email_req">E-posta *</label><input id="emp-email" type="email" class="form-input" /></div>
       </div>
       <div class="form-group" id="emp-pw-label">
-        <label class="form-label">Şifre *</label>
+        <label class="form-label" data-i18n="emp.pw_req">Şifre *</label>
         <input id="emp-pw" type="password" class="form-input" />
       </div>
       <div class="form-grid-2">
-        <div class="form-group"><label class="form-label">Rol</label>
+        <div class="form-group"><label class="form-label" data-i18n="emp.role_label">Rol</label>
           <select id="emp-role" class="form-select">
-            <option value="Employee">Personel</option>
-            <option value="Admin">Yönetici</option>
+            <option value="Employee" data-i18n="emp.modal_role_emp">Personel</option>
+            <option value="Admin" data-i18n="emp.modal_role_adm">Yönetici</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Departman</label><select id="emp-dept" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label" data-i18n="emp.dept_label">Departman</label><select id="emp-dept" class="form-select"></select></div>
       </div>
       <div class="form-grid-2">
-        <div class="form-group"><label class="form-label">Pozisyon</label><input id="emp-pos" type="text" class="form-input" /></div>
-        <div class="form-group"><label class="form-label">İşe Giriş</label><input id="emp-hire" type="date" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="emp.pos_label">Pozisyon</label><input id="emp-pos" type="text" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="emp.hire_label">İşe Giriş</label><input id="emp-hire" type="date" class="form-input" /></div>
       </div>
-      <div class="form-group"><label class="form-label">Telefon</label><input id="emp-phone" type="tel" class="form-input" /></div>
+      <div class="form-group"><label class="form-label" data-i18n="emp.phone_label">Telefon</label><input id="emp-phone" type="tel" class="form-input" /></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('emp-modal')" data-i18n="common.cancel">İptal</button>
@@ -1002,7 +945,7 @@
 <div id="shift-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-head">
-      <h3 id="shift-modal-title">Vardiya Ata</h3>
+      <h3 id="shift-modal-title" data-i18n="shift.modal_title">Vardiya Ata</h3>
       <button class="icon-btn" onclick="closeModal('shift-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
@@ -1011,48 +954,48 @@
 
       <!-- Mevcut atamalar (varsa) -->
       <div id="shift-existing-wrap" class="hidden">
-        <label class="form-label" style="margin-bottom:6px;display:block">Bu güne atanmış vardiyalar</label>
+        <label class="form-label" style="margin-bottom:6px;display:block" data-i18n="shift.existing_label">Bu güne atanmış vardiyalar</label>
         <div id="shift-existing-list" class="existing-shifts"></div>
         <div class="divider" style="margin:14px 0"></div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Personel</label>
+        <label class="form-label" data-i18n="shift.cell_person">Personel</label>
         <select id="shift-user-sel" class="form-select"></select>
       </div>
 
       <!-- Kategori sekmeleri -->
       <div class="form-group">
-        <label class="form-label">Vardiya Kategorisi</label>
+        <label class="form-label" data-i18n="shift.cat_label">Vardiya Kategorisi</label>
         <div class="shift-cat-tabs" id="shift-cat-tabs">
           <button type="button" class="shift-cat-tab active" data-cat="shift" onclick="switchShiftCat('shift')">
-            <span class="cat-dot" style="background:#4f6ef7"></span> Vardiyalar
+            <span class="cat-dot" style="background:#4f6ef7"></span> <span data-i18n="shift.cat_shift">Vardiyalar</span>
           </button>
           <button type="button" class="shift-cat-tab" data-cat="leave" onclick="switchShiftCat('leave')">
-            <span class="cat-dot" style="background:#ef4444"></span> Tatil / İzin
+            <span class="cat-dot" style="background:#ef4444"></span> <span data-i18n="shift.cat_leave">Tatil / İzin</span>
           </button>
           <button type="button" class="shift-cat-tab" data-cat="overtime" onclick="switchShiftCat('overtime')">
-            <span class="cat-dot" style="background:#f97316"></span> Fazla Mesai
+            <span class="cat-dot" style="background:#f97316"></span> <span data-i18n="shift.cat_overtime">Fazla Mesai</span>
           </button>
         </div>
       </div>
 
       <!-- Vardiya tipi grid (kategori bazlı dinamik) -->
       <div class="form-group">
-        <label class="form-label">Vardiya Türü</label>
+        <label class="form-label" data-i18n="shift.type_label">Vardiya Türü</label>
         <div id="shift-type-grid" class="shift-type-grid"></div>
         <input id="shift-type-sel" type="hidden" />
       </div>
 
       <div class="form-group">
-        <label class="form-label">Not (opsiyonel)</label>
-        <input id="shift-note" type="text" class="form-input" placeholder="Örn: Müşteri toplantısı, etkinlik..." />
+        <label class="form-label" data-i18n="common.note_opt">Not (opsiyonel)</label>
+        <input id="shift-note" type="text" class="form-input" data-i18n-placeholder="shift.note_ph" placeholder="Örn: Müşteri toplantısı, etkinlik..." />
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('shift-modal')">İptal</button>
-      <button class="btn btn-danger hidden" id="shift-delete-btn" onclick="deleteShift()">Vardiyayı Sil</button>
-      <button class="btn btn-primary" id="shift-save-btn" onclick="saveShift()">Kaydet</button>
+      <button class="btn btn-secondary" onclick="closeModal('shift-modal')" data-i18n="common.cancel">İptal</button>
+      <button class="btn btn-danger hidden" id="shift-delete-btn" onclick="deleteShift()" data-i18n="shift.delete_btn">Vardiyayı Sil</button>
+      <button class="btn btn-primary" id="shift-save-btn" onclick="saveShift()" data-i18n="common.save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -1060,27 +1003,27 @@
 <div id="leave-modal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h3>İzin Talebi</h3>
+      <h3 data-i18n="leave.modal_title2">İzin Talebi</h3>
       <button class="icon-btn" onclick="closeModal('leave-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">İzin Türü</label>
+      <div class="form-group"><label class="form-label" data-i18n="leave.type_label">İzin Türü</label>
         <select id="leave-type" class="form-select">
-          <option value="Yıllık">Yıllık</option>
-          <option value="Sağlık">Sağlık</option>
-          <option value="Mazeret">Mazeret</option>
+          <option value="Yıllık" data-i18n="leave.type_a">Yıllık</option>
+          <option value="Sağlık" data-i18n="leave.type_b">Sağlık</option>
+          <option value="Mazeret" data-i18n="leave.type_c">Mazeret</option>
         </select>
       </div>
       <div class="form-grid-2">
-        <div class="form-group"><label class="form-label">Başlangıç *</label><input id="leave-start" type="date" class="form-input" /></div>
-        <div class="form-group"><label class="form-label">Bitiş *</label><input id="leave-end" type="date" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="leave.start_label">Başlangıç *</label><input id="leave-start" type="date" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" data-i18n="leave.end_label">Bitiş *</label><input id="leave-end" type="date" class="form-input" /></div>
       </div>
-      <div class="form-group"><label class="form-label">Açıklama</label><textarea id="leave-desc" class="form-input" rows="3"></textarea></div>
-      <label class="checkbox-row"><input id="leave-report" type="checkbox" /><span>Sağlık raporum var</span></label>
+      <div class="form-group"><label class="form-label" data-i18n="leave.desc_label">Açıklama</label><textarea id="leave-desc" class="form-input" rows="3"></textarea></div>
+      <label class="checkbox-row"><input id="leave-report" type="checkbox" /><span data-i18n="leave.report_check">Sağlık raporum var</span></label>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('leave-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="submitLeave()">Talep Gönder</button>
+      <button class="btn btn-secondary" onclick="closeModal('leave-modal')" data-i18n="common.cancel">İptal</button>
+      <button class="btn btn-primary" onclick="submitLeave()" data-i18n="leave.submit_btn">Talep Gönder</button>
     </div>
   </div>
 </div>
@@ -1088,16 +1031,16 @@
 <div id="dept-modal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h3>Departman Ekle</h3>
+      <h3 data-i18n="dept.modal_add">Departman Ekle</h3>
       <button class="icon-btn" onclick="closeModal('dept-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">Departman Adı *</label><input id="dept-name" type="text" class="form-input" placeholder="örn. Operasyon" /></div>
-      <div class="form-group"><label class="form-label">Açıklama</label><input id="dept-desc" type="text" class="form-input" placeholder="Opsiyonel" /></div>
+      <div class="form-group"><label class="form-label" data-i18n="dept.name_label">Departman Adı *</label><input id="dept-name" type="text" class="form-input" data-i18n-placeholder="dept.name_ph" placeholder="örn. Operasyon" /></div>
+      <div class="form-group"><label class="form-label" data-i18n="dept.desc_label">Açıklama</label><input id="dept-desc" type="text" class="form-input" data-i18n-placeholder="dept.desc_ph" placeholder="Opsiyonel" /></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('dept-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="saveDept()">Kaydet</button>
+      <button class="btn btn-secondary" onclick="closeModal('dept-modal')" data-i18n="common.cancel">İptal</button>
+      <button class="btn btn-primary" onclick="saveDept()" data-i18n="common.save">Kaydet</button>
     </div>
   </div>
 </div>
@@ -1106,16 +1049,16 @@
 <div id="overtime-modal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h3>Yeni Mesai Talebi</h3>
+      <h3 data-i18n="ot.modal_new">Yeni Mesai Talebi</h3>
       <button class="icon-btn" onclick="closeModal('overtime-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label">Tarih *</label>
+        <label class="form-label" data-i18n="ot.date_label">Tarih *</label>
         <input id="ot-date" type="date" class="form-input" />
       </div>
       <div class="form-group">
-        <label class="form-label">Mesai Vardiyası *</label>
+        <label class="form-label" data-i18n="ot.shift_label_req">Mesai Vardiyası *</label>
         <select id="ot-shift" class="form-select">
           <option value="7">Sabah FM (16:00 – 18:00)</option>
           <option value="8">Öğleden Sonra FM (22:00 – 00:00)</option>
@@ -1123,13 +1066,13 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Sebep (opsiyonel)</label>
-        <textarea id="ot-reason" class="form-input" rows="3" placeholder="Örn: Etkinlik hazırlığı, yoğunluk..."></textarea>
+        <label class="form-label" data-i18n="ot.reason_label">Sebep (opsiyonel)</label>
+        <textarea id="ot-reason" class="form-input" rows="3" data-i18n-placeholder="ot.reason_ph" placeholder="Örn: Etkinlik hazırlığı, yoğunluk..."></textarea>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('overtime-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="submitOvertimeRequest()">Talep Gönder</button>
+      <button class="btn btn-secondary" onclick="closeModal('overtime-modal')" data-i18n="common.cancel">İptal</button>
+      <button class="btn btn-primary" onclick="submitOvertimeRequest()" data-i18n="leave.submit_btn">Talep Gönder</button>
     </div>
   </div>
 </div>
@@ -1138,34 +1081,34 @@
 <div id="swap-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-head">
-      <h3>Vardiya Değişim Talebi</h3>
+      <h3 data-i18n="swap.modal_new">Vardiya Değişim Talebi</h3>
       <button class="icon-btn" onclick="closeModal('swap-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label">Vardiyam *</label>
+        <label class="form-label" data-i18n="swap.my_label">Vardiyam *</label>
         <select id="swap-my-shift" class="form-select"></select>
-        <small class="text-sub">Önümüzdeki 30 günde atanmış vardiyalarından birini seç</small>
+        <small class="text-sub" data-i18n="swap.my_shift_hint">Önümüzdeki 30 günde atanmış vardiyalarından birini seç</small>
       </div>
       <div class="form-group">
-        <label class="form-label">Değişeceğin Personel *</label>
+        <label class="form-label" data-i18n="swap.target_label">Değişeceğin Personel *</label>
         <select id="swap-target-user" class="form-select" onchange="loadSwapTargetShifts()"></select>
       </div>
       <div class="form-group">
-        <label class="form-label">Onun Vardiyası (opsiyonel)</label>
+        <label class="form-label" data-i18n="swap.their_label">Onun Vardiyası (opsiyonel)</label>
         <select id="swap-target-shift" class="form-select">
-          <option value="">Vardiyamı üstüne almasını rica ediyorum</option>
+          <option value="" data-i18n="swap.cover_default">Vardiyamı üstüne almasını rica ediyorum</option>
         </select>
-        <small class="text-sub">Boş bırakırsan tek yönlü "vardiyamı üstüne al" talebi olur</small>
+        <small class="text-sub" data-i18n="swap.target_shift_hint">Boş bırakırsan tek yönlü "vardiyamı üstüne al" talebi olur</small>
       </div>
       <div class="form-group">
-        <label class="form-label">Sebep (opsiyonel)</label>
-        <textarea id="swap-reason" class="form-input" rows="3" placeholder="Örn: Doktor randevusu, kişisel..."></textarea>
+        <label class="form-label" data-i18n="ot.reason_label">Sebep (opsiyonel)</label>
+        <textarea id="swap-reason" class="form-input" rows="3" data-i18n-placeholder="swap.reason_ph" placeholder="Örn: Doktor randevusu, kişisel..."></textarea>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('swap-modal')">İptal</button>
-      <button class="btn btn-primary" onclick="submitSwapRequest()">Talep Gönder</button>
+      <button class="btn btn-secondary" onclick="closeModal('swap-modal')" data-i18n="common.cancel">İptal</button>
+      <button class="btn btn-primary" onclick="submitSwapRequest()" data-i18n="leave.submit_btn">Talep Gönder</button>
     </div>
   </div>
 </div>

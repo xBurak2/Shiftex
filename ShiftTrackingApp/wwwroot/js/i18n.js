@@ -59,7 +59,7 @@ const I18N = {
     'common.dept':        'Departman',
 
     // ─── Login ───
-    'login.welcome':      'Hoş geldin 👋',
+    'login.welcome':      'Hoş geldin',
     'login.subtitle':     'Hesabınla giriş yap, ekibini yönet.',
     'login.email':        'E-posta adresi',
     'login.email_ph':     'ornek@sirket.com',
@@ -68,16 +68,8 @@ const I18N = {
     'login.kiosk':        'Turnike (Kiosk) Modu',
     'login.or':           'veya',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title':   'Vardiyalarınız,',
-    'login.hero_title2':  'otomasyonla',
-    'login.hero_title3':  'yönetilsin.',
-    'login.hero_sub':     'Modern bir vardiya planlama, yüz tanıma ile devam takibi ve raporlama platformu. Tek panelden tüm ekibiniz.',
-    'login.feat1_title':  'Yüz tanıma turnikesi',
-    'login.feat1_sub':    'AES-256 şifreli biyometrik veri',
-    'login.feat2_title':  'Kategorize vardiya planlama',
-    'login.feat2_sub':    'Vardiyalar, tatil, fazla mesai — aynı güne çoklu atama',
-    'login.feat3_title':  'Aylık devam raporları',
-    'login.feat3_sub':    'CSV / Excel uyumlu çıktı',
+    'login.hero_title_v2':'Vardiyalarınız, otomasyonla yönetilsin.',
+    'login.hero_sub_v2':  'Modern vardiya planlama, yüz tanıma ile devam takibi ve raporlama — tüm ekibiniz tek panelde.',
     'login.err_credentials': 'E-posta ve şifre zorunludur.',
 
     // ─── Nav: Admin ───
@@ -432,6 +424,134 @@ const I18N = {
     // ─── Roles / Status ───
     'role.admin':           'Yönetici',
     'role.employee':        'Personel',
+
+    // ─── Common labels ───
+    'common.action':        'İşlem',
+    'common.name_full':     'Ad Soyad',
+    'common.required_star': '*',
+    'common.optional_par':  '(opsiyonel)',
+    'common.role':          'Rol',
+    'common.shift':         'Vardiya',
+    'common.shift_full':    'Vardiya',
+    'common.request_date':  'Talep Tarihi',
+    'common.start_end':     'Başlangıç',
+    'common.end':           'Bitiş',
+    'common.start':         'Başlangıç',
+    'common.day_one':       'Gün',
+    'common.description':   'Açıklama',
+    'common.reason_label':  'Sebep',
+    'common.note_opt':      'Not (opsiyonel)',
+
+    // Employee modal
+    'emp.modal_role_emp':   'Personel',
+    'emp.modal_role_adm':   'Yönetici',
+    'emp.label_phone':      'Telefon',
+    'emp.label_dept':       'Departman',
+    'emp.label_pos':        'Pozisyon',
+
+    // Shift modal
+    'shift.modal_title':    'Vardiya Ata',
+    'shift.cell_person':    'Personel',
+    'shift.cat_label':      'Vardiya Kategorisi',
+    'shift.cat_shift':      'Vardiyalar',
+    'shift.cat_leave':      'Tatil / İzin',
+    'shift.cat_overtime':   'Fazla Mesai',
+    'shift.type_label':     'Vardiya Türü',
+    'shift.note_ph':        'Örn: Müşteri toplantısı, etkinlik...',
+    'shift.existing_label': 'Bu güne atanmış vardiyalar',
+    'shift.delete_btn':     'Vardiyayı Sil',
+
+    // Leave modal
+    'leave.modal_title2':   'İzin Talebi',
+    'leave.type_label':     'İzin Türü',
+    'leave.start_label':    'Başlangıç *',
+    'leave.end_label':      'Bitiş *',
+    'leave.desc_label':     'Açıklama',
+    'leave.report_check':   'Sağlık raporum var',
+    'leave.submit_btn':     'Talep Gönder',
+
+    // Department modal
+    'dept.modal_add':       'Departman Ekle',
+    'dept.name_label':      'Departman Adı *',
+    'dept.desc_label':      'Açıklama',
+
+    // Overtime modal
+    'ot.date_label':        'Tarih *',
+    'ot.shift_label_req':   'Mesai Vardiyası *',
+    'ot.reason_label':      'Sebep (opsiyonel)',
+    'ot.modal_new':         'Yeni Mesai Talebi',
+    'ot.col_date':          'Tarih',
+    'ot.col_shift':         'Vardiya',
+    'ot.col_hour':          'Saat',
+    'ot.col_reason':        'Sebep',
+    'ot.col_status':        'Durum',
+    'ot.col_request_date':  'Talep Tarihi',
+
+    // Swap modal
+    'swap.modal_new':       'Vardiya Değişim Talebi',
+    'swap.my_label':        'Vardiyam *',
+    'swap.target_label':    'Değişeceğin Personel *',
+    'swap.their_label':     'Onun Vardiyası (opsiyonel)',
+    'swap.cover_default':   'Vardiyamı üstüne almasını rica ediyorum',
+    'swap.reason_ph':       'Örn: Doktor randevusu, kişisel...',
+    'swap.col_my':          'Senin Vardiyan',
+    'swap.col_other':       'Diğer Personel',
+    'swap.col_their':       'Onun Vardiyası',
+    'swap.col_action':      'İşlem',
+    'swap.col_status':      'Durum',
+    'swap.col_requester':   'Talep Eden',
+    'swap.col_shift':       'Vardiya',
+    'swap.col_target':      'Hedef',
+    'swap.col_target_shift':'Hedef Vardiya',
+    'swap.filter_all':      'Tümü',
+    'swap.filter_pending_admin':'Onay Bekleyen',
+    'swap.filter_approved': 'Onaylanan',
+    'swap.filter_rejected': 'Reddedilen',
+    'swap.filter_emp_wait': 'Personel Bekliyor',
+
+    // Profile + Enroll hardcoded
+    'profile.info_title':   'Bilgilerim',
+    'profile.photo_change2':'Fotoğraf Değiştir',
+    'profile.pw_min_label': 'En az 6 karakter',
+    'profile.pw_update_btn':'Şifreyi Güncelle',
+    'profile.new_pw_label': 'Yeni Şifre',
+    'enroll.new_title':     'Yeni Kayıt',
+    'enroll.list_title':    'Kayıtlı Yüzler',
+    'enroll.start_btn':     'Kamerayı Aç',
+    'enroll.capture_btn':   'Yüzü Kaydet',
+    'enroll.stop_btn':      'Kapat',
+    'enroll.user_label':    'Personel',
+    'enroll.user_ph':       '— Personel Seçin —',
+
+    // Employee modal hardcoded
+    'emp.name_req':         'Ad Soyad *',
+    'emp.email_req':        'E-posta *',
+    'emp.pw_req':           'Şifre *',
+    'emp.role_label':       'Rol',
+    'emp.dept_label':       'Departman',
+    'emp.pos_label':        'Pozisyon',
+    'emp.hire_label':       'İşe Giriş',
+    'emp.phone_label':      'Telefon',
+    'emp.photo_select':     'Fotoğraf Seç',
+    'emp.photo_remove2':    'Kaldır',
+    'emp.photo_hint2':      'Maks. 400 KB · JPG/PNG',
+
+    // My shifts
+    'myshift.col_date':     'Tarih',
+    'myshift.col_day':      'Gün',
+    'myshift.col_shift':    'Vardiya',
+    'myshift.col_start':    'Başlangıç',
+    'myshift.col_end':      'Bitiş',
+
+    // View detail / titles
+    'view.emp_detail':      'Personel Detayı',
+    'view.close':           'Kapat',
+    'view.edit':            'Düzenle',
+
+    // Leave types
+    'leave.type_a':         'Yıllık',
+    'leave.type_b':         'Sağlık',
+    'leave.type_c':         'Mazeret',
   },
 
   en: {
@@ -477,7 +597,7 @@ const I18N = {
     'common.dept':        'Department',
 
     // ─── Login ───
-    'login.welcome':      'Welcome back 👋',
+    'login.welcome':      'Welcome back',
     'login.subtitle':     'Sign in to manage your team.',
     'login.email':        'Email address',
     'login.email_ph':     'name@company.com',
@@ -486,16 +606,8 @@ const I18N = {
     'login.kiosk':        'Turnstile (Kiosk) Mode',
     'login.or':           'or',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title':   'Let your shifts',
-    'login.hero_title2':  'run themselves',
-    'login.hero_title3':  'with automation.',
-    'login.hero_sub':     'A modern shift planning, face-recognition attendance, and reporting platform. Your whole team on one panel.',
-    'login.feat1_title':  'Face recognition turnstile',
-    'login.feat1_sub':    'AES-256 encrypted biometric data',
-    'login.feat2_title':  'Categorized shift planning',
-    'login.feat2_sub':    'Shifts, leave, overtime — multi-assign on the same day',
-    'login.feat3_title':  'Monthly attendance reports',
-    'login.feat3_sub':    'CSV / Excel-compatible export',
+    'login.hero_title_v2':'Let your shifts run themselves.',
+    'login.hero_sub_v2':  'Modern shift planning, face-recognition attendance and reporting — your whole team on a single panel.',
     'login.err_credentials': 'Email and password are required.',
 
     // ─── Nav: Admin ───
@@ -849,6 +961,134 @@ const I18N = {
     // ─── Roles / Status ───
     'role.admin':           'Admin',
     'role.employee':        'Employee',
+
+    // ─── Common labels ───
+    'common.action':        'Action',
+    'common.name_full':     'Full Name',
+    'common.required_star': '*',
+    'common.optional_par':  '(optional)',
+    'common.role':          'Role',
+    'common.shift':         'Shift',
+    'common.shift_full':    'Shift',
+    'common.request_date':  'Request Date',
+    'common.start_end':     'Start',
+    'common.end':           'End',
+    'common.start':         'Start',
+    'common.day_one':       'Day',
+    'common.description':   'Description',
+    'common.reason_label':  'Reason',
+    'common.note_opt':      'Note (optional)',
+
+    // Employee modal
+    'emp.modal_role_emp':   'Employee',
+    'emp.modal_role_adm':   'Admin',
+    'emp.label_phone':      'Phone',
+    'emp.label_dept':       'Department',
+    'emp.label_pos':        'Position',
+
+    // Shift modal
+    'shift.modal_title':    'Assign Shift',
+    'shift.cell_person':    'Employee',
+    'shift.cat_label':      'Shift Category',
+    'shift.cat_shift':      'Shifts',
+    'shift.cat_leave':      'Leave / Holiday',
+    'shift.cat_overtime':   'Overtime',
+    'shift.type_label':     'Shift Type',
+    'shift.note_ph':        'e.g. Client meeting, event...',
+    'shift.existing_label': 'Shifts assigned for this day',
+    'shift.delete_btn':     'Delete Shift',
+
+    // Leave modal
+    'leave.modal_title2':   'Leave Request',
+    'leave.type_label':     'Leave Type',
+    'leave.start_label':    'Start *',
+    'leave.end_label':      'End *',
+    'leave.desc_label':     'Description',
+    'leave.report_check':   'I have a medical report',
+    'leave.submit_btn':     'Submit Request',
+
+    // Department modal
+    'dept.modal_add':       'Add Department',
+    'dept.name_label':      'Department Name *',
+    'dept.desc_label':      'Description',
+
+    // Overtime modal
+    'ot.date_label':        'Date *',
+    'ot.shift_label_req':   'Overtime Shift *',
+    'ot.reason_label':      'Reason (optional)',
+    'ot.modal_new':         'New Overtime Request',
+    'ot.col_date':          'Date',
+    'ot.col_shift':         'Shift',
+    'ot.col_hour':          'Hour',
+    'ot.col_reason':        'Reason',
+    'ot.col_status':        'Status',
+    'ot.col_request_date':  'Request Date',
+
+    // Swap modal
+    'swap.modal_new':       'Shift Swap Request',
+    'swap.my_label':        'My Shift *',
+    'swap.target_label':    'Person to Swap With *',
+    'swap.their_label':     'Their Shift (optional)',
+    'swap.cover_default':   'Request them to cover my shift',
+    'swap.reason_ph':       'e.g. Doctor appointment, personal...',
+    'swap.col_my':          'Your Shift',
+    'swap.col_other':       'Other Person',
+    'swap.col_their':       'Their Shift',
+    'swap.col_action':      'Action',
+    'swap.col_status':      'Status',
+    'swap.col_requester':   'Requester',
+    'swap.col_shift':       'Shift',
+    'swap.col_target':      'Target',
+    'swap.col_target_shift':'Target Shift',
+    'swap.filter_all':      'All',
+    'swap.filter_pending_admin':'Pending Approval',
+    'swap.filter_approved': 'Approved',
+    'swap.filter_rejected': 'Rejected',
+    'swap.filter_emp_wait': 'Awaiting Employee',
+
+    // Profile + Enroll hardcoded
+    'profile.info_title':   'My Info',
+    'profile.photo_change2':'Change Photo',
+    'profile.pw_min_label': 'Min 6 characters',
+    'profile.pw_update_btn':'Update Password',
+    'profile.new_pw_label': 'New Password',
+    'enroll.new_title':     'New Enrollment',
+    'enroll.list_title':    'Enrolled Faces',
+    'enroll.start_btn':     'Open Camera',
+    'enroll.capture_btn':   'Capture & Save',
+    'enroll.stop_btn':      'Stop',
+    'enroll.user_label':    'Employee',
+    'enroll.user_ph':       '— Select Employee —',
+
+    // Employee modal hardcoded
+    'emp.name_req':         'Full Name *',
+    'emp.email_req':        'Email *',
+    'emp.pw_req':           'Password *',
+    'emp.role_label':       'Role',
+    'emp.dept_label':       'Department',
+    'emp.pos_label':        'Position',
+    'emp.hire_label':       'Hire Date',
+    'emp.phone_label':      'Phone',
+    'emp.photo_select':     'Choose Photo',
+    'emp.photo_remove2':    'Remove',
+    'emp.photo_hint2':      'Max 400 KB · JPG/PNG',
+
+    // My shifts
+    'myshift.col_date':     'Date',
+    'myshift.col_day':      'Day',
+    'myshift.col_shift':    'Shift',
+    'myshift.col_start':    'Start',
+    'myshift.col_end':      'End',
+
+    // View detail / titles
+    'view.emp_detail':      'Employee Detail',
+    'view.close':           'Close',
+    'view.edit':            'Edit',
+
+    // Leave types
+    'leave.type_a':         'Annual',
+    'leave.type_b':         'Health',
+    'leave.type_c':         'Excuse',
   }
 };
 
