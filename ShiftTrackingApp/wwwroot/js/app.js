@@ -432,20 +432,21 @@ const NAV_EMP = [
 // ── Vardiya kategorileri (Shift Id'ye göre) ─────────────────────────
 // 1-3: Vardiyalar | 4-5: Tatil/İzin | 6: Part Time (Vardiya) | 7-9: Fazla Mesai
 const SHIFT_TYPES = [
-  { id:1, name:'Sabah',                cat:'shift',    color:'#f59e0b', startTime:'08:00', endTime:'16:00' },
-  { id:2, name:'Öğleden Sonra',        cat:'shift',    color:'#4f6ef7', startTime:'14:00', endTime:'22:00' },
-  { id:3, name:'Gece',                 cat:'shift',    color:'#a78bfa', startTime:'22:00', endTime:'06:00' },
-  { id:6, name:'Part Time',            cat:'shift',    color:'#14b8a6', startTime:'08:00', endTime:'12:00' },
-  { id:4, name:'Tatil',                cat:'leave',    color:'#ef4444', startTime:'—',     endTime:'—'     },
-  { id:5, name:'İzinli',               cat:'leave',    color:'#22c55e', startTime:'—',     endTime:'—'     },
-  { id:7, name:'Sabah FM',             cat:'overtime', color:'#f97316', startTime:'16:00', endTime:'18:00' },
-  { id:8, name:'Öğleden Sonra FM',     cat:'overtime', color:'#6366f1', startTime:'22:00', endTime:'00:00' },
-  { id:9, name:'Gece FM',              cat:'overtime', color:'#ec4899', startTime:'06:00', endTime:'08:00' },
+  { id:1, nameKey:'shift.name.morning',     cat:'shift',    color:'#f59e0b', startTime:'08:00', endTime:'16:00' },
+  { id:2, nameKey:'shift.name.afternoon',   cat:'shift',    color:'#4f6ef7', startTime:'14:00', endTime:'22:00' },
+  { id:3, nameKey:'shift.name.night',       cat:'shift',    color:'#a78bfa', startTime:'22:00', endTime:'06:00' },
+  { id:6, nameKey:'shift.name.parttime',    cat:'shift',    color:'#14b8a6', startTime:'08:00', endTime:'12:00' },
+  { id:4, nameKey:'shift.name.holiday',     cat:'leave',    color:'#ef4444', startTime:'—',     endTime:'—'     },
+  { id:5, nameKey:'shift.name.leaved',      cat:'leave',    color:'#22c55e', startTime:'—',     endTime:'—'     },
+  { id:7, nameKey:'shift.name.morningOT',   cat:'overtime', color:'#f97316', startTime:'16:00', endTime:'18:00' },
+  { id:8, nameKey:'shift.name.afternoonOT', cat:'overtime', color:'#6366f1', startTime:'22:00', endTime:'00:00' },
+  { id:9, nameKey:'shift.name.nightOT',     cat:'overtime', color:'#ec4899', startTime:'06:00', endTime:'08:00' },
 ];
-const SHIFT_CAT_LABELS = { shift:'Vardiyalar', leave:'Tatil / İzin', overtime:'Fazla Mesai' };
+function shiftCatLabel(cat) { return t('shift.cat.' + cat); }
+function shiftTypeName(shiftType) { return shiftType.nameKey ? t(shiftType.nameKey) : (shiftType.name || ''); }
 function getShiftCategory(shiftId) {
-  const t = SHIFT_TYPES.find(x=>x.id===shiftId);
-  return t?.cat || 'shift';
+  const x = SHIFT_TYPES.find(s => s.id === shiftId);
+  return x?.cat || 'shift';
 }
 
 function buildNav() {
@@ -633,13 +634,12 @@ async function loadDashboard() {
 
 let heroClockInterval = null;
 function startHeroClock() {
-  if (heroClockInterval) clearInterval(heroClockInterval);
-  const update = () => {
-    const el = document.getElementById('hero-clock');
-    if (el) el.textContent = new Date().toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
-  };
-  update();
-  heroClockInterval = setInterval(update, 30000);
+  if (heroClockInterval) { clearInterval(heroClockInterval); heroClockInterval = null; }
+  const el = document.getElementById('hero-clock');
+  if (el) {
+    const locale = getLang()==='en' ? 'en-US' : 'tr-TR';
+    el.textContent = new Date().toLocaleTimeString(locale, { hour:'2-digit', minute:'2-digit' });
+  }
 }
 
 async function renderShiftDistribution() {
@@ -867,43 +867,44 @@ async function viewEmployeeProfile(id) {
 
   // Modalı aç
   document.getElementById('emp-view-modal').classList.remove('hidden');
+  const monthLabel = now.toLocaleDateString(getLang()==='en'?'en-US':'tr-TR', {month:'long', year:'numeric'});
   document.getElementById('emp-view-content').innerHTML = `
     <div class="profile-view-head">
       <div class="profile-view-avatar">${avatar(u.fullName, u.photoBase64, 96)}</div>
       <div class="profile-view-meta">
         <h2 class="profile-view-name">${esc(u.fullName)}</h2>
         <div class="profile-view-role">
-          <span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span>
+          <span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?t('role.admin'):t('role.employee')}</span>
           ${u.departmentName ? `<span class="profile-view-dept">${esc(u.departmentName)}</span>` : ''}
         </div>
-        <div class="profile-view-pos">${esc(u.position || 'Pozisyon belirtilmemiş')}</div>
+        <div class="profile-view-pos">${esc(u.position || t('profile.no_position'))}</div>
       </div>
     </div>
     <div class="profile-view-grid">
       <div class="pv-info">
-        <span class="pv-label">E-posta</span>
+        <span class="pv-label">${t('profile.lbl_email')}</span>
         <span class="pv-val">${esc(u.email)}</span>
       </div>
       <div class="pv-info">
-        <span class="pv-label">Telefon</span>
+        <span class="pv-label">${t('profile.lbl_phone')}</span>
         <span class="pv-val">${esc(u.phoneNumber || '—')}</span>
       </div>
       <div class="pv-info">
-        <span class="pv-label">İşe Giriş</span>
+        <span class="pv-label">${t('profile.lbl_hire')}</span>
         <span class="pv-val">${u.hireDate ? fmtDate(u.hireDate) : '—'}</span>
       </div>
       <div class="pv-info">
-        <span class="pv-label">Durum</span>
-        <span class="pv-val">${u.isActive ? '<span class="badge badge-ok">Aktif</span>' : '<span class="badge badge-err">Pasif</span>'}</span>
+        <span class="pv-label">${t('profile.lbl_status')}</span>
+        <span class="pv-val">${u.isActive ? `<span class="badge badge-ok">${t('badge.active')}</span>` : `<span class="badge badge-err">${t('badge.inactive')}</span>`}</span>
       </div>
     </div>
     <div class="pv-section">
-      <h4>Bu Ayki Devam (${now.toLocaleDateString('tr-TR',{month:'long',year:'numeric'})})</h4>
-      <div id="pv-monthly" class="pv-monthly-loading">Yükleniyor…</div>
+      <h4>${t('profile.view_month_att')} (${monthLabel})</h4>
+      <div id="pv-monthly" class="pv-monthly-loading">${t('common.loading_dots')}</div>
     </div>
     <div class="pv-section">
-      <h4>Son İzin Talepleri</h4>
-      <div id="pv-leaves" class="pv-leaves-loading">Yükleniyor…</div>
+      <h4>${t('profile.view_recent')}</h4>
+      <div id="pv-leaves" class="pv-leaves-loading">${t('common.loading_dots')}</div>
     </div>
   `;
 
@@ -1190,16 +1191,16 @@ function switchShiftCat(cat, selectedId) {
   });
 
   const grid = document.getElementById('shift-type-grid');
-  const items = SHIFT_TYPES.filter(t => t.cat === cat);
+  const items = SHIFT_TYPES.filter(s => s.cat === cat);
   // İlk seçili: parametre varsa onu, yoksa kategorinin ilkini
   const selId = selectedId || items[0]?.id;
   document.getElementById('shift-type-sel').value = selId || '';
-  grid.innerHTML = items.map(t => `
-    <div class="shift-type-card ${t.id===selId?'selected':''}" data-id="${t.id}" onclick="selectShiftType(${t.id})">
-      <span class="cat-dot" style="background:${t.color}"></span>
+  grid.innerHTML = items.map(s => `
+    <div class="shift-type-card ${s.id===selId?'selected':''}" data-id="${s.id}" onclick="selectShiftType(${s.id})">
+      <span class="cat-dot" style="background:${s.color}"></span>
       <div class="stc-info">
-        <strong>${t.name}</strong>
-        <small>${t.startTime} – ${t.endTime}</small>
+        <strong>${shiftTypeName(s)}</strong>
+        <small>${s.startTime} – ${s.endTime}</small>
       </div>
       <svg class="stc-check" viewBox="0 0 20 20" fill="none"><path d="M5 10l3 3 7-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
@@ -1216,15 +1217,15 @@ function selectShiftType(id) {
 async function saveShift() {
   const id = document.getElementById('shift-assign-id').value;
   const shiftId = +document.getElementById('shift-type-sel').value;
-  if (!shiftId) { toast('Vardiya türü seçin.','warn'); return; }
+  if (!shiftId) { toast(t('toast.shift_pick_type'),'warn'); return; }
 
   // FM kontrolü: aynı güne sadece 1 FM ve FM için base shift gerekir
   const cat = getShiftCategory(shiftId);
   if (cat === 'overtime' && !id) {
     const hasOvertime  = dayExistingShifts.some(s => getShiftCategory(s.shiftId) === 'overtime');
     const hasBaseShift = dayExistingShifts.some(s => getShiftCategory(s.shiftId) !== 'overtime');
-    if (hasOvertime)  { toast('Bu güne zaten fazla mesai eklenmiş.', 'err'); return; }
-    if (!hasBaseShift){ toast('Fazla mesai için önce normal vardiya atayın.', 'err'); return; }
+    if (hasOvertime)  { toast(t('toast.ot_already'), 'err'); return; }
+    if (!hasBaseShift){ toast(t('toast.ot_need_base'), 'err'); return; }
   }
 
   const body = {
@@ -1258,17 +1259,17 @@ async function loadAttendance() {
 }
 function attRow(a) {
   const badges = [];
-  if (a.isLateArrival)    badges.push(`<span class="badge badge-warn">Geç +${a.lateMinutes}dk</span>`);
-  if (a.isEarlyDeparture) badges.push(`<span class="badge badge-warn">Erken -${a.earlyMinutes}dk</span>`);
-  if (a.isInvalidTime)    badges.push(`<span class="badge badge-err">Hatalı Saat</span>`);
-  if (a.isShortDuration)  badges.push(`<span class="badge badge-err">Kısa Süre</span>`);
-  if (!badges.length)     badges.push(`<span class="badge badge-ok">Normal</span>`);
+  if (a.isLateArrival)    badges.push(`<span class="badge badge-warn">${t('badge.late_min',{m:a.lateMinutes})}</span>`);
+  if (a.isEarlyDeparture) badges.push(`<span class="badge badge-warn">${t('badge.early_min',{m:a.earlyMinutes})}</span>`);
+  if (a.isInvalidTime)    badges.push(`<span class="badge badge-err">${t('badge.invalid_time')}</span>`);
+  if (a.isShortDuration)  badges.push(`<span class="badge badge-err">${t('badge.short_dur')}</span>`);
+  if (!badges.length)     badges.push(`<span class="badge badge-ok">${t('badge.normal')}</span>`);
   return `<tr>
     <td><div class="name-cell">${avatar(a.userFullName,a.userPhoto)}<span>${a.userFullName}</span></div></td>
     <td class="font-mono">${fmtTime(a.checkIn)}</td>
     <td class="font-mono">${a.checkOut?fmtTime(a.checkOut):'—'}</td>
-    <td><span class="badge ${a.source==='FaceRecognition'?'badge-info':'badge-emp'}">${a.source==='FaceRecognition'?'Yüz Tanıma':'Manuel'}</span></td>
-    <td class="font-mono">${a.workedHours!=null?a.workedHours.toFixed(1)+' sa':'—'}</td>
+    <td><span class="badge ${a.source==='FaceRecognition'?'badge-info':'badge-emp'}">${a.source==='FaceRecognition'?t('badge.face_rec'):t('badge.manual')}</span></td>
+    <td class="font-mono">${a.workedHours!=null?a.workedHours.toFixed(1)+' '+t('badge.hour_short'):'—'}</td>
     <td>${badges.join(' ')}</td>
   </tr>`;
 }
@@ -1280,15 +1281,15 @@ async function loadMyAttendance() {
       ? logs.map(a => `<tr>
           <td class="font-mono">${fmtTime(a.checkIn)}</td>
           <td class="font-mono">${a.checkOut?fmtTime(a.checkOut):'—'}</td>
-          <td>${a.source==='FaceRecognition'?'Yüz Tanıma':'Manuel'}</td>
-          <td class="font-mono">${a.workedHours!=null?a.workedHours.toFixed(1)+' sa':'—'}</td>
-          <td>${a.checkOut?'<span class="badge badge-ok">Tamamlandı</span>':'<span class="badge badge-on">Aktif</span>'}</td>
+          <td>${a.source==='FaceRecognition'?t('badge.face_rec'):t('badge.manual')}</td>
+          <td class="font-mono">${a.workedHours!=null?a.workedHours.toFixed(1)+' '+t('badge.hour_short'):'—'}</td>
+          <td>${a.checkOut?`<span class="badge badge-ok">${t('badge.completed')}</span>`:`<span class="badge badge-on">${t('badge.active_now')}</span>`}</td>
         </tr>`).join('')
-      : `<tr><td colspan="5" class="empty">Bugün kayıt yok. Giriş/çıkış için yüz tanıma turnikesini kullanın.</td></tr>`;
+      : `<tr><td colspan="5" class="empty">${t('common.no_today_log')}</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
-async function doCheckIn() { try { await api('POST','/api/Attendance/checkin'); toast('Giriş kaydedildi.'); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
-async function doCheckOut() { try { await api('POST','/api/Attendance/checkout'); toast('Çıkış kaydedildi.'); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
+async function doCheckIn() { try { await api('POST','/api/Attendance/checkin'); toast(t('toast.checkin_saved')); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
+async function doCheckOut() { try { await api('POST','/api/Attendance/checkout'); toast(t('toast.checkout_saved')); loadMyAttendance(); } catch(e) { toast(e.message,'err'); } }
 
 // ── Leaves ──────────────────────────────────────────────────────────
 async function loadLeaves() {
@@ -1356,17 +1357,16 @@ async function submitLeave() {
 async function loadMyDashboard() {
   const firstName = currentUser.fullName.split(' ')[0];
   const hour = new Date().getHours();
-  const greet = hour < 6 ? 'İyi geceler' : hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
-  document.getElementById('my-hero-title').textContent = `${greet}, ${esc(firstName)} 👋`;
+  const greetKey = hour < 6 ? 'dash.good_night' : hour < 12 ? 'dash.good_morning' : hour < 18 ? 'dash.good_day' : 'dash.good_evening';
+  document.getElementById('my-hero-title').textContent = `${t(greetKey)}, ${esc(firstName)}`;
+  const locale = getLang()==='en' ? 'en-US' : 'tr-TR';
   document.getElementById('my-hero-date').textContent =
-    new Date().toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric', weekday:'long' });
+    new Date().toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric', weekday:'long' });
 
-  // Canlı saat
+  // Sabit saat (animasyon yok, sayfa açılışında bir kere)
   const clockEl = document.getElementById('my-hero-clock');
-  const tick = () => { if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); };
-  tick();
-  if (heroClockInterval) clearInterval(heroClockInterval);
-  heroClockInterval = setInterval(tick, 30000);
+  if (clockEl) clockEl.textContent = new Date().toLocaleTimeString(locale, { hour:'2-digit', minute:'2-digit' });
+  if (heroClockInterval) { clearInterval(heroClockInterval); heroClockInterval = null; }
 
   try {
     const ws = getMondayOf(new Date());
@@ -1568,7 +1568,7 @@ async function loadMyShifts() {
           <td class="font-mono">${s.startTime}</td>
           <td class="font-mono">${s.endTime}</td>
         </tr>`).join('')
-      : '<tr><td colspan="5" class="empty">Bu hafta vardiya atanmamış.</td></tr>';
+      : `<tr><td colspan="5" class="empty">${t('common.empty_week')}</td></tr>`;
   } catch(e) { toast(e.message,'err'); }
 }
 function myShiftNav(d) { myShiftWeekStart.setDate(myShiftWeekStart.getDate()+d*7); loadMyShifts(); }
@@ -1583,30 +1583,30 @@ async function loadProfile() {
 
     document.getElementById('profile-avatar').innerHTML = avatar(u.fullName, u.photoBase64, 96);
     document.getElementById('profile-photo-name').textContent = u.fullName;
-    document.getElementById('profile-photo-role').textContent = u.role==='Admin'?'Yönetici':'Personel';
+    document.getElementById('profile-photo-role').textContent = u.role==='Admin'?t('role.admin'):t('role.employee');
 
     document.getElementById('profile-info').innerHTML = `
       <table class="profile-table">
-        <tr><th>E-posta</th><td>${u.email}</td></tr>
-        <tr><th>Departman</th><td>${u.departmentName||'—'}</td></tr>
-        <tr><th>Pozisyon</th><td>${u.position||'—'}</td></tr>
-        <tr><th>Telefon</th><td>${u.phoneNumber||'—'}</td></tr>
-        <tr><th>İşe Giriş</th><td>${u.hireDate?fmtDate(u.hireDate):'—'}</td></tr>
-        <tr><th>Rol</th><td>${u.role==='Admin'?'Yönetici':'Personel'}</td></tr>
+        <tr><th>${t('profile.lbl_email')}</th><td>${u.email}</td></tr>
+        <tr><th>${t('profile.lbl_dept')}</th><td>${u.departmentName||'—'}</td></tr>
+        <tr><th>${t('profile.lbl_pos')}</th><td>${u.position||'—'}</td></tr>
+        <tr><th>${t('profile.lbl_phone')}</th><td>${u.phoneNumber||'—'}</td></tr>
+        <tr><th>${t('profile.lbl_hire')}</th><td>${u.hireDate?fmtDate(u.hireDate):'—'}</td></tr>
+        <tr><th>${t('profile.lbl_role')}</th><td>${u.role==='Admin'?t('role.admin'):t('role.employee')}</td></tr>
       </table>`;
   } catch(e) { toast(e.message,'err'); }
 }
 function handlePhoto(evt) {
   const file = evt.target.files[0];
   if (!file) return;
-  if (file.size > 400_000) { toast('Fotoğraf 400 KB\'dan küçük olmalıdır.','err'); return; }
+  if (file.size > 400_000) { toast(t('toast.photo_too_big'),'err'); return; }
   const reader = new FileReader();
   reader.onload = async e => {
     try {
       await api('PUT', `/api/Users/${currentUser.userId}`, { photoBase64: e.target.result });
       currentUser.photoBase64 = e.target.result;
       sessionStorage.setItem('sx_user', JSON.stringify(currentUser));
-      toast('Fotoğraf güncellendi.');
+      toast(t('toast.photo_updated'));
       loadProfile();
     } catch(ex) { toast(ex.message,'err'); }
   };
@@ -1614,10 +1614,10 @@ function handlePhoto(evt) {
 }
 async function saveProfile() {
   const pw = document.getElementById('new-pw').value;
-  if (!pw) { toast('Şifre giriniz.','warn'); return; }
-  if (pw.length < 6) { toast('Şifre en az 6 karakter olmalıdır.','err'); return; }
+  if (!pw) { toast(t('toast.password_enter'),'warn'); return; }
+  if (pw.length < 6) { toast(t('toast.password_short'),'err'); return; }
   try { await api('PUT', `/api/Users/${currentUser.userId}`, { newPassword: pw });
-    document.getElementById('new-pw').value = ''; toast('Şifre güncellendi.'); }
+    document.getElementById('new-pw').value = ''; toast(t('toast.password_updated')); }
   catch(e) { toast(e.message,'err'); }
 }
 
@@ -1647,9 +1647,9 @@ function renderDepts() {
   if (!allDepts.length) {
     grid.innerHTML = `<div class="empty-state">
       <div class="empty-icon">🏢</div>
-      <h3>Henüz departman yok</h3>
-      <p>Personellerinizi gruplamak için ilk departmanı oluşturun.</p>
-      <button class="btn btn-primary" onclick="openDeptModal()">Departman Ekle</button>
+      <h3>${t('dept.empty_title')}</h3>
+      <p>${t('dept.empty_sub')}</p>
+      <button class="btn btn-primary" onclick="openDeptModal()">${t('dept.empty_btn')}</button>
     </div>`;
     if (summary) summary.innerHTML = '';
     return;
@@ -1661,24 +1661,24 @@ function renderDepts() {
   summary.innerHTML = `
     <div class="dept-summary-item">
       <div class="dsi-val">${allDepts.length}</div>
-      <div class="dsi-lbl">Toplam Departman</div>
+      <div class="dsi-lbl">${t('dept.summary_total')}</div>
     </div>
     <div class="dept-summary-item">
       <div class="dsi-val">${totalEmployees}</div>
-      <div class="dsi-lbl">Toplam Personel</div>
+      <div class="dsi-lbl">${t('dept.summary_emp')}</div>
     </div>
     <div class="dept-summary-item">
       <div class="dsi-val">${populated} / ${allDepts.length}</div>
-      <div class="dsi-lbl">Aktif Departman</div>
+      <div class="dsi-lbl">${t('dept.summary_active')}</div>
     </div>`;
 
   grid.innerHTML = allDepts.map((d, idx) => {
     const count = d.employeeCount ?? 0;
     const s     = deptStyle(idx);
     const isEmpty = count === 0;
-    const label = isEmpty ? 'Henüz personel atanmamış'
-               : count === 1 ? '1 personel'
-               : `${count} personel`;
+    const label = isEmpty ? t('dept.no_emp_full')
+               : count === 1 ? t('dept.emp_one_full')
+               : t('dept.emp_n_full', { count });
     // Bu departmandaki personellerin küçük avatar dizimi (top 5)
     const members = allUsers.filter(u => u.departmentId === d.id).slice(0, 5);
     const memberAvatars = members.length ? members.map(m => `
@@ -1710,9 +1710,9 @@ function openDeptModal() {
 async function saveDept() {
   const name = document.getElementById('dept-name').value.trim();
   const desc = document.getElementById('dept-desc').value.trim();
-  if (!name) { toast('Departman adı zorunludur.','err'); return; }
+  if (!name) { toast(t('toast.dept_name_req'),'err'); return; }
   try { await api('POST','/api/Departments', { name, description: desc||null });
-    toast('Departman eklendi.'); closeModal('dept-modal');
+    toast(t('toast.dept_added')); closeModal('dept-modal');
     await loadDepts(); renderDepts(); populateUserSelects(); }
   catch(e) { toast(e.message,'err'); }
 }

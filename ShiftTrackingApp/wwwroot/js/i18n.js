@@ -552,6 +552,76 @@ const I18N = {
     'leave.type_a':         'Yıllık',
     'leave.type_b':         'Sağlık',
     'leave.type_c':         'Mazeret',
+
+    // Shift type names (SHIFT_TYPES local)
+    'shift.name.morning':   'Sabah',
+    'shift.name.afternoon': 'Öğleden Sonra',
+    'shift.name.night':     'Gece',
+    'shift.name.parttime':  'Yarı Zamanlı',
+    'shift.name.holiday':   'Tatil',
+    'shift.name.leaved':    'İzinli',
+    'shift.name.morningOT': 'Sabah FM',
+    'shift.name.afternoonOT':'Öğleden Sonra FM',
+    'shift.name.nightOT':   'Gece FM',
+
+    // Shift categories
+    'shift.cat.shift':      'Vardiyalar',
+    'shift.cat.leave':      'Tatil / İzin',
+    'shift.cat.overtime':   'Fazla Mesai',
+
+    // Status / badges
+    'badge.active':         'Aktif',
+    'badge.inactive':       'Pasif',
+    'badge.normal':         'Normal',
+    'badge.invalid_time':   'Hatalı Saat',
+    'badge.short_dur':      'Kısa Süre',
+    'badge.late_min':       'Geç +{m}dk',
+    'badge.early_min':      'Erken -{m}dk',
+    'badge.completed':      'Tamamlandı',
+    'badge.active_now':     'Aktif',
+    'badge.face_rec':       'Yüz Tanıma',
+    'badge.manual':         'Manuel',
+    'badge.hour_short':     'sa',
+
+    // Profile dynamic
+    'profile.lbl_email':    'E-posta',
+    'profile.lbl_dept':     'Departman',
+    'profile.lbl_pos':      'Pozisyon',
+    'profile.lbl_phone':    'Telefon',
+    'profile.lbl_hire':     'İşe Giriş',
+    'profile.lbl_role':     'Rol',
+    'profile.lbl_status':   'Durum',
+    'profile.view_month_att':'Bu Ayki Devam',
+    'profile.view_recent':  'Son İzin Talepleri',
+    'profile.no_position':  'Pozisyon belirtilmemiş',
+
+    // Department dynamic
+    'dept.summary_total':   'Toplam Departman',
+    'dept.summary_emp':     'Toplam Personel',
+    'dept.summary_active':  'Aktif Departman',
+    'dept.no_emp_full':     'Henüz personel atanmamış',
+    'dept.emp_one_full':    '1 personel',
+    'dept.emp_n_full':      '{count} personel',
+    'dept.empty_btn':       'Departman Ekle',
+
+    // Common
+    'common.loading_dots':  'Yükleniyor…',
+    'common.empty_week':    'Bu hafta vardiya atanmamış.',
+    'common.no_today_log':  'Bugün kayıt yok. Giriş/çıkış için yüz tanıma turnikesini kullanın.',
+    'common.dash':          '—',
+
+    // Toasts ek
+    'toast.photo_too_big':  'Fotoğraf 400 KB\'dan küçük olmalıdır.',
+    'toast.photo_updated':  'Fotoğraf güncellendi.',
+    'toast.password_enter': 'Şifre giriniz.',
+    'toast.password_short': 'Şifre en az 6 karakter olmalıdır.',
+    'toast.shift_pick_type':'Vardiya türü seçin.',
+    'toast.ot_already':     'Bu güne zaten fazla mesai eklenmiş.',
+    'toast.ot_need_base':   'Fazla mesai için önce normal vardiya atayın.',
+    'toast.dept_name_req':  'Departman adı zorunludur.',
+    'toast.dept_added':     'Departman eklendi.',
+    'toast.checkin_saved':  'Giriş kaydedildi.',
+    'toast.checkout_saved': 'Çıkış kaydedildi.',
   },
 
   en: {
@@ -1089,6 +1159,76 @@ const I18N = {
     'leave.type_a':         'Annual',
     'leave.type_b':         'Health',
     'leave.type_c':         'Excuse',
+
+    // Shift type names
+    'shift.name.morning':   'Morning',
+    'shift.name.afternoon': 'Afternoon',
+    'shift.name.night':     'Night',
+    'shift.name.parttime':  'Part Time',
+    'shift.name.holiday':   'Holiday',
+    'shift.name.leaved':    'On Leave',
+    'shift.name.morningOT': 'Morning OT',
+    'shift.name.afternoonOT':'Afternoon OT',
+    'shift.name.nightOT':   'Night OT',
+
+    // Shift categories
+    'shift.cat.shift':      'Shifts',
+    'shift.cat.leave':      'Leave / Holiday',
+    'shift.cat.overtime':   'Overtime',
+
+    // Status / badges
+    'badge.active':         'Active',
+    'badge.inactive':       'Inactive',
+    'badge.normal':         'Normal',
+    'badge.invalid_time':   'Invalid time',
+    'badge.short_dur':      'Short duration',
+    'badge.late_min':       'Late +{m}min',
+    'badge.early_min':      'Early -{m}min',
+    'badge.completed':      'Completed',
+    'badge.active_now':     'Active',
+    'badge.face_rec':       'Face Recognition',
+    'badge.manual':         'Manual',
+    'badge.hour_short':     'h',
+
+    // Profile dynamic
+    'profile.lbl_email':    'Email',
+    'profile.lbl_dept':     'Department',
+    'profile.lbl_pos':      'Position',
+    'profile.lbl_phone':    'Phone',
+    'profile.lbl_hire':     'Hire Date',
+    'profile.lbl_role':     'Role',
+    'profile.lbl_status':   'Status',
+    'profile.view_month_att':'This Month\'s Attendance',
+    'profile.view_recent':  'Recent Leave Requests',
+    'profile.no_position':  'No position set',
+
+    // Department dynamic
+    'dept.summary_total':   'Total Departments',
+    'dept.summary_emp':     'Total Employees',
+    'dept.summary_active':  'Active Departments',
+    'dept.no_emp_full':     'No employees assigned',
+    'dept.emp_one_full':    '1 employee',
+    'dept.emp_n_full':      '{count} employees',
+    'dept.empty_btn':       'Add Department',
+
+    // Common
+    'common.loading_dots':  'Loading…',
+    'common.empty_week':    'No shifts assigned this week.',
+    'common.no_today_log':  'No record today. Use the face-recognition turnstile to check in/out.',
+    'common.dash':          '—',
+
+    // Toasts ek
+    'toast.photo_too_big':  'Photo must be smaller than 400 KB.',
+    'toast.photo_updated':  'Photo updated.',
+    'toast.password_enter': 'Enter a password.',
+    'toast.password_short': 'Password must be at least 6 characters.',
+    'toast.shift_pick_type':'Pick a shift type.',
+    'toast.ot_already':     'Overtime already added for this day.',
+    'toast.ot_need_base':   'Assign a regular shift before overtime.',
+    'toast.dept_name_req':  'Department name is required.',
+    'toast.dept_added':     'Department added.',
+    'toast.checkin_saved':  'Check-in saved.',
+    'toast.checkout_saved': 'Check-out saved.',
   }
 };
 
