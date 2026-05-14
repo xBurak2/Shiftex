@@ -669,6 +669,7 @@ const I18N = {
     'swap.any_shift':         'Herhangi bir vardiya',
     'swap.s.Open':            'Açık İlan',
     'swap.posted':            'Açıldı',
+  },
 
   en: {
     // ─── General ───
