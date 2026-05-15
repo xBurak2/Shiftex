@@ -468,8 +468,8 @@ const NAV_EMP = [
 // 1-3: Vardiyalar | 4-5: Tatil/İzin | 6: Part Time (Vardiya) | 7-9: Fazla Mesai
 const SHIFT_TYPES = [
   { id:1, nameKey:'shift.name.morning',     cat:'shift',    color:'#f59e0b', startTime:'08:00', endTime:'16:00' },
-  { id:2, nameKey:'shift.name.afternoon',   cat:'shift',    color:'#4f6ef7', startTime:'14:00', endTime:'22:00' },
-  { id:3, nameKey:'shift.name.night',       cat:'shift',    color:'#a78bfa', startTime:'22:00', endTime:'06:00' },
+  { id:2, nameKey:'shift.name.afternoon',   cat:'shift',    color:'#4f6ef7', startTime:'16:00', endTime:'00:00' },
+  { id:3, nameKey:'shift.name.night',       cat:'shift',    color:'#a78bfa', startTime:'00:00', endTime:'08:00' },
   { id:6, nameKey:'shift.name.parttime',    cat:'shift',    color:'#14b8a6', startTime:'08:00', endTime:'12:00' },
   { id:4, nameKey:'shift.name.holiday',     cat:'leave',    color:'#ef4444', startTime:'—',     endTime:'—'     },
   { id:5, nameKey:'shift.name.leaved',      cat:'leave',    color:'#22c55e', startTime:'—',     endTime:'—'     },

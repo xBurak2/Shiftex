@@ -126,8 +126,8 @@ namespace ShiftTrackingApp.Data
 
             mb.Entity<Shift>().HasData(
                 new Shift { Id = 1, Name = "Sabah",                       StartTime = new TimeSpan(8,  0, 0), EndTime = new TimeSpan(16, 0, 0), Color = "#f59e0b" },
-                new Shift { Id = 2, Name = "Öğleden Sonra",               StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(22, 0, 0), Color = "#4f6ef7" },
-                new Shift { Id = 3, Name = "Gece",                        StartTime = new TimeSpan(22, 0, 0), EndTime = new TimeSpan(6,  0, 0), Color = "#a78bfa" },
+                new Shift { Id = 2, Name = "Öğleden Sonra",               StartTime = new TimeSpan(16, 0, 0), EndTime = new TimeSpan(0,  0, 0), Color = "#4f6ef7" },
+                new Shift { Id = 3, Name = "Gece",                        StartTime = new TimeSpan(0,  0, 0), EndTime = new TimeSpan(8,  0, 0), Color = "#a78bfa" },
                 new Shift { Id = 4, Name = "Tatil",                       StartTime = TimeSpan.Zero,          EndTime = TimeSpan.Zero,          Color = "#ef4444" },
                 new Shift { Id = 5, Name = "İzinli",                      StartTime = TimeSpan.Zero,          EndTime = TimeSpan.Zero,          Color = "#22c55e" },
                 new Shift { Id = 6, Name = "Part Time",                   StartTime = new TimeSpan(8,  0, 0), EndTime = new TimeSpan(12, 0, 0), Color = "#14b8a6" },
