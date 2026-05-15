@@ -60,7 +60,7 @@ const I18N = {
 
     // ─── Login ───
     'login.welcome':      'Hoş geldin',
-    'login.subtitle':     'Hesabınla giriş yap, ekibini yönet.',
+    'login.subtitle':     'Hesabınla giriş yap, vardiyalarına ve ekibine ulaş.',
     'login.email':        'E-posta adresi',
     'login.email_ph':     'ornek@sirket.com',
     'login.password':     'Şifre',
@@ -68,8 +68,8 @@ const I18N = {
     'login.kiosk':        'Turnike (Kiosk) Modu',
     'login.or':           'veya',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title_v2':'Tüm ekibinizi tek panelden yönetin.',
-    'login.hero_sub_v2':  'Yüz tanıma ile devam takibi, otomatik vardiya planlama ve gerçek-zamanlı raporlama.',
+    'login.hero_title_v2':'Yöneticiden personele, herkes için tek platform.',
+    'login.hero_sub_v2':  'Vardiya planı, yüz tanıma ile devam takibi ve anlık raporlama — ekibinizdeki herkes için.',
     'login.feat_face':       'Yüz Tanıma',
     'login.feat_face_sub':   'AES-256 şifreli biyometrik turnike',
     'login.feat_att':        'Devam Takibi',
@@ -741,7 +741,7 @@ const I18N = {
 
     // ─── Login ───
     'login.welcome':      'Welcome back',
-    'login.subtitle':     'Sign in to manage your team.',
+    'login.subtitle':     'Sign in and access your shifts and team.',
     'login.email':        'Email address',
     'login.email_ph':     'name@company.com',
     'login.password':     'Password',
@@ -749,8 +749,8 @@ const I18N = {
     'login.kiosk':        'Turnstile (Kiosk) Mode',
     'login.or':           'or',
     'login.foot':         '© 2026 Shiftex · v1.2 Production',
-    'login.hero_title_v2':'Manage your whole team from one panel.',
-    'login.hero_sub_v2':  'Face-recognition attendance, automated shift planning and real-time reporting.',
+    'login.hero_title_v2':'One platform for managers and staff alike.',
+    'login.hero_sub_v2':  'Shift scheduling, face-recognition attendance and real-time reporting — for everyone on your team.',
     'login.feat_face':       'Face Recognition',
     'login.feat_face_sub':   'AES-256 encrypted biometric turnstile',
     'login.feat_att':        'Attendance Tracking',

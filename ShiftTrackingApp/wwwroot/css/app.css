@@ -181,7 +181,7 @@ textarea.form-input { resize: vertical; min-height: 88px; font-family: inherit; 
   position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
+  grid-template-columns: 1fr 1.65fr;
   overflow: hidden;
   background: var(--bg);
 }
