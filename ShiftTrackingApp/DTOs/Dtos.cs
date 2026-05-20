@@ -56,8 +56,6 @@ namespace ShiftTrackingApp.DTOs
         public bool IsActive { get; set; }
         /// <summary>"Permanent" (kadrolu) veya "Casual" (yevmiyeci).</summary>
         public string EmploymentType { get; set; } = "Permanent";
-        /// <summary>Yevmiyeci için günlük ücret (TL); kadrolu personelde null.</summary>
-        public decimal? DailyWage { get; set; }
     }
 
     public class CreateUserDto
@@ -120,6 +118,29 @@ namespace ShiftTrackingApp.DTOs
         [StrongPassword(MinLength = 8)]
         [MaxLength(100, ErrorMessage = "Şifre en fazla 100 karakter olabilir.")]
         public string? NewPassword { get; set; }
+    }
+
+    // ─── STAFFING REQUIREMENT (Personel İhtiyacı) ─────────
+    public class StaffingRequirementDto
+    {
+        public int Id { get; set; }
+        public int DepartmentId { get; set; }
+        public int ShiftId { get; set; }
+        public int DayOfWeek { get; set; }      // 0=Pzt..6=Paz
+        public int RequiredCount { get; set; }
+    }
+
+    /// <summary>Bir departmanın haftalık ihtiyaç matrisini topluca günceller.</summary>
+    public class UpsertStaffingRequirementDto
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Geçerli bir vardiya seçin.")]
+        public int ShiftId { get; set; }
+
+        [Range(0, 6, ErrorMessage = "Gün 0 (Pzt) ile 6 (Paz) arasında olmalıdır.")]
+        public int DayOfWeek { get; set; }
+
+        [Range(0, 999, ErrorMessage = "Gereken sayı 0 ile 999 arasında olmalıdır.")]
+        public int RequiredCount { get; set; }
     }
 
     // ─── SHIFT ────────────────────────────────────────────

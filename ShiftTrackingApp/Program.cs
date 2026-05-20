@@ -133,6 +133,7 @@ builder.Services.AddScoped<IShiftService,      ShiftService>();
 builder.Services.AddScoped<ILeaveService,      LeaveService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IStaffingRequirementService, StaffingRequirementService>();
 builder.Services.AddScoped<IFaceDataService,   FaceDataService>();
 builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 builder.Services.AddScoped<IShiftSwapService,    ShiftSwapService>();
@@ -368,6 +369,10 @@ using (var scope = app.Services.CreateScope())
             END
         ");
 
+        // ── Personel ihtiyaç matrisi: tablo boşsa makul varsayılanlarla doldur ──
+        // İdempotent: yalnızca hiç kayıt yoksa ekler (üzerine yazmaz).
+        SeedDefaultStaffingRequirements(db, log);
+
         log.LogInformation("Veritabanı başarıyla hazırlandı.");
     }
     catch (Exception ex)
@@ -377,3 +382,52 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// ── Personel ihtiyaç matrisi varsayılan seed (idempotent) ───────────────
+// Konfeksiyon atölyesi için makul başlangıç değerleri. Tablo boşsa eklenir.
+static void SeedDefaultStaffingRequirements(AppDbContext db, Microsoft.Extensions.Logging.ILogger log)
+{
+    if (db.StaffingRequirements.Any()) return; // zaten tanımlı → dokunma
+
+    // Departman var mı kontrolü (temiz seed'de 1-5 bekleniyor)
+    var deptIds = db.Departments.Select(d => d.Id).ToHashSet();
+    if (deptIds.Count == 0) return;
+
+    // (DepartmentId, ShiftId) → hafta içi gereken sayı. Shift: 1=Sabah,2=Öğle,3=Gece
+    // Hafta sonu (Cmt/Paz) yarıya iner (aşağıda hesaplanır).
+    var weekday = new (int dept, int shift, int count)[]
+    {
+        (1,1,4), (1,2,3), (1,3,1),   // Kesim
+        (2,1,6), (2,2,4), (2,3,2),   // Dikiş (en kalabalık)
+        (3,1,3), (3,2,2), (3,3,0),   // Ütü & Paketleme
+        (4,1,2), (4,2,1), (4,3,0),   // Kalite Kontrol
+        (5,1,2), (5,2,2), (5,3,1),   // Sevkiyat
+    };
+
+    var rows = new List<ShiftTrackingApp.Models.StaffingRequirement>();
+    foreach (var (dept, shift, count) in weekday)
+    {
+        if (!deptIds.Contains(dept) || count <= 0) continue;
+        for (int dow = 0; dow < 7; dow++)
+        {
+            // Hafta sonu (5=Cmt, 6=Paz) ihtiyacı yarıya iner (yukarı yuvarlanır)
+            int required = dow >= 5 ? (count + 1) / 2 : count;
+            if (required <= 0) continue;
+            rows.Add(new ShiftTrackingApp.Models.StaffingRequirement
+            {
+                DepartmentId  = dept,
+                ShiftId       = shift,
+                DayOfWeek     = dow,
+                RequiredCount = required,
+                UpdatedAt     = DateTime.UtcNow
+            });
+        }
+    }
+
+    if (rows.Count > 0)
+    {
+        db.StaffingRequirements.AddRange(rows);
+        db.SaveChanges();
+        log.LogInformation("✓ {Count} varsayılan personel ihtiyaç kaydı eklendi.", rows.Count);
+    }
+}

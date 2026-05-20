@@ -11,15 +11,10 @@ namespace ShiftTrackingApp.Models
         public string Role { get; set; } = "Employee";
 
         /// <summary>
-        /// "Permanent" = kadrolu personel (sabit roster, aylık maaş)
-        /// "Casual"    = yevmiyeci (ihtiyaç bazlı çağrılır, günlük ücret)
+        /// "Permanent" = kadrolu personel (sabit roster)
+        /// "Casual"    = yevmiyeci (ihtiyaç bazlı çağrılır)
         /// </summary>
         public string EmploymentType { get; set; } = "Permanent";
-
-        /// <summary>
-        /// Yevmiyeci için günlük ücret (TL). Kadrolu personelde null.
-        /// </summary>
-        public decimal? DailyWage { get; set; }
 
         public int? DepartmentId { get; set; }
         public string? Position { get; set; }

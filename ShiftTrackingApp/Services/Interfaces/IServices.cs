@@ -58,6 +58,22 @@ namespace ShiftTrackingApp.Services.Interfaces
     }
 
     /// <summary>
+    /// Personel ihtiyaç matrisini (departman × vardiya × gün → gereken sayı) yönetir.
+    /// Talep-güdümlü vardiya planlamasının temelidir.
+    /// </summary>
+    public interface IStaffingRequirementService
+    {
+        /// <summary>Bir departmanın tüm ihtiyaç kayıtlarını döner.</summary>
+        Task<List<StaffingRequirementDto>> GetByDepartmentAsync(int departmentId);
+
+        /// <summary>Tüm departmanların ihtiyaç kayıtlarını döner (dashboard için).</summary>
+        Task<List<StaffingRequirementDto>> GetAllAsync();
+
+        /// <summary>Bir departmanın haftalık matrisini topluca günceller (upsert + temizlik).</summary>
+        Task UpsertForDepartmentAsync(int departmentId, List<UpsertStaffingRequirementDto> items);
+    }
+
+    /// <summary>
     /// Yüz tanıma verilerini şifreli olarak backend'de yönetir.
     /// </summary>
     public interface IFaceDataService

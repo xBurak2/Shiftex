@@ -207,6 +207,34 @@ namespace ShiftTrackingApp.Controllers
         }
     }
 
+    // ════════════ STAFFING REQUIREMENTS (Personel İhtiyacı) ══════════════
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class StaffingRequirementsController : ControllerBase
+    {
+        private readonly IStaffingRequirementService _staffing;
+        public StaffingRequirementsController(IStaffingRequirementService staffing)
+            => _staffing = staffing;
+
+        /// <summary>Tüm ihtiyaç kayıtları (dashboard) veya ?departmentId=X ile tek departman.</summary>
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] int? departmentId)
+            => Ok(departmentId.HasValue
+                ? await _staffing.GetByDepartmentAsync(departmentId.Value)
+                : await _staffing.GetAllAsync());
+
+        /// <summary>Bir departmanın haftalık ihtiyaç matrisini topluca günceller.</summary>
+        [HttpPut("department/{departmentId}")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> UpsertForDepartment(
+            int departmentId, [FromBody] List<UpsertStaffingRequirementDto> items)
+        {
+            await _staffing.UpsertForDepartmentAsync(departmentId, items ?? new());
+            return Ok(await _staffing.GetByDepartmentAsync(departmentId));
+        }
+    }
+
     // ════════════ SHIFTS ═════════════════════════════════════════════════
     [ApiController]
     [Route("api/[controller]")]

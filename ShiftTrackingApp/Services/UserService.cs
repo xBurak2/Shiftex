@@ -208,7 +208,6 @@ namespace ShiftTrackingApp.Services
             PhoneNumber    = u.PhoneNumber,
             IsActive       = u.IsActive,
             EmploymentType = u.EmploymentType,
-            DailyWage      = u.DailyWage,
         };
     }
 }

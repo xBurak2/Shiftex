@@ -844,6 +844,24 @@ textarea.form-input { resize: vertical; min-height: 88px; font-family: inherit; 
 }
 .info-banner svg { color: var(--info); flex-shrink: 0; margin-top: 1px; }
 
+/* Personel ihtiyaç matrisi */
+.field-inline { display: flex; align-items: center; gap: 8px; }
+.field-inline label { font-size: 13px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
+.field-inline select { width: auto; min-width: 200px; }
+.staffing-table th, .staffing-table td { text-align: center; }
+.staffing-table .staffing-shift-label { text-align: left; font-weight: 700; white-space: nowrap; }
+.staffing-input {
+  width: 52px; padding: 6px 4px; text-align: center;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font-size: 14px; font-weight: 600;
+}
+.staffing-input:focus { border-color: var(--accent); outline: none; }
+.staffing-table td.staffing-weekend { background: var(--surface-2); }
+.staffing-totals { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; font-size: 12.5px; color: var(--text-2); padding: 4px 0; }
+.staffing-totals b { color: var(--text); }
+.staffing-weekend-txt { color: var(--warn); }
+.staffing-week-total { color: var(--accent); font-weight: 600; }
+
 /* ════════ TOAST ════════ */
 .toast-container {
   position: fixed; top: 80px; right: 24px;

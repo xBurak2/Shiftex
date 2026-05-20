@@ -17,6 +17,7 @@ namespace ShiftTrackingApp.Data
         public DbSet<FaceData>          FaceData           => Set<FaceData>();
         public DbSet<ShiftSwapRequest>  ShiftSwapRequests  => Set<ShiftSwapRequest>();
         public DbSet<OvertimeRequest>   OvertimeRequests   => Set<OvertimeRequest>();
+        public DbSet<StaffingRequirement> StaffingRequirements => Set<StaffingRequirement>();
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
@@ -31,10 +32,6 @@ namespace ShiftTrackingApp.Data
               .HasForeignKey(u => u.DepartmentId)
               .OnDelete(DeleteBehavior.SetNull);
 
-            // Yevmiyeci günlük ücreti: TL bazlı, 2 ondalık (HasPrecision 10,2)
-            mb.Entity<User>()
-              .Property(u => u.DailyWage)
-              .HasPrecision(10, 2);
 
             mb.Entity<ShiftAssignment>()
               .HasOne(sa => sa.User)
@@ -105,6 +102,23 @@ namespace ShiftTrackingApp.Data
               .HasOne(s => s.DesiredShift)
               .WithMany()
               .HasForeignKey(s => s.DesiredShiftId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // ── PERSONEL İHTİYACI (Staffing Requirement) ──────────────────
+            mb.Entity<StaffingRequirement>()
+              .HasIndex(s => new { s.DepartmentId, s.ShiftId, s.DayOfWeek })
+              .IsUnique();
+
+            mb.Entity<StaffingRequirement>()
+              .HasOne(s => s.Department)
+              .WithMany()
+              .HasForeignKey(s => s.DepartmentId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            mb.Entity<StaffingRequirement>()
+              .HasOne(s => s.Shift)
+              .WithMany()
+              .HasForeignKey(s => s.ShiftId)
               .OnDelete(DeleteBehavior.Restrict);
 
             // ── MESAİ TALEPLERİ ───────────────────────────────────────────
@@ -182,18 +196,18 @@ namespace ShiftTrackingApp.Data
                 },
                 // ── YEVMİYECİ HAVUZU ────────────────────────────────────────
                 // Kesim — 2 kişi
-                new User { Id = 100, FullName = "Hasan Demir",     Email = "hasan.demir@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 1, Position = "Yevmiyeci · Kesim",            DailyWage = 850m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
-                new User { Id = 101, FullName = "Murat Aksoy",     Email = "murat.aksoy@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 1, Position = "Yevmiyeci · Kesim",            DailyWage = 850m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 100, FullName = "Hasan Demir",     Email = "hasan.demir@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 1, Position = "Yevmiyeci · Kesim",            IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 101, FullName = "Murat Aksoy",     Email = "murat.aksoy@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 1, Position = "Yevmiyeci · Kesim",            IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
                 // Dikiş — 3 kişi (en kalabalık)
-                new User { Id = 102, FullName = "Fatma Şahin",     Email = "fatma.sahin@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            DailyWage = 800m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
-                new User { Id = 103, FullName = "Zeynep Aydın",    Email = "zeynep.aydin@shifttrack.com",    PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            DailyWage = 800m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
-                new User { Id = 104, FullName = "Emine Çelik",     Email = "emine.celik@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            DailyWage = 800m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 102, FullName = "Fatma Şahin",     Email = "fatma.sahin@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 103, FullName = "Zeynep Aydın",    Email = "zeynep.aydin@shifttrack.com",    PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 104, FullName = "Emine Çelik",     Email = "emine.celik@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 2, Position = "Yevmiyeci · Dikiş",            IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
                 // Ütü & Paketleme — 1 kişi
-                new User { Id = 105, FullName = "Sibel Polat",     Email = "sibel.polat@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 3, Position = "Yevmiyeci · Ütü & Paketleme",  DailyWage = 750m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 105, FullName = "Sibel Polat",     Email = "sibel.polat@shifttrack.com",     PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 3, Position = "Yevmiyeci · Ütü & Paketleme",  IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
                 // Kalite Kontrol — 1 kişi
-                new User { Id = 106, FullName = "Burak Öztürk",    Email = "burak.ozturk@shifttrack.com",    PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 4, Position = "Yevmiyeci · Kalite Kontrol",   DailyWage = 900m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 106, FullName = "Burak Öztürk",    Email = "burak.ozturk@shifttrack.com",    PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 4, Position = "Yevmiyeci · Kalite Kontrol",   IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
                 // Sevkiyat — 1 kişi
-                new User { Id = 107, FullName = "Selim Kurt",      Email = "selim.kurt@shifttrack.com",      PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 5, Position = "Yevmiyeci · Sevkiyat",         DailyWage = 850m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+                new User { Id = 107, FullName = "Selim Kurt",      Email = "selim.kurt@shifttrack.com",      PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 5, Position = "Yevmiyeci · Sevkiyat",         IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
 
                 // ── KADROLU PERSONEL (20 kişi) ──────────────────────────────
                 // Tüm kadrolu personel password'ü demo amaçlı aynı: "Personel123!"

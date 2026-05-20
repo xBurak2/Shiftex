@@ -18,6 +18,29 @@ namespace ShiftTrackingApp.Models
         public ICollection<ShiftAssignment> Assignments { get; set; } = new List<ShiftAssignment>();
     }
 
+    /// <summary>
+    /// Bir departmanın belirli bir vardiyada, haftanın belirli bir gününde
+    /// kaç kişiye ihtiyaç duyduğunu tanımlar (talep-güdümlü planlamanın temeli).
+    /// Haftalık şablon: (DepartmentId, ShiftId, DayOfWeek) benzersiz.
+    /// </summary>
+    public class StaffingRequirement
+    {
+        public int Id { get; set; }
+        public int DepartmentId { get; set; }
+        public int ShiftId { get; set; }
+
+        /// <summary>0 = Pazartesi ... 6 = Pazar</summary>
+        public int DayOfWeek { get; set; }
+
+        /// <summary>O gün/vardiya için gereken minimum personel sayısı.</summary>
+        public int RequiredCount { get; set; }
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        public Department Department { get; set; } = null!;
+        public Shift Shift { get; set; } = null!;
+    }
+
     public class ShiftAssignment
     {
         public int Id { get; set; }

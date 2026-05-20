@@ -132,8 +132,17 @@ const I18N = {
     'emp.casual':           'Yevmiyeci',
     'casual.sub':           'İhtiyaç anında çağrılan yevmiyeci havuzu',
     'casual.info':          'Yevmiyeciler sabit roster\'a eklenmez; vardiya açığı oluştuğunda departmanlarına göre çağrılır. Çağrı sistemi bir sonraki aşamada eklenecek.',
-    'casual.col_wage':      'Günlük Ücret',
     'casual.count_suffix':  'yevmiyeci',
+
+    // ─── Personel İhtiyacı (Staffing) ───
+    'nav.staffing':         'Personel İhtiyacı',
+    'staffing.sub':         'Her departman ve vardiya için gereken kişi sayısını tanımla',
+    'staffing.info':        'Bu matris "o vardiyaya kaç kişi gerekli" sorusunun cevabıdır. Eksik/fazla eleman hesabı ve yevmiyeci çağrısı bu sayılara göre yapılır.',
+    'staffing.dept_label':  'Departman:',
+    'staffing.col_shift':   'Vardiya',
+    'staffing.col_total':   'Günlük Toplam',
+    'staffing.week_total':  'Haftalık',
+    'staffing.saved':       'Personel ihtiyacı kaydedildi.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Yönetici',
@@ -843,8 +852,17 @@ const I18N = {
     'emp.casual':           'Casual',
     'casual.sub':           'On-demand casual worker pool',
     'casual.info':          'Casual workers are not added to the fixed roster; they are called by department when a shift gap occurs. The call system will be added in the next phase.',
-    'casual.col_wage':      'Daily Wage',
     'casual.count_suffix':  'casual workers',
+
+    // ─── Staffing Requirement ───
+    'nav.staffing':         'Staffing Needs',
+    'staffing.sub':         'Define the headcount required for each department and shift',
+    'staffing.info':        'This matrix answers "how many people does this shift need". Shortage/surplus calculations and casual-worker calls are based on these numbers.',
+    'staffing.dept_label':  'Department:',
+    'staffing.col_shift':   'Shift',
+    'staffing.col_total':   'Daily Total',
+    'staffing.week_total':  'Weekly',
+    'staffing.saved':       'Staffing requirements saved.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Admin',

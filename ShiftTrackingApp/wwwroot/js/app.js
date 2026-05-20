@@ -38,7 +38,13 @@ const ICONS = {
   palm:       '<svg viewBox="0 0 20 20" fill="none"><path d="M10 3v14M5 8c2-3 8-3 10 0M3 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   cross:      '<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   pending:    '<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  trend:      '<svg viewBox="0 0 20 20" fill="none"><path d="M3 14l4-4 3 3 7-7M13 6h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  trend:      '<svg viewBox="0 0 20 20" fill="none"><path d="M3 14l4-4 3 3 7-7M13 6h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // Vardiya değişimi — iki yönlü ok (takas)
+  swap:       '<svg viewBox="0 0 20 20" fill="none"><path d="M3 7h11M11 4l3 3-3 3M17 13H6M9 10l-3 3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // Yevmiyeci — kişi + saat rozeti (çağrı üzerine/ihtiyaç anında)
+  oncall:     '<svg viewBox="0 0 20 20" fill="none"><circle cx="8" cy="6.5" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 17a5.5 5.5 0 019.2-3.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="14.5" cy="14" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 12.4V14l1.2 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  // Personel ihtiyacı — hedef/nişangah
+  target:     '<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="3.4" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="0.6" fill="currentColor"/></svg>'
 };
 
 // ── Utilities ───────────────────────────────────────────────────────
@@ -447,14 +453,15 @@ const NAV_ADMIN = [
   { id: 'dashboard',      key: 'nav.dashboard',      icon: ICONS.dashboard },
   { section: 'nav.personnel' },
   { id: 'employees',      key: 'nav.employees',      icon: ICONS.users },
-  { id: 'casual-workers', key: 'nav.casual_workers', icon: ICONS.scan },
+  { id: 'casual-workers', key: 'nav.casual_workers', icon: ICONS.oncall },
   { id: 'departments',    key: 'nav.departments',    icon: ICONS.building },
   { section: 'nav.operations' },
+  { id: 'staffing',       key: 'nav.staffing',       icon: ICONS.target },
   { id: 'roster',         key: 'nav.roster',         icon: ICONS.calendar },
   { id: 'attendance',     key: 'nav.attendance',     icon: ICONS.check },
   { id: 'leaves',         key: 'nav.leaves',         icon: ICONS.clipboard },
   { id: 'overtime-admin', key: 'nav.overtime_admin', icon: ICONS.trend },
-  { id: 'swap-admin',     key: 'nav.swap_admin',     icon: ICONS.scan },
+  { id: 'swap-admin',     key: 'nav.swap_admin',     icon: ICONS.swap },
   { section: 'nav.reports' },
   { id: 'enroll',         key: 'nav.enroll',         icon: ICONS.scan },
   { id: 'monthly',        key: 'nav.monthly',        icon: ICONS.chart },
@@ -467,7 +474,7 @@ const NAV_EMP = [
   { id: 'my-attendance', key: 'nav.my_attendance', icon: ICONS.check },
   { id: 'my-leaves',     key: 'nav.my_leaves',     icon: ICONS.clipboard },
   { id: 'my-overtime',   key: 'nav.my_overtime',   icon: ICONS.trend },
-  { id: 'my-swaps',      key: 'nav.my_swaps',      icon: ICONS.scan },
+  { id: 'my-swaps',      key: 'nav.my_swaps',      icon: ICONS.swap },
   { id: 'my-monthly',    key: 'nav.my_monthly',    icon: ICONS.chart },
   { section: 'nav.team' },
   { id: 'roster',        key: 'nav.weekly_plan',   icon: ICONS.calendar },
@@ -543,6 +550,7 @@ const PAGE_TITLE_KEYS = {
   'employees': 'nav.employees',
   'casual-workers': 'nav.casual_workers',
   'departments': 'nav.departments',
+  'staffing': 'nav.staffing',
   'roster': 'nav.roster',
   'attendance': 'nav.attendance',
   'leaves': 'nav.leaves',
@@ -578,6 +586,7 @@ function showPage(id) {
     case 'dashboard':   loadDashboard(); break;
     case 'employees':   loadEmployees(); break;
     case 'casual-workers': loadCasualWorkers(); break;
+    case 'staffing':    loadStaffing();  break;
     case 'roster':      loadRoster();    break;
     case 'attendance':  loadAttendance();break;
     case 'leaves':      loadLeaves();    break;
@@ -616,9 +625,94 @@ async function loadCasualWorkers() {
         <td><div class="name-cell">${avatar(u.fullName, u.photoBase64)}<span>${esc(u.fullName)}</span></div></td>
         <td>${esc(u.departmentName||'—')}</td>
         <td>${esc(u.position||'—')}</td>
-        <td>${u.dailyWage!=null ? `${Number(u.dailyWage).toLocaleString('tr-TR')} ₺` : '—'}</td>
         <td>${esc(u.email)}</td>
       </tr>`).join('');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── Admin: Personel İhtiyaç Matrisi (Faz 1) ─────────────────────────
+// Vardiya × gün → gereken kişi sayısı. Talep-güdümlü planlamanın temeli.
+const STAFFING_SHIFTS = [1, 2, 3]; // Sabah, Öğle, Gece
+let staffingDeptId = null;
+
+async function loadStaffing() {
+  const sel = document.getElementById('staffing-dept');
+  if (!sel) return;
+  // Departman seçiciyi doldur (ilk açılışta)
+  if (!sel.options.length) {
+    if (!allDepts.length) await loadDepts();
+    sel.innerHTML = allDepts.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+  }
+  staffingDeptId = staffingDeptId || (allDepts[0]?.id ?? null);
+  if (staffingDeptId) sel.value = staffingDeptId;
+  await renderStaffingMatrix();
+}
+
+async function onStaffingDeptChange() {
+  staffingDeptId = parseInt(document.getElementById('staffing-dept').value, 10);
+  await renderStaffingMatrix();
+}
+
+async function renderStaffingMatrix() {
+  const wrap = document.getElementById('staffing-matrix');
+  if (!wrap || !staffingDeptId) return;
+  let rows = [];
+  try { rows = await api('GET', `/api/StaffingRequirements?departmentId=${staffingDeptId}`); }
+  catch(e) { toast(e.message,'err'); return; }
+
+  // (shiftId, dow) → count haritası
+  const map = {};
+  rows.forEach(r => { map[`${r.shiftId}_${r.dayOfWeek}`] = r.requiredCount; });
+
+  const dayHeaders = DAY_KEYS_SHORT.map(k => `<th>${t(k)}</th>`).join('');
+  const bodyRows = STAFFING_SHIFTS.map(sid => {
+    const cells = [];
+    for (let dow = 0; dow < 7; dow++) {
+      const val = map[`${sid}_${dow}`] ?? 0;
+      const weekend = dow >= 5 ? ' staffing-weekend' : '';
+      cells.push(`<td class="${weekend}"><input type="number" min="0" max="99" class="staffing-input" data-shift="${sid}" data-dow="${dow}" value="${val}" oninput="updateStaffingTotals()"></td>`);
+    }
+    return `<tr><td class="staffing-shift-label">${esc(shiftNameById(sid))}</td>${cells.join('')}</tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table class="data-table staffing-table">
+      <thead><tr><th data-i18n="staffing.col_shift">Vardiya</th>${dayHeaders}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+      <tfoot><tr><td class="staffing-shift-label" data-i18n="staffing.col_total">Günlük Toplam</td><td colspan="7" id="staffing-total-cell"></td></tr></tfoot>
+    </table>`;
+  updateStaffingTotals();
+}
+
+function updateStaffingTotals() {
+  const inputs = document.querySelectorAll('.staffing-input');
+  const perDay = [0,0,0,0,0,0,0];
+  inputs.forEach(inp => {
+    const dow = parseInt(inp.dataset.dow, 10);
+    perDay[dow] += parseInt(inp.value || '0', 10);
+  });
+  const cell = document.getElementById('staffing-total-cell');
+  if (cell) {
+    const weekTotal = perDay.reduce((a,b)=>a+b,0);
+    cell.innerHTML = `<div class="staffing-totals">` +
+      perDay.map((n,i)=>`<span class="${i>=5?'staffing-weekend-txt':''}">${t(DAY_KEYS_SHORT[i])}: <b>${n}</b></span>`).join('') +
+      `<span class="staffing-week-total">${t('staffing.week_total')}: <b>${weekTotal}</b></span></div>`;
+  }
+}
+
+async function saveStaffing() {
+  if (!staffingDeptId) return;
+  const items = [];
+  document.querySelectorAll('.staffing-input').forEach(inp => {
+    items.push({
+      shiftId: parseInt(inp.dataset.shift, 10),
+      dayOfWeek: parseInt(inp.dataset.dow, 10),
+      requiredCount: parseInt(inp.value || '0', 10)
+    });
+  });
+  try {
+    await api('PUT', `/api/StaffingRequirements/department/${staffingDeptId}`, items);
+    toast(t('staffing.saved'));
   } catch(e) { toast(e.message,'err'); }
 }
 
@@ -1861,6 +1955,23 @@ const DEPT_GRADIENTS = [
 function deptStyle(idx) {
   return DEPT_GRADIENTS[idx % DEPT_GRADIENTS.length];
 }
+// Departman adına göre işe özel emoji (konfeksiyon atölyesi)
+const DEPT_EMOJI_MAP = [
+  { kw: ['kesim', 'kes'],                     emoji: '✂️' },
+  { kw: ['dikiş', 'dikis', 'overlok'],        emoji: '🧵' },
+  { kw: ['ütü', 'utu', 'paket'],              emoji: '📦' },
+  { kw: ['kalite'],                           emoji: '🔍' },
+  { kw: ['sevk', 'depo', 'lojistik'],         emoji: '🚚' },
+  { kw: ['nakış', 'nakis'],                   emoji: '🪡' },
+  { kw: ['boya', 'baskı', 'baski'],           emoji: '🎨' },
+];
+function deptEmoji(name, fallback) {
+  const n = (name || '').toLocaleLowerCase('tr');
+  for (const e of DEPT_EMOJI_MAP) {
+    if (e.kw.some(k => n.includes(k))) return e.emoji;
+  }
+  return fallback; // eşleşme yoksa gradient'in varsayılan emojisi
+}
 
 function renderDepts() {
   const grid    = document.getElementById('dept-grid');
@@ -1910,7 +2021,7 @@ function renderDepts() {
     return `<div class="dept-card ${isEmpty?'dept-card-empty':''}">
       <div class="dept-card-bg" style="background: linear-gradient(135deg, ${s.from} 0%, ${s.to} 100%)"></div>
       <div class="dept-card-head">
-        <div class="dept-emoji">${s.icon}</div>
+        <div class="dept-emoji">${deptEmoji(d.name, s.icon)}</div>
         <button class="dept-card-menu" onclick="deleteDept(${d.id},'${esc(d.name).replace(/'/g,"\\'")}')" title="Departmanı sil">
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 7h10M8 4h4l1 3M7 7v9a1 1 0 001 1h4a1 1 0 001-1V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
