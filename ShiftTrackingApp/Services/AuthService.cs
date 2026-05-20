@@ -58,13 +58,14 @@ namespace ShiftTrackingApp.Services
 
             return new AuthResponseDto
             {
-                Token        = token,
-                RefreshToken = refreshToken,
-                FullName     = user.FullName,
-                Email        = user.Email,
-                Role         = user.Role,
-                UserId       = user.Id,
-                PhotoBase64  = user.PhotoBase64
+                Token          = token,
+                RefreshToken   = refreshToken,
+                FullName       = user.FullName,
+                Email          = user.Email,
+                Role           = user.Role,
+                UserId         = user.Id,
+                PhotoBase64    = user.PhotoBase64,
+                EmploymentType = user.EmploymentType,
             };
         }
 
@@ -89,13 +90,14 @@ namespace ShiftTrackingApp.Services
 
             return new AuthResponseDto
             {
-                Token        = newToken,
-                RefreshToken = newRefreshToken,
-                FullName     = rt.User.FullName,
-                Email        = rt.User.Email,
-                Role         = rt.User.Role,
-                UserId       = rt.User.Id,
-                PhotoBase64  = rt.User.PhotoBase64
+                Token          = newToken,
+                RefreshToken   = newRefreshToken,
+                FullName       = rt.User.FullName,
+                Email          = rt.User.Email,
+                Role           = rt.User.Role,
+                UserId         = rt.User.Id,
+                PhotoBase64    = rt.User.PhotoBase64,
+                EmploymentType = rt.User.EmploymentType,
             };
         }
 

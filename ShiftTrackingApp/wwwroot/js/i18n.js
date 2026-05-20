@@ -122,10 +122,17 @@ const I18N = {
     'nav.my_swaps':       'Vardiya Değişimleri',
     'nav.my_monthly':     'Aylık Özetim',
     'nav.weekly_plan':    'Haftalık Plan',
+    'nav.my_callouts':    'Gelen Çağrılar',
+
+    // ─── Yevmiyeci (Casual) ───
+    'callouts.sub':         'Yöneticinin sana gönderdiği vardiya çağrıları',
+    'callouts.empty_title': 'Henüz çağrı yok',
+    'callouts.empty_sub':   'Yönetici sana vardiya için çağrı gönderdiğinde burada görünür.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Yönetici',
     'topbar.employee':    'Personel',
+    'topbar.casual':      'Yevmiyeci',
     'menu.profile':       'Profilim',
     'menu.theme':         'Görünüm:',
     'menu.theme_dark':    'Karanlık',
@@ -820,10 +827,17 @@ const I18N = {
     'nav.my_swaps':       'Shift Swaps',
     'nav.my_monthly':     'My Monthly Summary',
     'nav.weekly_plan':    'Weekly Plan',
+    'nav.my_callouts':    'Incoming Calls',
+
+    // ─── Casual Worker (Yevmiyeci) ───
+    'callouts.sub':         'Shift calls sent to you by management',
+    'callouts.empty_title': 'No calls yet',
+    'callouts.empty_sub':   'When management sends you a shift call, it will appear here.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Admin',
     'topbar.employee':    'Employee',
+    'topbar.casual':      'Casual',
     'menu.profile':       'My Profile',
     'menu.theme':         'Theme:',
     'menu.theme_dark':    'Dark',

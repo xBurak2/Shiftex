@@ -29,6 +29,7 @@ namespace ShiftTrackingApp.Helpers
                 new Claim(ClaimTypes.Email,          user.Email),
                 new Claim(ClaimTypes.Name,           user.FullName),
                 new Claim(ClaimTypes.Role,           user.Role),
+                new Claim("emp_type",                user.EmploymentType ?? "Permanent"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 

@@ -24,6 +24,8 @@ namespace ShiftTrackingApp.DTOs
         public int UserId { get; set; }
         public string? PhotoBase64 { get; set; }
         public string RefreshToken { get; set; } = string.Empty;
+        /// <summary>"Permanent" (kadrolu) veya "Casual" (yevmiyeci) — frontend menü filtresi için.</summary>
+        public string EmploymentType { get; set; } = "Permanent";
     }
 
     // ─── PAGINATION ───────────────────────────────────────
@@ -52,6 +54,10 @@ namespace ShiftTrackingApp.DTOs
         public string? PhotoBase64 { get; set; }
         public string? PhoneNumber { get; set; }
         public bool IsActive { get; set; }
+        /// <summary>"Permanent" (kadrolu) veya "Casual" (yevmiyeci).</summary>
+        public string EmploymentType { get; set; } = "Permanent";
+        /// <summary>Yevmiyeci için günlük ücret (TL); kadrolu personelde null.</summary>
+        public decimal? DailyWage { get; set; }
     }
 
     public class CreateUserDto

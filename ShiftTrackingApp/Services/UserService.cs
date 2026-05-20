@@ -207,6 +207,8 @@ namespace ShiftTrackingApp.Services
             PhotoBase64    = u.PhotoBase64,
             PhoneNumber    = u.PhoneNumber,
             IsActive       = u.IsActive,
+            EmploymentType = u.EmploymentType,
+            DailyWage      = u.DailyWage,
         };
     }
 }

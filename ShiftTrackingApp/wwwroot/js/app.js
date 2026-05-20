@@ -120,7 +120,11 @@ window.onLanguageChanged = function(lang) {
   // Topbar role'ünü güncelle
   if (currentUser) {
     const r = document.getElementById('topbar-role');
-    if (r) r.textContent = currentUser.role === 'Admin' ? t('topbar.admin') : t('topbar.employee');
+    if (r) {
+      const labelKey = currentUser.role === 'Admin' ? 'topbar.admin'
+                     : (currentUser.employmentType === 'Casual' ? 'topbar.casual' : 'topbar.employee');
+      r.textContent = t(labelKey);
+    }
   }
   // Sidebar nav'i yeniden çiz
   if (currentUser) buildNav();
@@ -264,7 +268,11 @@ async function startApp() {
   updateTopbarUser();
   await Promise.all([loadAllUsers(), loadDepts()]);
   const isAdmin = currentUser.role === 'Admin';
-  navTo(isAdmin ? 'dashboard' : 'my-dashboard');
+  // Yevmiyeci'nin dashboard'u yok — direkt vardiyalarına gitsin
+  const defaultPage = isAdmin ? 'dashboard'
+                    : isCasualUser() ? 'my-shifts'
+                    : 'my-dashboard';
+  navTo(defaultPage);
   // Bildirimler — hem admin hem personel için açık (içerik role bazlı)
   startNotificationPolling();
 }
@@ -464,6 +472,14 @@ const NAV_EMP = [
   { id: 'roster',        key: 'nav.weekly_plan',   icon: ICONS.calendar },
 ];
 
+// Yevmiyeci (Casual) — sadece çağrılar, kendi vardiyaları, kendi devamı
+const NAV_CASUAL = [
+  { section: 'nav.personal' },
+  { id: 'my-shifts',     key: 'nav.my_shifts',     icon: ICONS.calendar },
+  { id: 'my-attendance', key: 'nav.my_attendance', icon: ICONS.check },
+  { id: 'my-callouts',   key: 'nav.my_callouts',   icon: ICONS.trend },
+];
+
 // ── Vardiya kategorileri (Shift Id'ye göre) ─────────────────────────
 // 1-3: Vardiyalar | 4-5: Tatil/İzin | 6: Part Time (Vardiya) | 7-9: Fazla Mesai
 const SHIFT_TYPES = [
@@ -503,8 +519,17 @@ function leaveTypeI18n(srvType) {
   return map[srvType] ? t(map[srvType]) : (srvType || '');
 }
 
+// Yevmiyeci (Casual) ayrı bir personel tipi — daha kısıtlı menü
+function isCasualUser() {
+  return currentUser?.employmentType === 'Casual';
+}
+
 function buildNav() {
-  const items = currentUser.role === 'Admin' ? NAV_ADMIN : NAV_EMP;
+  let items;
+  if (currentUser.role === 'Admin')   items = NAV_ADMIN;
+  else if (isCasualUser())            items = NAV_CASUAL;
+  else                                items = NAV_EMP;
+
   const html = items.map(it => {
     if (it.section) return `<div class="nav-section">${esc(t(it.section))}</div>`;
     return `<a class="nav-link" data-page="${it.id}" onclick="navTo('${it.id}')">${it.icon}<span>${esc(t(it.key))}</span></a>`;
@@ -530,6 +555,7 @@ const PAGE_TITLE_KEYS = {
   'my-overtime': 'nav.my_overtime',
   'my-swaps': 'nav.my_swaps',
   'my-monthly': 'nav.my_monthly',
+  'my-callouts': 'nav.my_callouts',
   'profile': 'menu.profile'
 };
 
@@ -565,15 +591,37 @@ function showPage(id) {
     case 'my-swaps':        loadMySwaps('outgoing'); break;
     case 'overtime-admin':  loadAdminOvertime(); break;
     case 'swap-admin':      loadAdminSwaps(); break;
+    case 'my-callouts':     loadMyCallouts(); break;
   }
+}
+
+// ── Yevmiyeci: Gelen Çağrılar (stub — Faz 3'te dolacak) ─────────────
+async function loadMyCallouts() {
+  const listEl = document.getElementById('my-callouts-list');
+  if (!listEl) return;
+  // Faz 3'te bu endpoint eklenecek: GET /api/CasualCallouts/me
+  listEl.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">${ICONS.trend || ''}</div>
+      <h3 data-i18n="callouts.empty_title">Henüz çağrı yok</h3>
+      <p data-i18n="callouts.empty_sub">Yönetici sana vardiya için çağrı gönderdiğinde burada görünür.</p>
+    </div>`;
+  if (window.applyI18n) window.applyI18n(listEl);
 }
 
 // ── Topbar User ─────────────────────────────────────────────────────
 function updateTopbarUser() {
   const u = currentUser;
   document.getElementById('topbar-avatar').innerHTML = avatar(u.fullName, u.photoBase64, 32);
+  // Yevmiyeci için role badge'i "Yevmiyeci" göstermesin diye topbar-role'ı doğrudan güncelle
+  const roleEl = document.getElementById('topbar-role');
+  if (roleEl) {
+    const labelKey = u.role === 'Admin' ? 'topbar.admin'
+                   : (u.employmentType === 'Casual' ? 'topbar.casual' : 'topbar.employee');
+    roleEl.textContent = t(labelKey);
+  }
   document.getElementById('topbar-name').textContent = u.fullName;
-  document.getElementById('topbar-role').textContent = u.role === 'Admin' ? t('topbar.admin') : t('topbar.employee');
+  // (topbar-role yukarıda yevmiyeci için de doğru ayarlandı — burada tekrar ezme)
   document.getElementById('dropdown-header').innerHTML =
     `<strong>${u.fullName}</strong>${u.email}`;
 }
