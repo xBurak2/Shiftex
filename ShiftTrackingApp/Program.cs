@@ -342,6 +342,22 @@ app.MapGet("/api/_diag/migrate", (AppDbContext db) =>
     }
 });
 
+// Production departman/kullanıcı durumunu görmek için (geçici)
+app.MapGet("/api/_diag/state", (AppDbContext db) =>
+{
+    try
+    {
+        var depts = db.Departments.Select(d => new { d.Id, d.Name }).ToList();
+        var userCount = db.Users.Count();
+        var maxUserId = db.Users.Max(u => (int?)u.Id) ?? 0;
+        var sampleUsers = db.Users.OrderBy(u => u.Id)
+            .Select(u => new { u.Id, u.Email, u.DepartmentId, u.Role })
+            .Take(20).ToList();
+        return Results.Ok(new { depts, userCount, maxUserId, sampleUsers });
+    }
+    catch (Exception ex) { return Results.Ok(new { error = ex.ToString() }); }
+});
+
 // ── Başlangıç migrasyonu & indeks düzeltmesi ─────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
