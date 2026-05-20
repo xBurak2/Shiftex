@@ -831,6 +831,18 @@ textarea.form-input { resize: vertical; min-height: 88px; font-family: inherit; 
 .badge-admin { background: var(--accent-soft); color: var(--accent); }
 .badge-emp   { background: var(--surface-2);   color: var(--text-2); }
 .badge-info  { background: var(--info-soft);   color: var(--info); }
+.badge-casual { background: var(--warn-soft);  color: var(--warn); margin-left: 6px; }
+
+/* Bilgi şeridi (info banner) */
+.info-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; margin-bottom: 16px;
+  background: var(--info-soft);
+  border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
+  border-radius: 12px;
+  color: var(--text-2); font-size: 13px; line-height: 1.5;
+}
+.info-banner svg { color: var(--info); flex-shrink: 0; margin-top: 1px; }
 
 /* ════════ TOAST ════════ */
 .toast-container {

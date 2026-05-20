@@ -447,6 +447,7 @@ const NAV_ADMIN = [
   { id: 'dashboard',      key: 'nav.dashboard',      icon: ICONS.dashboard },
   { section: 'nav.personnel' },
   { id: 'employees',      key: 'nav.employees',      icon: ICONS.users },
+  { id: 'casual-workers', key: 'nav.casual_workers', icon: ICONS.scan },
   { id: 'departments',    key: 'nav.departments',    icon: ICONS.building },
   { section: 'nav.operations' },
   { id: 'roster',         key: 'nav.roster',         icon: ICONS.calendar },
@@ -540,6 +541,7 @@ function buildNav() {
 const PAGE_TITLE_KEYS = {
   'dashboard': 'nav.dashboard',
   'employees': 'nav.employees',
+  'casual-workers': 'nav.casual_workers',
   'departments': 'nav.departments',
   'roster': 'nav.roster',
   'attendance': 'nav.attendance',
@@ -575,6 +577,7 @@ function showPage(id) {
   switch(id) {
     case 'dashboard':   loadDashboard(); break;
     case 'employees':   loadEmployees(); break;
+    case 'casual-workers': loadCasualWorkers(); break;
     case 'roster':      loadRoster();    break;
     case 'attendance':  loadAttendance();break;
     case 'leaves':      loadLeaves();    break;
@@ -593,6 +596,30 @@ function showPage(id) {
     case 'swap-admin':      loadAdminSwaps(); break;
     case 'my-callouts':     loadMyCallouts(); break;
   }
+}
+
+// ── Admin: Yevmiyeci Havuzu ─────────────────────────────────────────
+async function loadCasualWorkers() {
+  const tbody = document.getElementById('casual-tbody');
+  const countEl = document.getElementById('casual-count');
+  if (!tbody) return;
+  try {
+    const res = await api('GET', `/api/Users?page=1&pageSize=200`);
+    const casuals = (res.items || []).filter(u => u.employmentType === 'Casual');
+    if (countEl) countEl.textContent = `${casuals.length} ${t('casual.count_suffix')}`;
+    if (!casuals.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-sub" style="text-align:center;padding:24px">${t('common.empty')}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = casuals.map(u => `
+      <tr class="emp-row" onclick="viewEmployeeProfile(${u.id})" style="cursor:pointer">
+        <td><div class="name-cell">${avatar(u.fullName, u.photoBase64)}<span>${esc(u.fullName)}</span></div></td>
+        <td>${esc(u.departmentName||'—')}</td>
+        <td>${esc(u.position||'—')}</td>
+        <td>${u.dailyWage!=null ? `${Number(u.dailyWage).toLocaleString('tr-TR')} ₺` : '—'}</td>
+        <td>${esc(u.email)}</td>
+      </tr>`).join('');
+  } catch(e) { toast(e.message,'err'); }
 }
 
 // ── Yevmiyeci: Gelen Çağrılar (stub — Faz 3'te dolacak) ─────────────
@@ -831,7 +858,10 @@ async function loadEmployees(page) {
         <td>${esc(u.email)}</td>
         <td>${esc(u.departmentName||'—')}</td>
         <td>${esc(u.position||'—')}</td>
-        <td><span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span></td>
+        <td>
+          <span class="badge ${u.role==='Admin'?'badge-admin':'badge-emp'}">${u.role==='Admin'?'Yönetici':'Personel'}</span>
+          ${u.employmentType==='Casual' ? `<span class="badge badge-casual">${t('emp.casual')}</span>` : ''}
+        </td>
         <td class="text-right" onclick="event.stopPropagation()">
           <div class="btn-group" style="justify-content:flex-end">
             <button class="btn btn-ghost btn-sm" onclick="openEmpModal(${u.id})">Düzenle</button>

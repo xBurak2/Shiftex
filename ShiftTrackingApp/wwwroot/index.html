@@ -485,6 +485,37 @@
         </div>
       </section>
 
+      <!-- ── YEVMİYECİ HAVUZU (admin) ─── -->
+      <section id="page-casual-workers" class="page hidden">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" data-i18n="nav.casual_workers">Yevmiyeciler</h1>
+            <p class="page-sub" data-i18n="casual.sub">İhtiyaç anında çağrılan yevmiyeci havuzu</p>
+          </div>
+          <span id="casual-count" class="text-sub"></span>
+        </div>
+        <div class="info-banner">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v5M10 6.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span data-i18n="casual.info">Yevmiyeciler sabit roster'a eklenmez; vardiya açığı oluştuğunda departmanlarına göre çağrılır. Çağrı sistemi bir sonraki aşamada eklenecek.</span>
+        </div>
+        <div class="card no-pad">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="emp.col_name">Ad Soyad</th>
+                  <th data-i18n="emp.col_dept">Departman</th>
+                  <th data-i18n="emp.col_pos">Pozisyon</th>
+                  <th data-i18n="casual.col_wage">Günlük Ücret</th>
+                  <th data-i18n="emp.col_email">E-posta</th>
+                </tr>
+              </thead>
+              <tbody id="casual-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section id="page-roster" class="page hidden">
         <div class="page-header">
           <div>

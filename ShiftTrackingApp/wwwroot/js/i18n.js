@@ -123,11 +123,17 @@ const I18N = {
     'nav.my_monthly':     'Aylık Özetim',
     'nav.weekly_plan':    'Haftalık Plan',
     'nav.my_callouts':    'Gelen Çağrılar',
+    'nav.casual_workers': 'Yevmiyeciler',
 
     // ─── Yevmiyeci (Casual) ───
     'callouts.sub':         'Yöneticinin sana gönderdiği vardiya çağrıları',
     'callouts.empty_title': 'Henüz çağrı yok',
     'callouts.empty_sub':   'Yönetici sana vardiya için çağrı gönderdiğinde burada görünür.',
+    'emp.casual':           'Yevmiyeci',
+    'casual.sub':           'İhtiyaç anında çağrılan yevmiyeci havuzu',
+    'casual.info':          'Yevmiyeciler sabit roster\'a eklenmez; vardiya açığı oluştuğunda departmanlarına göre çağrılır. Çağrı sistemi bir sonraki aşamada eklenecek.',
+    'casual.col_wage':      'Günlük Ücret',
+    'casual.count_suffix':  'yevmiyeci',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Yönetici',
@@ -828,11 +834,17 @@ const I18N = {
     'nav.my_monthly':     'My Monthly Summary',
     'nav.weekly_plan':    'Weekly Plan',
     'nav.my_callouts':    'Incoming Calls',
+    'nav.casual_workers': 'Casual Workers',
 
     // ─── Casual Worker (Yevmiyeci) ───
     'callouts.sub':         'Shift calls sent to you by management',
     'callouts.empty_title': 'No calls yet',
     'callouts.empty_sub':   'When management sends you a shift call, it will appear here.',
+    'emp.casual':           'Casual',
+    'casual.sub':           'On-demand casual worker pool',
+    'casual.info':          'Casual workers are not added to the fixed roster; they are called by department when a shift gap occurs. The call system will be added in the next phase.',
+    'casual.col_wage':      'Daily Wage',
+    'casual.count_suffix':  'casual workers',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Admin',

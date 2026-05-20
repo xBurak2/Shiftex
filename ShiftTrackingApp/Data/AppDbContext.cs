@@ -147,7 +147,8 @@ namespace ShiftTrackingApp.Data
             // 1 admin (Üretim Müdürü) + 1 kadrolu personel (dikiş operatörü)
             // Yevmiyeci havuzu (Id 100-107): Kesim×2, Dikiş×3, Ütü&Pkt×1, Kalite×1, Sevkiyat×1
             // Tüm yevmiyeci password'ü demo amaçlı aynı: "Yevmiye123!"
-            const string YEVMIYE_HASH = "$2a$11$OtjPXY5sSdMc2Sagr6O8r.5j0a8vAlJROTuKr03GvMsmhL/G2P3Li";
+            const string YEVMIYE_HASH  = "$2a$11$OtjPXY5sSdMc2Sagr6O8r.5j0a8vAlJROTuKr03GvMsmhL/G2P3Li";
+            const string PERSONEL_HASH = "$2a$11$TVb1Y7cHcpUJlrAQLLs.ueVrdsfZuPRbUOSYI7o2KTYtTgOqzDfhS";
             var yevmiyeHireDate = new DateTime(2024, 1, 15);
 
             mb.Entity<User>().HasData(
@@ -192,7 +193,36 @@ namespace ShiftTrackingApp.Data
                 // Kalite Kontrol — 1 kişi
                 new User { Id = 106, FullName = "Burak Öztürk",    Email = "burak.ozturk@shifttrack.com",    PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 4, Position = "Yevmiyeci · Kalite Kontrol",   DailyWage = 900m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
                 // Sevkiyat — 1 kişi
-                new User { Id = 107, FullName = "Selim Kurt",      Email = "selim.kurt@shifttrack.com",      PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 5, Position = "Yevmiyeci · Sevkiyat",         DailyWage = 850m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate }
+                new User { Id = 107, FullName = "Selim Kurt",      Email = "selim.kurt@shifttrack.com",      PasswordHash = YEVMIYE_HASH, Role = "Employee", EmploymentType = "Casual", DepartmentId = 5, Position = "Yevmiyeci · Sevkiyat",         DailyWage = 850m, IsActive = true, CreatedAt = yevmiyeHireDate, HireDate = yevmiyeHireDate },
+
+                // ── KADROLU PERSONEL (20 kişi) ──────────────────────────────
+                // Tüm kadrolu personel password'ü demo amaçlı aynı: "Personel123!"
+                // Kesim (4) · Dikiş (6) · Ütü & Paketleme (4) · Kalite Kontrol (3) · Sevkiyat (3)
+                // Kesim — DepartmentId 1
+                new User { Id = 3,  FullName = "Ali Vural",        Email = "ali.vural@shifttrack.com",       PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 1, Position = "Kesim Ustası",       IsActive = true, CreatedAt = new DateTime(2021, 3, 10), HireDate = new DateTime(2021, 3, 10) },
+                new User { Id = 4,  FullName = "Cemal Doğan",      Email = "cemal.dogan@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 1, Position = "Kesim Operatörü",    IsActive = true, CreatedAt = new DateTime(2022, 7, 1),  HireDate = new DateTime(2022, 7, 1)  },
+                new User { Id = 5,  FullName = "Hakan Arslan",     Email = "hakan.arslan@shifttrack.com",    PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 1, Position = "Kesim Operatörü",    IsActive = true, CreatedAt = new DateTime(2023, 1, 16), HireDate = new DateTime(2023, 1, 16) },
+                new User { Id = 6,  FullName = "Osman Yıldırım",   Email = "osman.yildirim@shifttrack.com",  PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 1, Position = "Kesim Operatörü",    IsActive = true, CreatedAt = new DateTime(2023, 9, 4),  HireDate = new DateTime(2023, 9, 4)  },
+                // Dikiş — DepartmentId 2 (en kalabalık bölüm)
+                new User { Id = 7,  FullName = "Elif Şimşek",      Email = "elif.simsek@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Dikiş Ustası",      IsActive = true, CreatedAt = new DateTime(2020, 11, 2), HireDate = new DateTime(2020, 11, 2) },
+                new User { Id = 8,  FullName = "Derya Koç",        Email = "derya.koc@shifttrack.com",       PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Dikiş Operatörü",    IsActive = true, CreatedAt = new DateTime(2021, 6, 14), HireDate = new DateTime(2021, 6, 14) },
+                new User { Id = 9,  FullName = "Gül Erdoğan",      Email = "gul.erdogan@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Overlok Operatörü",  IsActive = true, CreatedAt = new DateTime(2022, 2, 21), HireDate = new DateTime(2022, 2, 21) },
+                new User { Id = 10, FullName = "Hatice Aslan",     Email = "hatice.aslan@shifttrack.com",    PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Dikiş Operatörü",    IsActive = true, CreatedAt = new DateTime(2022, 10, 3),HireDate = new DateTime(2022, 10, 3) },
+                new User { Id = 11, FullName = "Meryem Taş",       Email = "meryem.tas@shifttrack.com",      PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Dikiş Operatörü",    IsActive = true, CreatedAt = new DateTime(2023, 4, 17), HireDate = new DateTime(2023, 4, 17) },
+                new User { Id = 12, FullName = "Nurten Acar",      Email = "nurten.acar@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 2, Position = "Düğme/İlik Operatörü",IsActive = true, CreatedAt = new DateTime(2023, 11, 6),HireDate = new DateTime(2023, 11, 6) },
+                // Ütü & Paketleme — DepartmentId 3
+                new User { Id = 13, FullName = "Kemal Şen",        Email = "kemal.sen@shifttrack.com",       PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 3, Position = "Ütü Ustası",        IsActive = true, CreatedAt = new DateTime(2021, 8, 9),  HireDate = new DateTime(2021, 8, 9)  },
+                new User { Id = 14, FullName = "Ramazan Bulut",    Email = "ramazan.bulut@shifttrack.com",   PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 3, Position = "Ütücü",            IsActive = true, CreatedAt = new DateTime(2022, 5, 23), HireDate = new DateTime(2022, 5, 23) },
+                new User { Id = 15, FullName = "Yasemin Toprak",   Email = "yasemin.toprak@shifttrack.com",  PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 3, Position = "Paketleme Elemanı",  IsActive = true, CreatedAt = new DateTime(2023, 2, 13), HireDate = new DateTime(2023, 2, 13) },
+                new User { Id = 16, FullName = "Hülya Çetin",      Email = "hulya.cetin@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 3, Position = "Paketleme Elemanı",  IsActive = true, CreatedAt = new DateTime(2024, 1, 8),  HireDate = new DateTime(2024, 1, 8)  },
+                // Kalite Kontrol — DepartmentId 4
+                new User { Id = 17, FullName = "Serkan Korkmaz",   Email = "serkan.korkmaz@shifttrack.com",  PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 4, Position = "Kalite Şefi",       IsActive = true, CreatedAt = new DateTime(2020, 9, 28), HireDate = new DateTime(2020, 9, 28) },
+                new User { Id = 18, FullName = "Aylin Güneş",      Email = "aylin.gunes@shifttrack.com",     PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 4, Position = "Kalite Kontrolör",  IsActive = true, CreatedAt = new DateTime(2022, 3, 7),  HireDate = new DateTime(2022, 3, 7)  },
+                new User { Id = 19, FullName = "Pınar Yalçın",     Email = "pinar.yalcin@shifttrack.com",    PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 4, Position = "Kalite Kontrolör",  IsActive = true, CreatedAt = new DateTime(2023, 7, 19), HireDate = new DateTime(2023, 7, 19) },
+                // Sevkiyat — DepartmentId 5
+                new User { Id = 20, FullName = "Tolga Eren",       Email = "tolga.eren@shifttrack.com",      PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 5, Position = "Sevkiyat Sorumlusu", IsActive = true, CreatedAt = new DateTime(2021, 5, 11), HireDate = new DateTime(2021, 5, 11) },
+                new User { Id = 21, FullName = "Erhan Avcı",       Email = "erhan.avci@shifttrack.com",      PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 5, Position = "Depo Görevlisi",     IsActive = true, CreatedAt = new DateTime(2022, 12, 5),HireDate = new DateTime(2022, 12, 5) },
+                new User { Id = 22, FullName = "Volkan Kaplan",    Email = "volkan.kaplan@shifttrack.com",   PasswordHash = PERSONEL_HASH, Role = "Employee", EmploymentType = "Permanent", DepartmentId = 5, Position = "Depo Görevlisi",     IsActive = true, CreatedAt = new DateTime(2023, 6, 26), HireDate = new DateTime(2023, 6, 26) }
             );
         }
     }
