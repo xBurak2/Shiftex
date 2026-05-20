@@ -155,8 +155,8 @@ namespace ShiftTrackingApp.Services
                         var cur = coverageTrack.GetValueOrDefault(key);
                         cur.assigned++;
 
-                        // Devam: ~%88 gelen, ~%12 gelmez (eksik üretir)
-                        if (rnd.NextDouble() < 0.88)
+                        // Kadrolu personel devam: ~%96 gelen, ~%4 devamsız (gerçekçi düşük oran)
+                        if (rnd.NextDouble() < 0.96)
                         {
                             attendance.Add(MakeCheckIn(uid, d, shiftId));
                             res.Attendance++;
