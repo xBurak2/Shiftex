@@ -83,6 +83,16 @@ namespace ShiftTrackingApp.Services.Interfaces
     }
 
     /// <summary>
+    /// Demo/sunum için gerçekçi simülasyon verisi üretir: ihtiyaç matrisi,
+    /// roster atamaları, devam (check-in) ve yevmiyeci çağrıları.
+    /// İdempotent — verilen tarih aralığı her çalıştırmada temizlenip yeniden üretilir.
+    /// </summary>
+    public interface ISimulationService
+    {
+        Task<SimulationResultDto> GenerateAsync(DateOnly start, DateOnly end);
+    }
+
+    /// <summary>
     /// Yevmiyeci çağrı akışını yönetir: uygun yevmiyeci listesi, çağrı oluşturma,
     /// yevmiyecinin kabul/reddi (kabulde otomatik ShiftAssignment).
     /// </summary>

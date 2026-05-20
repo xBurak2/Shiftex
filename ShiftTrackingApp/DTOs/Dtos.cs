@@ -143,6 +143,19 @@ namespace ShiftTrackingApp.DTOs
         public int RequiredCount { get; set; }
     }
 
+    // ─── SIMULATION (Demo Verisi) ─────────────────────────
+    public class SimulationResultDto
+    {
+        public int Days { get; set; }
+        public int StaffingRows { get; set; }
+        public int Assignments { get; set; }
+        public int Attendance { get; set; }
+        public int Absences { get; set; }
+        public int Callouts { get; set; }
+        public int CalloutsAccepted { get; set; }
+        public int CalloutsRejected { get; set; }
+    }
+
     // ─── COVERAGE (Vardiya Kapasitesi) ────────────────────
     /// <summary>Bir gün/departman/vardiya için gereken-atanan-gelen-eksik özeti.</summary>
     public class CoverageDto

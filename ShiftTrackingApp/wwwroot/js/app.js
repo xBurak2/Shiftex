@@ -748,6 +748,18 @@ function onCoverageDateChange() {
   renderCoverage();
 }
 
+// Demo simülasyon verisini üretir (admin). Mevcut aydaki sim verisini yeniler.
+async function runSimulation() {
+  if (!confirm(t('sim.confirm'))) return;
+  toast(t('sim.running'));
+  try {
+    const r = await api('POST', '/api/Simulation/generate');
+    toast(t('sim.done', { a: r.assignments, p: r.attendance, c: r.callouts }), 'ok');
+    coverageDate = fmtDateOnly(new Date());
+    renderCoverage();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
 function coverageStatus(c) {
   if (c.shortage === 0)      return { cls: 'badge-ok',   label: t('cov.status_full') };
   if (c.assigned >= c.required) return { cls: 'badge-warn', label: t('cov.status_absent') };

@@ -549,9 +549,12 @@
             <h1 class="page-title" data-i18n="nav.coverage">Vardiya Kapasitesi</h1>
             <p class="page-sub" data-i18n="cov.sub">Gereken vs gelen kişi sayısı ve eksik eleman açığı</p>
           </div>
-          <div class="field-inline">
-            <label data-i18n="cov.date_label">Tarih:</label>
-            <input id="coverage-date" type="date" class="form-input" onchange="onCoverageDateChange()" />
+          <div class="page-actions">
+            <button class="btn btn-secondary btn-sm" onclick="runSimulation()" title="Demo verisi üretir" data-i18n="sim.btn">Simülasyon Yükle</button>
+            <div class="field-inline">
+              <label data-i18n="cov.date_label">Tarih:</label>
+              <input id="coverage-date" type="date" class="form-input" onchange="onCoverageDateChange()" />
+            </div>
           </div>
         </div>
         <div class="info-banner">

@@ -283,6 +283,28 @@ namespace ShiftTrackingApp.Controllers
         }
     }
 
+    // ════════════ SIMULATION (Demo Verisi) ══════════════════════════════
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize(Roles = Roles.Admin)]
+    public class SimulationController : ControllerBase
+    {
+        private readonly ISimulationService _sim;
+        public SimulationController(ISimulationService sim) => _sim = sim;
+
+        /// <summary>Mayıs simülasyon verisini üretir. ?start=&end= (boşsa ayın 1'i → bugün).</summary>
+        [HttpPost("generate")]
+        public async Task<IActionResult> Generate([FromQuery] DateOnly? start, [FromQuery] DateOnly? end)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var s = start ?? new DateOnly(today.Year, today.Month, 1);
+            var e = end ?? today;
+            if (e < s) return BadRequest(new { message = "Bitiş tarihi başlangıçtan önce olamaz." });
+            if (e.DayNumber - s.DayNumber > 92) return BadRequest(new { message = "Aralık en fazla 92 gün olabilir." });
+            return Ok(await _sim.GenerateAsync(s, e));
+        }
+    }
+
     // ════════════ COVERAGE (Vardiya Kapasitesi) ═════════════════════════
     [ApiController]
     [Route("api/[controller]")]

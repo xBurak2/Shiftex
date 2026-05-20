@@ -175,6 +175,10 @@ const I18N = {
     'callout.modal_title':  'Yevmiyeci Çağır',
     'callout.no_eligible':  'Bu departman/gün için müsait yevmiyeci yok.',
     'callout.sent':         'Çağrı gönderildi.',
+    'sim.btn':              'Simülasyon Yükle',
+    'sim.confirm':          'Bu ayın simülasyon verisi (atama, devam, çağrı) yeniden üretilecek. Devam edilsin mi?',
+    'sim.running':          'Simülasyon üretiliyor…',
+    'sim.done':             'Simülasyon hazır: {a} atama · {p} geliş · {c} çağrı.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Yönetici',
@@ -927,6 +931,10 @@ const I18N = {
     'callout.modal_title':  'Call a Casual Worker',
     'callout.no_eligible':  'No available casual worker for this department/day.',
     'callout.sent':         'Call sent.',
+    'sim.btn':              'Load Simulation',
+    'sim.confirm':          'This month\'s simulation data (assignments, attendance, calls) will be regenerated. Continue?',
+    'sim.running':          'Generating simulation…',
+    'sim.done':             'Simulation ready: {a} assignments · {p} check-ins · {c} calls.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Admin',
