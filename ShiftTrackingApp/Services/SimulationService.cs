@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftTrackingApp.Data;
 using ShiftTrackingApp.DTOs;
+using ShiftTrackingApp.Helpers;
 using ShiftTrackingApp.Models;
 using ShiftTrackingApp.Services.Interfaces;
 
@@ -96,7 +97,13 @@ namespace ShiftTrackingApp.Services
             AttendanceLog MakeCheckIn(int uid, DateOnly d, int shiftId)
             {
                 var st = shifts[shiftId].StartTime;
-                var ci = d.ToDateTime(TimeOnly.FromTimeSpan(st)).AddMinutes(rnd.Next(-4, 22));
+                // Çoğu personel zamanında (-6..+4 dk), ~%6 geç (+10..35 dk)
+                bool late = rnd.NextDouble() < 0.06;
+                int offset = late ? rnd.Next(10, 36) : rnd.Next(-6, 5);
+                // Türkiye yerel check-in saati → UTC olarak sakla (sistem UTC saklıyor,
+                // gösterimde +3 çevriliyor). Böylece ekranda doğru saat görünür.
+                var turkeyCi = d.ToDateTime(TimeOnly.FromTimeSpan(st)).AddMinutes(offset);
+                var ci = TimeZoneHelper.ConvertToUtc(turkeyCi);
                 return new AttendanceLog { UserId = uid, CheckIn = ci, CheckOut = ci.AddHours(8), Source = "Manual", Note = "[SIM]" };
             }
 

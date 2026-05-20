@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftTrackingApp.Data;
 using ShiftTrackingApp.DTOs;
+using ShiftTrackingApp.Helpers;
 using ShiftTrackingApp.Services.Interfaces;
 
 namespace ShiftTrackingApp.Services
@@ -35,8 +36,10 @@ namespace ShiftTrackingApp.Services
                 .ToListAsync();
 
             // 3) O gün check-in yapan personeller (gelen sayısı için)
-            var dayStart = date.ToDateTime(TimeOnly.MinValue);
-            var dayEnd   = dayStart.AddDays(1);
+            // Gün sınırlarını Türkiye yerelinden UTC'ye çevir (CheckIn UTC saklanıyor).
+            // Böylece gece vardiyaları da doğru günde sayılır.
+            var dayStart = TimeZoneHelper.ConvertToUtc(date.ToDateTime(TimeOnly.MinValue));
+            var dayEnd   = TimeZoneHelper.ConvertToUtc(date.AddDays(1).ToDateTime(TimeOnly.MinValue));
             var checkedIn = (await _db.AttendanceLogs
                 .Where(l => l.CheckIn >= dayStart && l.CheckIn < dayEnd)
                 .Select(l => l.UserId)
