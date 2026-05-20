@@ -58,10 +58,9 @@ namespace ShiftTrackingApp.Middleware
                     "Beklenmeyen hata. CorrelationId={CorrelationId} Path={Path}",
                     correlationId, ctx.Request.Path);
 
-                // GEÇİCİ DEBUG: production'da da exception mesajını dön (diagnoz sonrası geri alınacak)
                 var detail = _env.IsDevelopment()
                     ? ex.ToString()
-                    : $"[DEBUG] {ex.GetType().Name}: {ex.Message} || INNER: {ex.InnerException?.Message ?? "(none)"}";
+                    : "Beklenmeyen bir sunucu hatası oluştu. Destek ekibine iletmek için referans numarasını kullanın.";
 
                 await WriteProblem(ctx, HttpStatusCode.InternalServerError,
                     "Internal Server Error", detail, correlationId);
