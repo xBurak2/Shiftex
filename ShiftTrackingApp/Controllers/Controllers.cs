@@ -235,6 +235,54 @@ namespace ShiftTrackingApp.Controllers
         }
     }
 
+    // ════════════ CASUAL CALLOUTS (Yevmiyeci Çağrısı) ═══════════════════
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class CasualCalloutsController : ControllerBase
+    {
+        private readonly ICasualCalloutService _callouts;
+        public CasualCalloutsController(ICasualCalloutService callouts) => _callouts = callouts;
+
+        /// <summary>Çağrılabilecek müsait yevmiyeciler (admin).</summary>
+        [HttpGet("eligible")]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> GetEligible(
+            [FromQuery] int departmentId, [FromQuery] int shiftId, [FromQuery] DateOnly date)
+            => Ok(await _callouts.GetEligibleAsync(departmentId, shiftId, date));
+
+        /// <summary>Bir yevmiyeciye çağrı gönder (admin).</summary>
+        [HttpPost]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Create([FromBody] CreateCasualCalloutDto dto)
+        {
+            var adminId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _callouts.CreateAsync(dto, adminId));
+        }
+
+        /// <summary>Belirli günün tüm çağrıları (admin). ?date=YYYY-MM-DD</summary>
+        [HttpGet]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> GetByDate([FromQuery] DateOnly? date)
+            => Ok(await _callouts.GetByDateAsync(date ?? DateOnly.FromDateTime(DateTime.Today)));
+
+        /// <summary>Giriş yapan yevmiyecinin kendi çağrıları.</summary>
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMine()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _callouts.GetMineAsync(userId));
+        }
+
+        /// <summary>Çağrıyı kabul/red et (yevmiyeci).</summary>
+        [HttpPost("{id}/respond")]
+        public async Task<IActionResult> Respond(int id, [FromBody] CalloutResponseDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            return Ok(await _callouts.RespondAsync(id, userId, dto.Accept));
+        }
+    }
+
     // ════════════ COVERAGE (Vardiya Kapasitesi) ═════════════════════════
     [ApiController]
     [Route("api/[controller]")]

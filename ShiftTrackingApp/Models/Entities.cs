@@ -142,6 +142,34 @@ namespace ShiftTrackingApp.Models
         public Shift Shift { get; set; } = null!;
     }
 
+    /// <summary>
+    /// Yönetici tarafından bir yevmiyeciye gönderilen vardiya çağrısı.
+    /// Vardiya açığı oluştuğunda departmana uygun yevmiyeci çağrılır;
+    /// yevmiyeci kabul ederse ilgili güne otomatik ShiftAssignment oluşur.
+    /// </summary>
+    public class CasualCallout
+    {
+        public int Id { get; set; }
+        public int DepartmentId { get; set; }
+        public int ShiftId { get; set; }
+        public DateOnly Date { get; set; }
+
+        /// <summary>Çağrılan yevmiyeci.</summary>
+        public int CalledUserId { get; set; }
+
+        // Sent → Accepted (ShiftAssignment oluşur) | Rejected | Cancelled
+        public string Status { get; set; } = "Sent";
+        public string? Note { get; set; }
+
+        public int CreatedBy { get; set; }           // çağrıyı yapan admin
+        public DateTime CreatedAt   { get; set; } = DateTime.UtcNow;
+        public DateTime? RespondedAt { get; set; }    // yevmiyeci cevap verince
+
+        public Department Department { get; set; } = null!;
+        public Shift Shift           { get; set; } = null!;
+        public User CalledUser       { get; set; } = null!;
+    }
+
     public class AttendanceLog
     {
         public int Id { get; set; }

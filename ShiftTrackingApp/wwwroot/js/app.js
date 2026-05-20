@@ -304,6 +304,11 @@ async function refreshNotifications() {
       ]);
       const lates = (today || []).filter(a => a.isLateArrival);
       lastNotifData = { kind: 'admin', pending: pending || [], lates, swapPending: swapPending || [] };
+    } else if (isCasualUser()) {
+      // Yevmiyeci: yalnızca gelen çağrılar (bekleyenler bildirime düşer)
+      const callouts = await api('GET', '/api/CasualCallouts/my').catch(()=>[]);
+      const pendingCallouts = (callouts || []).filter(c => c.status === 'Sent');
+      lastNotifData = { kind: 'casual', pendingCallouts };
     } else {
       // Personel için: kendi izin durumum + yaklaşan vardiyalar + swap durumu
       const today = new Date();
@@ -367,6 +372,13 @@ function renderNotifications() {
       title: t('notif.swap_admin', { name: s.requesterName }),
       body: `${fmtDate(s.requesterDate)} · ${shiftNameById(s.requesterShiftId, s.requesterShiftName)}`,
       onclick: `navTo('swap-admin');closeNotifMenu()`
+    }));
+  } else if (d.kind === 'casual') {
+    (d.pendingCallouts || []).forEach(c => items.push({
+      icon: '📣',
+      title: t('notif.callout_new'),
+      body: `${c.departmentName} · ${shiftNameById(c.shiftId, c.shiftName)} · ${fmtDate(c.date)}`,
+      onclick: `navTo('my-callouts');closeNotifMenu()`
     }));
   } else if (d.kind === 'employee') {
     (d.myLeaves || []).forEach(l => {
@@ -779,6 +791,9 @@ async function renderCoverage() {
     const shortCell = c.shortage > 0
       ? `<td class="cov-num cov-short">−${c.shortage}</td>`
       : `<td class="cov-num cov-ok">0</td>`;
+    const callBtn = c.shortage > 0
+      ? `<button class="btn btn-sm btn-primary callout-call-btn" onclick="openCalloutModal(${c.departmentId}, ${c.shiftId})">${t('cov.call_btn')}</button>`
+      : '';
     return `<tr>
       ${deptCell}
       <td><span class="shift-dot" style="background:${esc(c.shiftColor)}"></span>${esc(shiftNameById(c.shiftId, c.shiftName))}</td>
@@ -786,23 +801,115 @@ async function renderCoverage() {
       <td class="cov-num">${c.assigned}</td>
       <td class="cov-num cov-present">${c.present}</td>
       ${shortCell}
-      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td><div class="cov-status-cell"><span class="badge ${st.cls}">${st.label}</span>${callBtn}</div></td>
     </tr>`;
   }).join('');
 }
 
-// ── Yevmiyeci: Gelen Çağrılar (stub — Faz 3'te dolacak) ─────────────
+// ── Admin: Yevmiyeci Çağır modalı (Faz 3) ───────────────────────────
+let calloutCtx = null;
+
+async function openCalloutModal(departmentId, shiftId) {
+  calloutCtx = { departmentId, shiftId, date: coverageDate };
+  const dept = allDepts.find(d => d.id === departmentId);
+  const ctxEl = document.getElementById('callout-context');
+  if (ctxEl) {
+    const d = new Date(coverageDate);
+    ctxEl.textContent = `${dept?.name || ''} · ${shiftNameById(shiftId)} · ${fmtDateOnly(d)} (${dayFullFromDate(d)})`;
+  }
+  document.getElementById('callout-modal').classList.remove('hidden');
+  await renderEligibleCasuals();
+}
+
+async function renderEligibleCasuals() {
+  const listEl = document.getElementById('callout-eligible-list');
+  if (!listEl || !calloutCtx) return;
+  listEl.innerHTML = `<div class="text-sub" style="padding:12px">${t('common.loading')}</div>`;
+  let rows = [];
+  try {
+    rows = await api('GET', `/api/CasualCallouts/eligible?departmentId=${calloutCtx.departmentId}&shiftId=${calloutCtx.shiftId}&date=${calloutCtx.date}`);
+  } catch(e) { listEl.innerHTML = `<div class="text-sub" style="padding:12px">${esc(e.message)}</div>`; return; }
+
+  if (!rows.length) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🤷</div><p>${t('callout.no_eligible')}</p></div>`;
+    return;
+  }
+  listEl.innerHTML = rows.map(u => `
+    <div class="callout-elig-row">
+      <div class="name-cell">${avatar(u.fullName, u.photoBase64)}<div><div>${esc(u.fullName)}</div><div class="text-sub">${esc(u.position||'')}</div></div></div>
+      <button class="btn btn-sm btn-primary" onclick="sendCallout(${u.userId})">${t('cov.call_btn')}</button>
+    </div>`).join('');
+}
+
+async function sendCallout(userId) {
+  if (!calloutCtx) return;
+  try {
+    await api('POST', '/api/CasualCallouts', {
+      departmentId: calloutCtx.departmentId,
+      shiftId: calloutCtx.shiftId,
+      date: calloutCtx.date,
+      calledUserId: userId
+    });
+    toast(t('callout.sent'), 'ok');
+    closeModal('callout-modal');
+    renderCoverage();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── Yevmiyeci: Gelen Çağrılar (Faz 3) ───────────────────────────────
+const CALLOUT_STATUS = {
+  Sent:     { cls: 'badge-warn', key: 'callouts.st_sent' },
+  Accepted: { cls: 'badge-ok',   key: 'callouts.st_accepted' },
+  Rejected: { cls: 'badge-err',  key: 'callouts.st_rejected' },
+  Cancelled:{ cls: 'badge-emp',  key: 'callouts.st_cancelled' },
+};
+
 async function loadMyCallouts() {
   const listEl = document.getElementById('my-callouts-list');
   if (!listEl) return;
-  // Faz 3'te bu endpoint eklenecek: GET /api/CasualCallouts/me
-  listEl.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">${ICONS.trend || ''}</div>
-      <h3 data-i18n="callouts.empty_title">Henüz çağrı yok</h3>
-      <p data-i18n="callouts.empty_sub">Yönetici sana vardiya için çağrı gönderdiğinde burada görünür.</p>
+  let rows = [];
+  try { rows = await api('GET', '/api/CasualCallouts/my'); }
+  catch(e) { toast(e.message,'err'); return; }
+
+  if (!rows.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3 data-i18n="callouts.empty_title">Henüz çağrı yok</h3>
+        <p data-i18n="callouts.empty_sub">Yönetici sana vardiya için çağrı gönderdiğinde burada görünür.</p>
+      </div>`;
+    if (window.applyI18n) window.applyI18n(listEl);
+    return;
+  }
+
+  listEl.innerHTML = rows.map(c => {
+    const st = CALLOUT_STATUS[c.status] || CALLOUT_STATUS.Sent;
+    const d = new Date(c.date);
+    const dateStr = `${fmtDateOnly(d)} · ${dayFullFromDate(d)}`;
+    const actions = c.status === 'Sent'
+      ? `<div class="callout-actions">
+           <button class="btn btn-primary btn-sm" onclick="respondCallout(${c.id}, true)">${t('callouts.accept')}</button>
+           <button class="btn btn-sm callout-reject" onclick="respondCallout(${c.id}, false)">${t('callouts.reject')}</button>
+         </div>`
+      : `<span class="badge ${st.cls}">${t(st.key)}</span>`;
+    return `<div class="callout-card">
+      <div class="callout-main">
+        <div class="callout-shift"><span class="shift-dot" style="background:${esc(c.shiftColor)}"></span>${esc(shiftNameById(c.shiftId, c.shiftName))} · ${esc(c.startTime)}–${esc(c.endTime)}</div>
+        <div class="callout-meta">${esc(c.departmentName)} · ${dateStr}</div>
+        ${c.note ? `<div class="callout-note">${esc(c.note)}</div>` : ''}
+      </div>
+      <div class="callout-side">${actions}</div>
     </div>`;
-  if (window.applyI18n) window.applyI18n(listEl);
+  }).join('');
+}
+
+async function respondCallout(id, accept) {
+  try {
+    await api('POST', `/api/CasualCallouts/${id}/respond`, { accept });
+    toast(accept ? t('callouts.accepted_toast') : t('callouts.rejected_toast'), accept ? 'ok' : undefined);
+    loadMyCallouts();
+    refreshNotifications();
+  } catch(e) { toast(e.message,'err'); }
 }
 
 // ── Topbar User ─────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ namespace ShiftTrackingApp.Data
         public DbSet<ShiftSwapRequest>  ShiftSwapRequests  => Set<ShiftSwapRequest>();
         public DbSet<OvertimeRequest>   OvertimeRequests   => Set<OvertimeRequest>();
         public DbSet<StaffingRequirement> StaffingRequirements => Set<StaffingRequirement>();
+        public DbSet<CasualCallout>     CasualCallouts     => Set<CasualCallout>();
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
@@ -120,6 +121,28 @@ namespace ShiftTrackingApp.Data
               .WithMany()
               .HasForeignKey(s => s.ShiftId)
               .OnDelete(DeleteBehavior.Restrict);
+
+            // ── YEVMİYECİ ÇAĞRISI (Casual Callout) ─────────────────────────
+            mb.Entity<CasualCallout>()
+              .HasOne(c => c.CalledUser)
+              .WithMany()
+              .HasForeignKey(c => c.CalledUserId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            mb.Entity<CasualCallout>()
+              .HasOne(c => c.Department)
+              .WithMany()
+              .HasForeignKey(c => c.DepartmentId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<CasualCallout>()
+              .HasOne(c => c.Shift)
+              .WithMany()
+              .HasForeignKey(c => c.ShiftId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<CasualCallout>()
+              .HasIndex(c => new { c.CalledUserId, c.Status });
 
             // ── MESAİ TALEPLERİ ───────────────────────────────────────────
             mb.Entity<OvertimeRequest>()

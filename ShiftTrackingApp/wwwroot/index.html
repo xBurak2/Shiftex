@@ -1085,6 +1085,23 @@
   </div>
 </div>
 
+<!-- ── YEVMİYECİ ÇAĞIR MODALI (Faz 3) ─── -->
+<div id="callout-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 data-i18n="callout.modal_title">Yevmiyeci Çağır</h3>
+      <button class="icon-btn" onclick="closeModal('callout-modal')"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="page-sub" id="callout-context"></p>
+      <div id="callout-eligible-list" class="callout-eligible"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('callout-modal')" data-i18n="common.close">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <div id="emp-modal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">

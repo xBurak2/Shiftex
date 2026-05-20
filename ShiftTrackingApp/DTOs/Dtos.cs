@@ -158,6 +158,58 @@ namespace ShiftTrackingApp.DTOs
         public int Shortage { get; set; }   // Eksik = max(0, Gereken - Gelen)
     }
 
+    // ─── CASUAL CALLOUT (Yevmiyeci Çağrısı) ───────────────
+    public class CasualCalloutDto
+    {
+        public int Id { get; set; }
+        public int DepartmentId { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
+        public int ShiftId { get; set; }
+        public string ShiftName { get; set; } = string.Empty;
+        public string ShiftColor { get; set; } = string.Empty;
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
+        public DateOnly Date { get; set; }
+        public int CalledUserId { get; set; }
+        public string CalledUserName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? Note { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? RespondedAt { get; set; }
+    }
+
+    public class CreateCasualCalloutDto
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Geçerli bir departman seçin.")]
+        public int DepartmentId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Geçerli bir vardiya seçin.")]
+        public int ShiftId { get; set; }
+
+        [Required(ErrorMessage = "Tarih zorunludur.")]
+        public DateOnly Date { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Geçerli bir yevmiyeci seçin.")]
+        public int CalledUserId { get; set; }
+
+        [MaxLength(300, ErrorMessage = "Not en fazla 300 karakter olabilir.")]
+        public string? Note { get; set; }
+    }
+
+    /// <summary>Bir gün/vardiya için çağrılabilecek müsait yevmiyeci.</summary>
+    public class EligibleCasualDto
+    {
+        public int UserId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string? Position { get; set; }
+        public string? PhotoBase64 { get; set; }
+    }
+
+    public class CalloutResponseDto
+    {
+        public bool Accept { get; set; }
+    }
+
     // ─── SHIFT ────────────────────────────────────────────
     public class ShiftAssignmentDto
     {

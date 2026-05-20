@@ -83,6 +83,28 @@ namespace ShiftTrackingApp.Services.Interfaces
     }
 
     /// <summary>
+    /// Yevmiyeci çağrı akışını yönetir: uygun yevmiyeci listesi, çağrı oluşturma,
+    /// yevmiyecinin kabul/reddi (kabulde otomatik ShiftAssignment).
+    /// </summary>
+    public interface ICasualCalloutService
+    {
+        /// <summary>Belirli gün/vardiya/departman için çağrılabilecek müsait yevmiyeciler.</summary>
+        Task<List<EligibleCasualDto>> GetEligibleAsync(int departmentId, int shiftId, DateOnly date);
+
+        /// <summary>Admin bir yevmiyeciye çağrı gönderir.</summary>
+        Task<CasualCalloutDto> CreateAsync(CreateCasualCalloutDto dto, int adminId);
+
+        /// <summary>Bir yevmiyecinin kendi çağrıları (en yeni önce).</summary>
+        Task<List<CasualCalloutDto>> GetMineAsync(int userId);
+
+        /// <summary>Belirli bir günün tüm çağrıları (admin görünümü).</summary>
+        Task<List<CasualCalloutDto>> GetByDateAsync(DateOnly date);
+
+        /// <summary>Yevmiyeci çağrıyı kabul/red eder. Kabulde ShiftAssignment oluşturulur.</summary>
+        Task<CasualCalloutDto> RespondAsync(int calloutId, int userId, bool accept);
+    }
+
+    /// <summary>
     /// Yüz tanıma verilerini şifreli olarak backend'de yönetir.
     /// </summary>
     public interface IFaceDataService
