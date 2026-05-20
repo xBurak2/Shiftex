@@ -156,7 +156,7 @@ namespace ShiftTrackingApp.Data
                     Id             = 1,
                     FullName       = "Ayşe Yılmaz",
                     Email          = "admin@shifttrack.com",
-                    PasswordHash   = "$2a$11$F.sfeiJJml3fxcIVJaCAd..dCqvOj4lxyYkU5G/ntppmqcz/49LGG",
+                    PasswordHash   = "$2a$11$E.YPlfQB/vm9Ef/cni.wROw1JGbmwwGVCWe7WI4LWCxMY0fjZYNnu",
                     Role           = "Admin",
                     EmploymentType = "Permanent",
                     DepartmentId   = null,
@@ -170,7 +170,7 @@ namespace ShiftTrackingApp.Data
                     Id             = 2,
                     FullName       = "Mehmet Kaya",
                     Email          = "mehmet@shifttrack.com",
-                    PasswordHash   = "$2a$11$M7vuZGpSlgLJF7JVBddg6uk5RHNb12QOPrvybvFot8o4N8bKJ.deq",
+                    PasswordHash   = "$2a$11$wfZHxZ2X.NMhZdirV1rJDO6FR6svu2Ll9MnlWG5Nbl.T4.1AYtmLG",
                     Role           = "Employee",
                     EmploymentType = "Permanent",
                     DepartmentId   = 2, // Dikiş
