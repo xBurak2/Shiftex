@@ -458,6 +458,7 @@ const NAV_ADMIN = [
   { section: 'nav.operations' },
   { id: 'staffing',       key: 'nav.staffing',       icon: ICONS.target },
   { id: 'roster',         key: 'nav.roster',         icon: ICONS.calendar },
+  { id: 'coverage',       key: 'nav.coverage',       icon: ICONS.chart },
   { id: 'attendance',     key: 'nav.attendance',     icon: ICONS.check },
   { id: 'leaves',         key: 'nav.leaves',         icon: ICONS.clipboard },
   { id: 'overtime-admin', key: 'nav.overtime_admin', icon: ICONS.trend },
@@ -552,6 +553,7 @@ const PAGE_TITLE_KEYS = {
   'departments': 'nav.departments',
   'staffing': 'nav.staffing',
   'roster': 'nav.roster',
+  'coverage': 'nav.coverage',
   'attendance': 'nav.attendance',
   'leaves': 'nav.leaves',
   'overtime-admin': 'nav.overtime_admin',
@@ -587,6 +589,7 @@ function showPage(id) {
     case 'employees':   loadEmployees(); break;
     case 'casual-workers': loadCasualWorkers(); break;
     case 'staffing':    loadStaffing();  break;
+    case 'coverage':    loadCoverage();  break;
     case 'roster':      loadRoster();    break;
     case 'attendance':  loadAttendance();break;
     case 'leaves':      loadLeaves();    break;
@@ -714,6 +717,78 @@ async function saveStaffing() {
     await api('PUT', `/api/StaffingRequirements/department/${staffingDeptId}`, items);
     toast(t('staffing.saved'));
   } catch(e) { toast(e.message,'err'); }
+}
+
+// ── Admin: Vardiya Kapasitesi Dashboard (Faz 2) ─────────────────────
+// Bir gün için departman×vardiya: Gereken / Atanan / Gelen / Eksik
+let coverageDate = null;
+
+async function loadCoverage() {
+  const dateInput = document.getElementById('coverage-date');
+  if (!dateInput) return;
+  if (!coverageDate) coverageDate = fmtDateOnly(new Date());
+  dateInput.value = coverageDate;
+  await renderCoverage();
+}
+
+function onCoverageDateChange() {
+  coverageDate = document.getElementById('coverage-date').value || fmtDateOnly(new Date());
+  renderCoverage();
+}
+
+function coverageStatus(c) {
+  if (c.shortage === 0)      return { cls: 'badge-ok',   label: t('cov.status_full') };
+  if (c.assigned >= c.required) return { cls: 'badge-warn', label: t('cov.status_absent') };
+  return { cls: 'badge-err', label: t('cov.status_short') };
+}
+
+async function renderCoverage() {
+  const summaryEl = document.getElementById('coverage-summary');
+  const tbody     = document.getElementById('coverage-tbody');
+  if (!tbody) return;
+
+  let rows = [];
+  try { rows = await api('GET', `/api/Coverage?date=${coverageDate}`); }
+  catch(e) { toast(e.message, 'err'); return; }
+
+  // Özet
+  const totReq   = rows.reduce((s,c)=>s+c.required, 0);
+  const totAsg   = rows.reduce((s,c)=>s+c.assigned, 0);
+  const totPre   = rows.reduce((s,c)=>s+c.present, 0);
+  const totShort = rows.reduce((s,c)=>s+c.shortage, 0);
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="cov-stat"><div class="cov-stat-val">${totReq}</div><div class="cov-stat-lbl">${t('cov.total_required')}</div></div>
+      <div class="cov-stat"><div class="cov-stat-val">${totAsg}</div><div class="cov-stat-lbl">${t('cov.total_assigned')}</div></div>
+      <div class="cov-stat"><div class="cov-stat-val cov-present">${totPre}</div><div class="cov-stat-lbl">${t('cov.total_present')}</div></div>
+      <div class="cov-stat"><div class="cov-stat-val ${totShort>0?'cov-short':'cov-ok'}">${totShort}</div><div class="cov-stat-lbl">${t('cov.total_shortage')}</div></div>`;
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-sub" style="text-align:center;padding:24px">${t('cov.empty')}</td></tr>`;
+    return;
+  }
+
+  let lastDept = null;
+  tbody.innerHTML = rows.map(c => {
+    const st = coverageStatus(c);
+    const deptCell = c.departmentName !== lastDept
+      ? `<td class="cov-dept" rowspan="1">${deptEmoji(c.departmentName,'')} ${esc(c.departmentName)}</td>`
+      : `<td class="cov-dept-cont"></td>`;
+    lastDept = c.departmentName;
+    const shortCell = c.shortage > 0
+      ? `<td class="cov-num cov-short">−${c.shortage}</td>`
+      : `<td class="cov-num cov-ok">0</td>`;
+    return `<tr>
+      ${deptCell}
+      <td><span class="shift-dot" style="background:${esc(c.shiftColor)}"></span>${esc(shiftNameById(c.shiftId, c.shiftName))}</td>
+      <td class="cov-num">${c.required}</td>
+      <td class="cov-num">${c.assigned}</td>
+      <td class="cov-num cov-present">${c.present}</td>
+      ${shortCell}
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Yevmiyeci: Gelen Çağrılar (stub — Faz 3'te dolacak) ─────────────

@@ -144,6 +144,25 @@ const I18N = {
     'staffing.week_total':  'Haftalık',
     'staffing.saved':       'Personel ihtiyacı kaydedildi.',
 
+    // ─── Vardiya Kapasitesi (Coverage) ───
+    'nav.coverage':         'Vardiya Kapasitesi',
+    'cov.sub':              'Gereken vs gelen kişi sayısı ve eksik eleman açığı',
+    'cov.info':             'Gelen = o gün vardiyasına atanmış ve giriş (check-in) yapmış personel. Eksik = Gereken − Gelen. Eksik açığı yevmiyeci çağrısıyla kapatılacak (sonraki aşama).',
+    'cov.date_label':       'Tarih:',
+    'cov.col_shift':        'Vardiya',
+    'cov.col_required':     'Gereken',
+    'cov.col_assigned':     'Atanan',
+    'cov.col_present':      'Gelen',
+    'cov.col_shortage':     'Eksik',
+    'cov.total_required':   'Toplam Gereken',
+    'cov.total_assigned':   'Toplam Atanan',
+    'cov.total_present':    'Toplam Gelen',
+    'cov.total_shortage':   'Toplam Eksik',
+    'cov.status_full':      'Tam',
+    'cov.status_absent':    'Gelmeyen var',
+    'cov.status_short':     'Eksik atama',
+    'cov.empty':            'Bu gün için tanımlı personel ihtiyacı yok.',
+
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Yönetici',
     'topbar.employee':    'Personel',
@@ -863,6 +882,25 @@ const I18N = {
     'staffing.col_total':   'Daily Total',
     'staffing.week_total':  'Weekly',
     'staffing.saved':       'Staffing requirements saved.',
+
+    // ─── Coverage ───
+    'nav.coverage':         'Shift Coverage',
+    'cov.sub':              'Required vs present headcount and the staffing shortage',
+    'cov.info':             'Present = staff assigned to that shift who have checked in. Shortage = Required − Present. The gap will be filled by casual-worker calls (next phase).',
+    'cov.date_label':       'Date:',
+    'cov.col_shift':        'Shift',
+    'cov.col_required':     'Required',
+    'cov.col_assigned':     'Assigned',
+    'cov.col_present':      'Present',
+    'cov.col_shortage':     'Short',
+    'cov.total_required':   'Total Required',
+    'cov.total_assigned':   'Total Assigned',
+    'cov.total_present':    'Total Present',
+    'cov.total_shortage':   'Total Shortage',
+    'cov.status_full':      'Full',
+    'cov.status_absent':    'Absentees',
+    'cov.status_short':     'Understaffed',
+    'cov.empty':            'No staffing requirement defined for this day.',
 
     // ─── Topbar / Dropdown ───
     'topbar.admin':       'Admin',

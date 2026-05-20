@@ -143,6 +143,21 @@ namespace ShiftTrackingApp.DTOs
         public int RequiredCount { get; set; }
     }
 
+    // ─── COVERAGE (Vardiya Kapasitesi) ────────────────────
+    /// <summary>Bir gün/departman/vardiya için gereken-atanan-gelen-eksik özeti.</summary>
+    public class CoverageDto
+    {
+        public int DepartmentId { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
+        public int ShiftId { get; set; }
+        public string ShiftName { get; set; } = string.Empty;
+        public string ShiftColor { get; set; } = string.Empty;
+        public int Required { get; set; }   // Gereken (StaffingRequirement)
+        public int Assigned { get; set; }   // Atanan (ShiftAssignment)
+        public int Present { get; set; }    // Gelen (check-in yapan atanan)
+        public int Shortage { get; set; }   // Eksik = max(0, Gereken - Gelen)
+    }
+
     // ─── SHIFT ────────────────────────────────────────────
     public class ShiftAssignmentDto
     {

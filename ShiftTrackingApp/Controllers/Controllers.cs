@@ -235,6 +235,24 @@ namespace ShiftTrackingApp.Controllers
         }
     }
 
+    // ════════════ COVERAGE (Vardiya Kapasitesi) ═════════════════════════
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize(Roles = Roles.Admin)]
+    public class CoverageController : ControllerBase
+    {
+        private readonly ICoverageService _coverage;
+        public CoverageController(ICoverageService coverage) => _coverage = coverage;
+
+        /// <summary>Belirli bir gün için departman×vardiya kapasite özeti. ?date=YYYY-MM-DD (boşsa bugün).</summary>
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] DateOnly? date)
+        {
+            var d = date ?? DateOnly.FromDateTime(DateTime.Today);
+            return Ok(await _coverage.GetCoverageAsync(d));
+        }
+    }
+
     // ════════════ SHIFTS ═════════════════════════════════════════════════
     [ApiController]
     [Route("api/[controller]")]

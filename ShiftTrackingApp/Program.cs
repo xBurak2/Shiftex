@@ -134,6 +134,7 @@ builder.Services.AddScoped<ILeaveService,      LeaveService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IStaffingRequirementService, StaffingRequirementService>();
+builder.Services.AddScoped<ICoverageService, CoverageService>();
 builder.Services.AddScoped<IFaceDataService,   FaceDataService>();
 builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 builder.Services.AddScoped<IShiftSwapService,    ShiftSwapService>();

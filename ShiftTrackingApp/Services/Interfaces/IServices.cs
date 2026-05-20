@@ -74,6 +74,15 @@ namespace ShiftTrackingApp.Services.Interfaces
     }
 
     /// <summary>
+    /// Belirli bir gün için departman×vardiya kapasitesini hesaplar:
+    /// Gereken (ihtiyaç) vs Atanan (roster) vs Gelen (check-in) → Eksik.
+    /// </summary>
+    public interface ICoverageService
+    {
+        Task<List<CoverageDto>> GetCoverageAsync(DateOnly date);
+    }
+
+    /// <summary>
     /// Yüz tanıma verilerini şifreli olarak backend'de yönetir.
     /// </summary>
     public interface IFaceDataService
