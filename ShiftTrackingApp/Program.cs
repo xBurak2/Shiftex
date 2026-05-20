@@ -358,6 +358,35 @@ app.MapGet("/api/_diag/state", (AppDbContext db) =>
     catch (Exception ex) { return Results.Ok(new { error = ex.ToString() }); }
 });
 
+// ── GEÇİCİ RESET ENDPOINT'İ (token korumalı, kullanım sonrası SİLİNECEK) ──
+// Tüm tabloları düşürür ve migration'ları sıfırdan uygular (temiz seed).
+app.MapPost("/api/_diag/reset", (AppDbContext db, string token) =>
+{
+    if (token != "sx-reset-2026-konfeksiyon") return Results.Unauthorized();
+    try
+    {
+        // 1) Tüm FK kısıtlarını düşür
+        db.Database.ExecuteSqlRaw(@"
+            DECLARE @sql NVARCHAR(MAX) = N'';
+            SELECT @sql += 'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.' + QUOTENAME(OBJECT_NAME(parent_object_id)) + ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
+            FROM sys.foreign_keys;
+            EXEC sp_executesql @sql;");
+        // 2) Tüm tabloları düşür (migration history dahil)
+        db.Database.ExecuteSqlRaw(@"
+            DECLARE @sql NVARCHAR(MAX) = N'';
+            SELECT @sql += 'DROP TABLE ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ';'
+            FROM sys.tables;
+            EXEC sp_executesql @sql;");
+        // 3) Migration'ları sıfırdan uygula (tam seed)
+        db.Database.Migrate();
+        var applied = db.Database.GetAppliedMigrations().ToList();
+        var deptCount = db.Departments.Count();
+        var userCount = db.Users.Count();
+        return Results.Ok(new { ok = true, appliedCount = applied.Count, deptCount, userCount });
+    }
+    catch (Exception ex) { return Results.Ok(new { ok = false, error = ex.ToString() }); }
+});
+
 // ── Başlangıç migrasyonu & indeks düzeltmesi ─────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
