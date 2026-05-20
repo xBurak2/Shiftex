@@ -323,6 +323,25 @@ app.MapGet("/", async context =>
 
 app.MapControllers();
 
+// ── GEÇİCİ TANI ENDPOINT'İ (diagnoz sonrası silinecek) ──────────────
+app.MapGet("/api/_diag/migrate", (AppDbContext db) =>
+{
+    try
+    {
+        var appliedBefore = db.Database.GetAppliedMigrations().ToList();
+        var pending       = db.Database.GetPendingMigrations().ToList();
+        string? migrateError = null;
+        try { db.Database.Migrate(); }
+        catch (Exception mex) { migrateError = mex.ToString(); }
+        var appliedAfter  = db.Database.GetAppliedMigrations().ToList();
+        return Results.Ok(new { appliedBefore, pending, appliedAfter, migrateError });
+    }
+    catch (Exception ex)
+    {
+        return Results.Ok(new { fatal = ex.ToString() });
+    }
+});
+
 // ── Başlangıç migrasyonu & indeks düzeltmesi ─────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
